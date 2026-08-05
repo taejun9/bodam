@@ -1,0 +1,90 @@
+# 품질 규칙
+
+## Planning Gate
+
+- 모든 구현은 docs/exec_plans/active/plan-NNN-task.md에서 시작한다.
+- plan에는 User Request, Approval, Goal, Non-Goals, Implementation Plan, QA Plan, Review Plan, Decision Log가 있어야 한다.
+- 사용자 승인 전 implementation checkbox를 진행하지 않는다.
+- 범위나 접근 변경은 코드와 함께 또는 먼저 Decision Log에 기록한다.
+- docs/plan은 금지한다.
+
+## Git Gate
+
+- main에서 구현·커밋·푸시하지 않는다.
+- codex/plan-NNN-task 브랜치와 .worktree/plan-NNN-task를 사용한다.
+- QA와 리뷰 후 plan을 completed로 이동하고 review mirror를 만든다.
+- 그다음 커밋, main 병합·푸시, git branch -d, worktree 제거 순서로 마친다.
+- lifecycle을 완료할 수 없으면 우회하지 않고 정확한 blocker를 보고한다.
+
+## Code Gate
+
+- 300줄 이상이 되기 전에 책임 단위로 분리한다.
+- package manager와 Cargo lockfile처럼 분리할 수 없는 lockfile만 줄 수 검사에서 제외한다.
+- TypeScript strict mode를 유지한다.
+- UI component와 Pinia store에 보험 비즈니스 계산을 넣지 않는다.
+- domain service는 Vue, Pinia, Router, Tauri, Prisma, ECharts에 의존하지 않는다.
+- 외부 입력, Excel/CSV row, IPC payload는 Zod schema로 검증한다.
+- clock과 filesystem, repository는 test에서 대체 가능하게 경계를 둔다.
+- soft-deleted record를 포함하는 query는 의도를 이름과 test로 드러낸다.
+
+## Database Gate
+
+- schema 변경은 Prisma Migration으로 기록한다.
+- 관계에는 Foreign Key와 의도적인 referential action을 둔다.
+- 업무 삭제는 deletedAt soft delete가 기본이다.
+- product service에 SQLite 전용 SQL을 두지 않는다.
+- 금액은 부동소수점 계산을 피하고 단위를 명시한다.
+- migration과 restore는 깨끗한 DB 및 기존 fixture DB에서 검증한다.
+
+## Excel / CSV Gate
+
+- 원본 파일을 수정하지 않는다.
+- import는 parse, normalize, validate와 commit 책임을 분리한다. preview와 사용자 확인 UX는 승인된 계획이 있을 때만 gate에 추가한다.
+- 행 번호와 필드별 오류를 반환하되 실제 고객 값을 로그에 남기지 않는다.
+- duplicate와 partial success 정책을 승인 전 구현하지 않는다.
+- export는 승인된 열 순서·헤더·날짜·금액 형식을 golden fixture와 비교한다.
+- 실제 첨부 파일은 repository fixture로 사용하지 않고 synthetic fixture를 만든다.
+
+## Date / Calendar Gate
+
+- 모든 계산 service는 기준일 또는 clock을 주입받는다.
+- 상령일 산식과 30/60/90 경계 규칙을 승인된 test case로 고정한다.
+- 월말, 연말, 윤년, 2월 29일, null, 과거일을 테스트한다.
+- UI에서 날짜 차이를 다시 계산하지 않는다.
+
+## Privacy Gate
+
+- 주민등록번호, 보험사 로그인 정보, 민감 병력, 상세 병력을 저장하지 않는다.
+- 실사용 고객 행, 메모, 연락처, 주소를 sample, test, docs, log, screenshot에 넣지 않는다.
+- broad filesystem capability, telemetry, remote call은 별도 근거와 승인이 필요하다.
+- backup과 export도 원본 DB와 같은 민감도로 다룬다.
+
+## QA → Review → Commit
+
+현재 기반 검증:
+
+    python3 harness/scripts/run_qa.py
+    python3 harness/scripts/run_review.py
+
+애플리케이션 bootstrap 이후 다음 종류의 실제 명령을 package scripts로 만들고 문서와 하네스에 연결한다.
+
+- unit test
+- lint
+- vue-tsc typecheck
+- Vite build
+- Tauri check/build
+- migration 검증
+- 전체 QA
+- 최종 verify
+
+명령이 실제로 동작하기 전 README에 실행 가능하다고 적지 않는다.
+
+## 완료 정의
+
+- 승인 범위가 구현됨
+- 자동 QA 통과
+- 수동 리뷰 findings가 해결되거나 잔여 위험으로 승인됨
+- 문서와 실제 명령이 일치
+- active plan이 completed로 이동
+- 동일 plan 번호의 review mirror 존재
+- 커밋과 Git lifecycle 완료
