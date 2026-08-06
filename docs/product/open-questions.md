@@ -22,10 +22,8 @@
 - 동일 양식 export가 값·헤더·열 순서만 의미하는지, 열 너비·색·병합·인쇄 설정까지 의미하는지
 - 사용할 Excel 라이브러리와 Tauri 실행 경계
 
-## Calendar / Notification
+## Notification
 
-- 월 보기만 필요한지, 주·일 보기도 필요한지
-- 사용자 일정의 필드, 반복, 완료, 우선순위, 고객 연결 여부
 - 30/60/90일 구간의 중복 노출 방식
 - 앱을 여러 날 실행하지 않았을 때 시작 계산과 하루 1회 계산의 기준
 - 오늘의 경계와 Windows 로컬 시간대 변경 처리
@@ -47,5 +45,8 @@
 - 상령은 생일에서 6개월 뒤 local date부터 증가하며 존재하지 않는 날짜는 월말로 clamp한다. Dashboard는 명시적 기준일·IANA local timezone으로 다음 상령일을 계산하고 저장하지 않는다.
 - Dashboard는 관리대상 Customer 기반 7개 read card와 기존 Family summary 기반 1개 card를 각각 최대 10건 표시한다. 오늘 연락은 최신 상담의 연락일, 최근 상담은 오늘 포함 30일, 미상담은 exact 90일 이상 또는 상담 없음으로 계산한다.
 - 상령·만기 bucket은 0–30, 31–60, 61–90일이고 날짜·금액·부족 Category 수 우선 뒤 이름·stable id로 동점을 정렬한다.
+- Calendar는 모든 활성 Customer의 상담일·다음 연락일·상령일·만기일과 사용자 일정을 월 보기로 제공한다. 상담 한 건의 상담일과 다음 연락일은 각각 보존한다.
+- 사용자 일정은 제목과 Calendar에서 접근 가능한 `9998-12-31` 이하 날짜 필수, 분 단위 local 시간·메모·활성 고객 연결 선택, 완료 boolean이다. 완료 일정도 표시하며 삭제는 soft delete다.
+- Calendar의 주·일 보기, 반복·우선순위·drag and drop은 후속 범위이고 새 달력 UI library는 사용하지 않는다.
 
-위 결정은 `docs/product/proposed-operating-profile.md`의 승인 상태와 공통 데이터·Customer/Consultation·Dashboard 규칙을 근거로 한다.
+위 결정은 `docs/product/proposed-operating-profile.md`의 승인 상태와 공통 데이터·Customer/Consultation·Dashboard·Calendar 규칙을 근거로 한다.

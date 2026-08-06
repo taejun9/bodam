@@ -18,12 +18,31 @@ model Customer {
   insurancePolicies InsurancePolicy[]
   familyMemberships FamilyMembership[]
   consultations     Consultation[]
+  schedules         Schedule[]
 
   @@index([deletedAt])
   @@index([name, deletedAt])
   @@index([status, deletedAt])
   @@index([isManaged, deletedAt])
   @@map("customers")
+}
+
+model Schedule {
+  id            String    @id @default(uuid())
+  customerId    String?   @map("customer_id")
+  title         String
+  scheduledOn   String    @map("scheduled_on")
+  scheduledTime String?   @map("scheduled_time")
+  memo          String?
+  isCompleted   Boolean   @default(false) @map("is_completed")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  customer      Customer? @relation(fields: [customerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([scheduledOn, deletedAt])
+  @@index([customerId, deletedAt])
+  @@map("schedules")
 }
 
 model Consultation {

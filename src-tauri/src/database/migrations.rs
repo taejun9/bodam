@@ -57,6 +57,13 @@ pub(crate) const MIGRATIONS: &[Migration] = &[
             "../../../database/prisma/migrations/20260806050000_add_coverage_benchmark/migration.sql"
         ),
     },
+    Migration {
+        name: "20260806060000_add_schedule",
+        checksum_sha256: "4c616425c637545d2d0b2ca910ac121c083052e9c2dddb7d28f946634a4f4157",
+        sql: include_str!(
+            "../../../database/prisma/migrations/20260806060000_add_schedule/migration.sql"
+        ),
+    },
 ];
 
 const HISTORY_TABLE_SQL: &str = r#"

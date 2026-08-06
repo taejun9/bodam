@@ -39,6 +39,14 @@ form, import schema, memo 도움말, test fixture, log에도 위 항목을 위�
 - 임시 import 파일은 필요 이상 보관하지 않는다.
 - 파일 권한, 암호화, 앱 잠금은 구현 전 threat model과 사용자 승인이 필요하다.
 
+## Schedule
+
+- 일정에는 업무 식별용 제목·날짜와 선택 시간·메모·Customer 연결·완료 상태만 저장한다.
+- 제목은 월 Calendar·선택일 agenda·수정·삭제 확인 dialog, 메모는 Calendar·agenda·수정 dialog에서만 표시하며 error·log·fixture 출력에는 복사하지 않는다.
+- 일정 메모에는 주민등록번호, 보험사 로그인 정보, 민감 병력·상세 병력이나 진단·치료 상세를 넣지 말라는 입력 안내를 제공한다.
+- soft delete된 일정과 soft delete된 Customer에 연결된 일정 원본은 SQLite에 남지만 기본 Calendar에서 숨긴다.
+- 현재 Schedule 전용 export는 없다. 전체 DB backup이 구현되면 Schedule도 같은 민감도의 원본으로 포함하며 별도 계획에서 경로·보존·복원 경계를 승인한다.
+
 ## Tauri Capability
 
 - dialog로 사용자가 선택한 파일과 필요한 app data 디렉터리만 접근한다.

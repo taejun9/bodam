@@ -12,6 +12,8 @@ mod family_tests;
 #[cfg(test)]
 mod insurance_tests;
 #[cfg(test)]
+mod schedule_tests;
+#[cfg(test)]
 mod tests;
 
 use std::path::Path;

@@ -46,12 +46,20 @@ import {
   waitForPremium,
 } from "../policy.fixture.mjs";
 import { runBenchmarkPersistenceScenario } from "../scenarios/benchmark-persistence.mjs";
+import { runCalendarPersistenceScenario } from "../scenarios/calendar-persistence.mjs";
 import { runConsultationPersistenceScenario } from "../scenarios/consultation-persistence.mjs";
 import { runDashboardPersistenceScenario } from "../scenarios/dashboard-persistence.mjs";
 
 describe("BODAM native restart flow", () => {
+  let dashboardResult;
+
   it("rebuilds all Dashboard cards with the same persisted native sources", async () => {
-    await runDashboardPersistenceScenario();
+    dashboardResult = await runDashboardPersistenceScenario();
+  });
+
+  it("persists the same Schedule and Calendar read model after restart", async () => {
+    if (!dashboardResult) throw new Error("Dashboard source capture must run first");
+    await runCalendarPersistenceScenario(dashboardResult);
   });
 
   it("persists Family relations and applies active parent visibility after restart", async () => {

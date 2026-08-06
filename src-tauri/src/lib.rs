@@ -5,6 +5,7 @@ mod database;
 mod error;
 mod family;
 mod insurance;
+mod schedule;
 mod text;
 
 use std::fs;
@@ -37,6 +38,10 @@ use insurance::commands::{
     update_insurance_policy,
 };
 use insurance::InsurancePolicyRepository;
+use schedule::commands::{
+    create_schedule, delete_schedule, list_schedules, set_schedule_completed, update_schedule,
+};
+use schedule::ScheduleRepository;
 use tauri::Manager;
 
 pub(crate) struct AppState {
@@ -45,6 +50,7 @@ pub(crate) struct AppState {
     customers: CustomerRepository,
     families: FamilyRepository,
     insurance_policies: InsurancePolicyRepository,
+    schedules: ScheduleRepository,
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -77,12 +83,15 @@ pub fn run() {
                 .map_err(|_| io::Error::other("BODAM database initialization failed"))?;
             let families = FamilyRepository::open(&database_path)
                 .map_err(|_| io::Error::other("BODAM database initialization failed"))?;
+            let schedules = ScheduleRepository::open(&database_path)
+                .map_err(|_| io::Error::other("BODAM database initialization failed"))?;
             app.manage(AppState {
                 coverages,
                 consultations,
                 customers,
                 families,
                 insurance_policies,
+                schedules,
             });
             Ok(())
         })
@@ -117,7 +126,12 @@ pub fn run() {
             list_family_memberships,
             add_family_membership,
             update_family_membership,
-            delete_family_membership
+            delete_family_membership,
+            list_schedules,
+            create_schedule,
+            update_schedule,
+            set_schedule_completed,
+            delete_schedule,
         ])
         .run(tauri::generate_context!())
         .expect("BODAM desktop runtime failed");

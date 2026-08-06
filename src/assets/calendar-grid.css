@@ -1,0 +1,223 @@
+.calendar-grid-shell {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.calendar-grid {
+  min-width: 0;
+}
+
+.calendar-weekdays,
+.calendar-week {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.calendar-weekdays {
+  color: var(--text-secondary);
+  background: var(--bg-subtle);
+  border-bottom: 1px solid var(--border);
+  font-size: 10px;
+  font-weight: 750;
+  text-align: center;
+}
+
+.calendar-weekdays span {
+  padding: 9px 4px;
+}
+
+.calendar-weekdays span:first-child {
+  color: var(--danger);
+}
+
+.calendar-day {
+  min-width: 0;
+  min-height: 132px;
+  padding: 7px;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.calendar-day:nth-child(7n) {
+  border-right: 0;
+}
+
+.calendar-day.is-blank {
+  background: var(--bg-subtle);
+}
+
+.calendar-day.is-selected {
+  background: color-mix(in srgb, var(--brand-50) 72%, var(--bg-surface));
+  box-shadow: inset 0 0 0 2px var(--brand-600);
+}
+
+.calendar-date-button {
+  display: flex;
+  width: 100%;
+  min-height: 27px;
+  padding: 2px 3px;
+  color: var(--text-main);
+  background: transparent;
+  border-radius: 6px;
+  align-items: center;
+  cursor: pointer;
+  gap: 5px;
+  text-align: left;
+}
+
+.calendar-date-button:hover {
+  background: var(--bg-muted);
+}
+
+.calendar-date-button time {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.calendar-day.is-today .calendar-date-button time {
+  color: #fff;
+  background: var(--brand-700);
+}
+
+.calendar-date-button > span {
+  color: var(--brand-700);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.calendar-date-button > b {
+  display: none;
+  margin-left: auto;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  color: var(--text-secondary);
+  background: var(--bg-muted);
+  border-radius: 99px;
+  place-items: center;
+  font-size: 9px;
+}
+
+.calendar-cell-events {
+  display: grid;
+  margin-top: 4px;
+  min-width: 0;
+  gap: 3px;
+}
+
+.calendar-event-chip {
+  display: grid;
+  min-width: 0;
+  min-height: 22px;
+  padding: 3px 5px 3px 7px;
+  color: var(--text-main);
+  background: var(--bg-subtle);
+  border: 0;
+  border-left: 3px solid var(--calendar-contact);
+  border-radius: 4px;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  cursor: pointer;
+  gap: 4px;
+  font-size: 9px;
+  line-height: 1.25;
+  text-align: left;
+  text-decoration: none;
+}
+
+.calendar-event-chip:hover,
+.calendar-event-chip:focus-visible {
+  background: var(--bg-muted);
+}
+
+.calendar-event-chip time {
+  color: var(--text-secondary);
+  font-size: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.calendar-event-chip > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-event-chip.is-consultation { border-left-color: var(--calendar-consultation); }
+.calendar-event-chip.is-insurance-age { border-left-color: var(--calendar-age); }
+.calendar-event-chip.is-policy-maturity { border-left-color: var(--calendar-maturity); }
+.calendar-event-chip.is-schedule { border-left-color: var(--calendar-schedule); }
+
+.calendar-event-chip.is-completed > span:last-child {
+  text-decoration: line-through;
+}
+
+.calendar-more-events {
+  min-height: 20px;
+  padding: 1px 5px;
+  color: var(--text-secondary);
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 9px;
+  text-align: left;
+}
+
+.calendar-more-events:hover {
+  color: var(--text-main);
+  background: var(--bg-muted);
+}
+
+@media (max-width: 720px) {
+  .calendar-day {
+    min-height: 54px;
+    padding: 3px;
+  }
+
+  .calendar-cell-events {
+    display: none;
+  }
+
+  .calendar-date-button {
+    display: grid;
+    min-height: 46px;
+    padding: 3px 1px;
+    justify-items: center;
+    grid-template-columns: 1fr;
+    gap: 0;
+    text-align: center;
+  }
+
+  .calendar-date-button > span {
+    display: none;
+  }
+
+  .calendar-date-button > b {
+    display: grid;
+    margin: -2px 0 0;
+  }
+
+}
+
+@media (max-width: 440px) {
+  .calendar-weekdays span {
+    padding-block: 7px;
+  }
+
+  .calendar-day {
+    min-height: 49px;
+    border-right-color: color-mix(in srgb, var(--border) 72%, transparent);
+  }
+
+  .calendar-date-button {
+    min-height: 42px;
+  }
+
+}

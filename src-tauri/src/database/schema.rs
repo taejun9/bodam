@@ -3,6 +3,7 @@ mod coverage;
 mod coverage_benchmark;
 mod family;
 mod inspection;
+mod schedule;
 
 use rusqlite::Connection;
 
@@ -79,6 +80,17 @@ pub(super) fn verify_registered_version(
             objects.sort();
             objects
         }
+        7 => {
+            let mut objects = owned_objects(CUSTOMER_OBJECTS);
+            objects.extend(owned_objects(INSURANCE_OBJECTS));
+            objects.extend(owned_objects(coverage::OBJECTS));
+            objects.extend(owned_objects(family::OBJECTS));
+            objects.extend(owned_objects(consultation::OBJECTS));
+            objects.extend(owned_objects(coverage_benchmark::OBJECTS));
+            objects.extend(owned_objects(schedule::OBJECTS));
+            objects.sort();
+            objects
+        }
         _ => return Err(AppError::MigrationDrift),
     };
     if runtime_objects(connection)? != expected {
@@ -101,6 +113,9 @@ pub(super) fn verify_registered_version(
     }
     if applied_count >= 6 {
         coverage_benchmark::verify_schema(connection)?;
+    }
+    if applied_count >= 7 {
+        schedule::verify_schema(connection)?;
     }
     Ok(())
 }
@@ -248,4 +263,9 @@ pub(super) fn verify_coverage_benchmark_schema_for_test(
     connection: &Connection,
 ) -> Result<(), AppError> {
     coverage_benchmark::verify_schema(connection)
+}
+
+#[cfg(test)]
+pub(super) fn verify_schedule_schema_for_test(connection: &Connection) -> Result<(), AppError> {
+    schedule::verify_schema(connection)
 }

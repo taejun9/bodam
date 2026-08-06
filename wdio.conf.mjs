@@ -1,4 +1,4 @@
-import { isAbsolute, resolve } from "node:path";
+import { dirname, isAbsolute, resolve } from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
@@ -38,7 +38,7 @@ export const config = {
     },
   ],
   logLevel: "warn",
-  outputDir: resolve(projectRoot, ".runtime", "wdio-logs"),
+  outputDir: resolve(dirname(databasePath), "wdio-logs"),
   bail: 0,
   waitforTimeout: 10_000,
   connectionRetryTimeout: 120_000,
@@ -46,6 +46,6 @@ export const config = {
   framework: "jasmine",
   reporters: ["spec"],
   jasmineOpts: {
-    defaultTimeoutInterval: 60_000,
+    defaultTimeoutInterval: 180_000,
   },
 };

@@ -2,7 +2,7 @@
 
 ## 상태
 
-이 문서는 목표 아키텍처다. plan-001에서는 애플리케이션 코드를 생성하지 않는다.
+이 문서는 구현 중인 목표 아키텍처와 현재 feature 경계를 함께 기록한다.
 
 ## 실행 원칙
 
@@ -11,7 +11,7 @@
 - SQLite가 로컬 데이터의 source of truth
 - 원격 API, 원격 AI, telemetry, 광고, 결제를 MVP에 포함하지 않음
 - 입력, IPC, import 행 경계에서 Zod 검증
-- 날짜 계산은 dayjs 기반 service가 담당
+- 날짜 계산은 명시적 기준일·timezone을 받는 pure service가 담당
 - UI는 저장 방식과 보험 비즈니스 규칙을 직접 호출하거나 계산하지 않음
 
 ## 논리 계층
@@ -125,7 +125,6 @@ ECharts는 service가 계산한 series를 표현할 뿐 합계나 판정을 계�
 
 - Prisma Client를 Tauri 앱에서 실행하는 방식
 - Excel 처리 라이브러리와 실행 위치
-- 달력 UI 라이브러리와 월·주·일 범위
 - Windows 오프라인 installer의 WebView2 포함 방식
 
 관련 문서:

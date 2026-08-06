@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { withBrowserStorageMutation } from "@/shared/browser-storage-mutation";
+
 import {
   StoredCustomerSchema,
   parseCustomerCreateInput,
@@ -72,64 +74,70 @@ export class BrowserCustomerRepository implements CustomerRepository {
 
   async create(input: CustomerInput): Promise<Customer> {
     const parsed = parseCustomerCreateInput(input);
-    const customers = this.load();
-    const id = this.createId();
-    if (customers.some((customer) => customer.id === id)) {
-      throw new CustomerRepositoryError("고객 식별자를 생성하지 못했습니다.");
-    }
+    return withBrowserStorageMutation(this.storage, async () => {
+      const customers = this.load();
+      const id = this.createId();
+      if (customers.some((customer) => customer.id === id)) {
+        throw new CustomerRepositoryError("고객 식별자를 생성하지 못했습니다.");
+      }
 
-    const timestamp = this.now();
-    const customer = this.parseStored({
-      id,
-      ...parsed,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-      deletedAt: null,
+      const timestamp = this.now();
+      const customer = this.parseStored({
+        id,
+        ...parsed,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+        deletedAt: null,
+      });
+      this.save([...customers, customer]);
+      return this.toCustomer(customer);
     });
-    this.save([...customers, customer]);
-    return this.toCustomer(customer);
   }
 
   async update(id: string, input: CustomerInput): Promise<Customer> {
     const parsedId = parseCustomerId(id);
     const parsed = parseCustomerUpdateInput(input);
-    const customers = this.load();
-    const index = customers.findIndex(
-      (customer) => customer.id === parsedId && customer.deletedAt === null,
-    );
-    const existing = customers[index];
-    if (index < 0 || existing === undefined) {
-      throw notFoundError();
-    }
+    return withBrowserStorageMutation(this.storage, async () => {
+      const customers = this.load();
+      const index = customers.findIndex(
+        (customer) => customer.id === parsedId && customer.deletedAt === null,
+      );
+      const existing = customers[index];
+      if (index < 0 || existing === undefined) {
+        throw notFoundError();
+      }
 
-    const updated = this.parseStored({
-      ...existing,
-      ...parsed,
-      updatedAt: this.now(),
+      const updated = this.parseStored({
+        ...existing,
+        ...parsed,
+        updatedAt: this.now(),
+      });
+      customers[index] = updated;
+      this.save(customers);
+      return this.toCustomer(updated);
     });
-    customers[index] = updated;
-    this.save(customers);
-    return this.toCustomer(updated);
   }
 
   async remove(id: string): Promise<void> {
     const parsedId = parseCustomerId(id);
-    const customers = this.load();
-    const index = customers.findIndex(
-      (customer) => customer.id === parsedId && customer.deletedAt === null,
-    );
-    const existing = customers[index];
-    if (index < 0 || existing === undefined) {
-      throw notFoundError();
-    }
+    return withBrowserStorageMutation(this.storage, async () => {
+      const customers = this.load();
+      const index = customers.findIndex(
+        (customer) => customer.id === parsedId && customer.deletedAt === null,
+      );
+      const existing = customers[index];
+      if (index < 0 || existing === undefined) {
+        throw notFoundError();
+      }
 
-    const timestamp = this.now();
-    customers[index] = this.parseStored({
-      ...existing,
-      updatedAt: timestamp,
-      deletedAt: timestamp,
+      const timestamp = this.now();
+      customers[index] = this.parseStored({
+        ...existing,
+        updatedAt: timestamp,
+        deletedAt: timestamp,
+      });
+      this.save(customers);
     });
-    this.save(customers);
   }
 
   private matches(customer: StoredCustomer, needle: string): boolean {

@@ -48,10 +48,13 @@ import {
   waitForPremium,
 } from "../policy.fixture.mjs";
 import { runBenchmarkWriteScenario } from "../scenarios/benchmark-write.mjs";
+import { runCalendarWriteScenario } from "../scenarios/calendar-write.mjs";
 import { runConsultationWriteScenario } from "../scenarios/consultation-write.mjs";
 import { runDashboardWriteScenario } from "../scenarios/dashboard-write.mjs";
 
 describe("BODAM native write flow", () => {
+  let dashboardResult;
+
   it("persists customer and policy totals through real Tauri IPC", async () => {
     await waitForNativeApp();
     await removeStaleSyntheticCustomers();
@@ -285,6 +288,11 @@ describe("BODAM native write flow", () => {
   });
 
   it("renders all Dashboard cards from persisted native sources", async () => {
-    await runDashboardWriteScenario();
+    dashboardResult = await runDashboardWriteScenario();
+  });
+
+  it("persists Schedule CRUD and renders all Calendar source kinds", async () => {
+    if (!dashboardResult) throw new Error("Dashboard source capture must run first");
+    await runCalendarWriteScenario(dashboardResult);
   });
 });

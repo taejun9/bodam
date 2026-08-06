@@ -35,16 +35,23 @@ async function policyIdFromRow(row) {
   return requiredAttribute(await row.$("[data-testid='manage-coverage']"), "data-policy-id");
 }
 
-async function updatedConsultationId() {
+async function activeConsultationIds() {
   await waitForConsultationSection();
+  const ids = [];
+  let recentConsultationId;
   for (const row of await visibleConsultationRows()) {
+    const id = await requiredAttribute(row, "data-consultation-id");
+    ids.push(id);
     if ((await row.getText()).includes(syntheticConsultations.updated.content)) {
-      const id = await requiredAttribute(row, "data-consultation-id");
       await consultationRowById(id);
-      return id;
+      recentConsultationId = id;
     }
   }
-  throw new Error("updated synthetic consultation was not found");
+  const duplicateConsultationId = ids.find((id) => id !== recentConsultationId);
+  if (!recentConsultationId || !duplicateConsultationId || ids.length !== 2) {
+    throw new Error("synthetic consultation identities were not found");
+  }
+  return { duplicateConsultationId, recentConsultationId };
 }
 
 async function captureSyntheticSourceIds() {
@@ -56,7 +63,8 @@ async function captureSyntheticSourceIds() {
   const maturityPolicyId = await policyIdFromRow(
     await waitForPolicy(syntheticPolicies.excluded.productName),
   );
-  const recentConsultationId = await updatedConsultationId();
+  const { duplicateConsultationId, recentConsultationId } =
+    await activeConsultationIds();
 
   await $("a[href='#/customers']").click();
   await waitForNativeApp();
@@ -76,6 +84,7 @@ async function captureSyntheticSourceIds() {
   );
   return {
     duplicateFamilyId,
+    duplicateConsultationId,
     maturityPolicyId,
     primaryCustomerId,
     primaryFamilyId,

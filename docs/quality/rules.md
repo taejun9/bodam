@@ -51,6 +51,8 @@
 - 모든 계산 service는 기준일 또는 clock을 주입받는다.
 - 상령일 산식과 30/60/90 경계 규칙을 승인된 test case로 고정한다.
 - 월말, 연말, 윤년, 2월 29일, null, 과거일을 테스트한다.
+- UTC instant의 local 월 귀속과 date-only·local wall time의 timezone 불변을 구분해 테스트한다.
+- Calendar event는 source 종류·stable id·날짜·시간·제목·id 정렬과 soft-deleted parent visibility를 테스트한다.
 - UI에서 날짜 차이를 다시 계산하지 않는다.
 
 ## Privacy Gate
