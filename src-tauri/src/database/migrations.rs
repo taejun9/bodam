@@ -14,13 +14,22 @@ pub(crate) struct Migration {
     pub sql: &'static str,
 }
 
-pub(crate) const MIGRATIONS: &[Migration] = &[Migration {
-    name: "20260806000000_init_customer",
-    checksum_sha256: "4583d3d1e50303b9db6f31636fdf7f3a8b765f52c603ddfd087a84dcd11f4e11",
-    sql: include_str!(
-        "../../../database/prisma/migrations/20260806000000_init_customer/migration.sql"
-    ),
-}];
+pub(crate) const MIGRATIONS: &[Migration] = &[
+    Migration {
+        name: "20260806000000_init_customer",
+        checksum_sha256: "4583d3d1e50303b9db6f31636fdf7f3a8b765f52c603ddfd087a84dcd11f4e11",
+        sql: include_str!(
+            "../../../database/prisma/migrations/20260806000000_init_customer/migration.sql"
+        ),
+    },
+    Migration {
+        name: "20260806010000_add_insurance_policy",
+        checksum_sha256: "df3f753cb3b34dfb11363df16946683bc946f82a87fb4893087dbe3ce91dc733",
+        sql: include_str!(
+            "../../../database/prisma/migrations/20260806010000_add_insurance_policy/migration.sql"
+        ),
+    },
+];
 
 const HISTORY_TABLE_SQL: &str = r#"
 CREATE TABLE IF NOT EXISTS "bodam_schema_migrations" (
@@ -32,13 +41,10 @@ CREATE TABLE IF NOT EXISTS "bodam_schema_migrations" (
 
 pub(crate) fn run(connection: &mut Connection) -> Result<(), AppError> {
     let applied_count = prepare_registered(connection, MIGRATIONS)?;
-    if applied_count == 0 && schema::has_application_objects(connection)? {
-        return Err(AppError::MigrationDrift);
-    }
+    schema::verify_registered_version(connection, applied_count)?;
     apply_missing(connection, MIGRATIONS, applied_count)?;
     verify_history_exact(connection, MIGRATIONS)?;
-    schema::verify_runtime_objects(connection)?;
-    schema::verify_customer_schema(connection)
+    schema::verify_registered_version(connection, MIGRATIONS.len())
 }
 
 #[cfg(test)]

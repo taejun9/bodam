@@ -55,7 +55,7 @@ fn migration_is_idempotent_and_preserves_existing_synthetic_rows() {
         })
         .expect("count migrations");
     assert_eq!(row_count, 1);
-    assert_eq!(history_count, 1);
+    assert_eq!(history_count, MIGRATIONS.len() as i64);
 }
 
 #[test]
@@ -70,12 +70,14 @@ fn detects_history_and_runtime_schema_drift() {
         .expect("alter migration metadata");
     assert_eq!(run(&mut connection), Err(AppError::MigrationDrift));
 
-    connection
-        .execute(
-            "UPDATE bodam_schema_migrations SET checksum_sha256 = ?1",
-            [checksum_for_test(MIGRATIONS[0].sql)],
-        )
-        .expect("restore migration metadata");
+    for migration in MIGRATIONS {
+        connection
+            .execute(
+                "UPDATE bodam_schema_migrations SET checksum_sha256 = ?2 WHERE migration_name = ?1",
+                params![migration.name, migration.checksum_sha256],
+            )
+            .expect("restore migration metadata");
+    }
     connection
         .execute("DROP INDEX customers_deleted_at_idx", [])
         .expect("alter runtime schema");

@@ -9,9 +9,18 @@ import {
   waitForNativeApp,
   waitForOneCustomer,
 } from "../customer.fixture.mjs";
+import {
+  createPolicy,
+  excludePolicy,
+  openCustomerInsurance,
+  syntheticPolicies,
+  waitForPolicy,
+  waitForPolicyPage,
+  waitForPremium,
+} from "../policy.fixture.mjs";
 
-describe("BODAM native customer write flow", () => {
-  it("creates, updates, and searches through real Tauri IPC", async () => {
+describe("BODAM native customer and policy write flow", () => {
+  it("persists customer and policy totals through real Tauri IPC", async () => {
     await waitForNativeApp();
     await removeStaleSyntheticCustomers();
     await searchCustomers("");
@@ -62,6 +71,21 @@ describe("BODAM native customer write flow", () => {
     await browser.refresh();
     await waitForNativeApp();
     await searchCustomers(syntheticCustomer.updatedName);
-    await waitForOneCustomer(syntheticCustomer.updatedName);
+    row = await waitForOneCustomer(syntheticCustomer.updatedName);
+
+    await openCustomerInsurance(row);
+    await createPolicy(syntheticPolicies.included, true);
+    await createPolicy(syntheticPolicies.excluded);
+    await waitForPremium("150,000원");
+
+    const excludedRow = await waitForPolicy(syntheticPolicies.excluded.productName);
+    await excludePolicy(excludedRow, syntheticPolicies.excluded.updatedPremium);
+    await waitForPremium("120,000원");
+    expect(await (await waitForPolicy(syntheticPolicies.excluded.productName)).getText())
+      .toContain("제외");
+
+    await browser.refresh();
+    await waitForPolicyPage();
+    await waitForPremium("120,000원");
   });
 });

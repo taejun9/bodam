@@ -1,6 +1,7 @@
 mod customer;
 mod database;
 mod error;
+mod insurance;
 
 use std::fs;
 use std::io;
@@ -9,10 +10,16 @@ use std::path::PathBuf;
 
 use customer::commands::{create_customer, delete_customer, list_customers, update_customer};
 use customer::CustomerRepository;
+use insurance::commands::{
+    create_insurance_policy, delete_insurance_policy, list_insurance_policies,
+    update_insurance_policy,
+};
+use insurance::InsurancePolicyRepository;
 use tauri::Manager;
 
 pub(crate) struct AppState {
     customers: CustomerRepository,
+    insurance_policies: InsurancePolicyRepository,
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -37,14 +44,23 @@ pub fn run() {
                 .map_err(|_| io::Error::other("BODAM app data directory is unavailable"))?;
             let customers = CustomerRepository::open(&database_path)
                 .map_err(|_| io::Error::other("BODAM database initialization failed"))?;
-            app.manage(AppState { customers });
+            let insurance_policies = InsurancePolicyRepository::open(&database_path)
+                .map_err(|_| io::Error::other("BODAM database initialization failed"))?;
+            app.manage(AppState {
+                customers,
+                insurance_policies,
+            });
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             list_customers,
             create_customer,
             update_customer,
-            delete_customer
+            delete_customer,
+            list_insurance_policies,
+            create_insurance_policy,
+            update_insurance_policy,
+            delete_insurance_policy
         ])
         .run(tauri::generate_context!())
         .expect("BODAM desktop runtime failed");

@@ -2,6 +2,8 @@ mod migrations;
 mod schema;
 
 #[cfg(test)]
+mod insurance_tests;
+#[cfg(test)]
 mod tests;
 
 use std::path::Path;

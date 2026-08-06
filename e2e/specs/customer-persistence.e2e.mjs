@@ -1,6 +1,6 @@
 /* global describe, it */
 
-import { expect } from "@wdio/globals";
+import { $, expect } from "@wdio/globals";
 
 import {
   customerRows,
@@ -10,9 +10,17 @@ import {
   waitForNativeApp,
   waitForOneCustomer,
 } from "../customer.fixture.mjs";
+import {
+  openCustomerInsurance,
+  policyRows,
+  removePolicy,
+  syntheticPolicies,
+  waitForPolicy,
+  waitForPremium,
+} from "../policy.fixture.mjs";
 
-describe("BODAM native customer restart flow", () => {
-  it("persists across an app process restart and soft-deletes from the active list", async () => {
+describe("BODAM native customer and policy restart flow", () => {
+  it("persists policy state and soft-deletes from active reads after restart", async () => {
     await waitForNativeApp();
     await searchCustomers(syntheticCustomer.updatedName);
 
@@ -21,8 +29,22 @@ describe("BODAM native customer restart flow", () => {
     expect(rowText).toContain(syntheticCustomer.phone);
     expect(rowText).toContain(syntheticCustomer.status);
 
-    await removeCustomer(row);
+    await openCustomerInsurance(row);
+    expect((await policyRows()).length).toBe(2);
+    await waitForPremium("120,000원");
+    const includedPolicy = await waitForPolicy(syntheticPolicies.included.productName);
+    await removePolicy(includedPolicy);
+    expect((await policyRows()).length).toBe(1);
+    await waitForPremium("0원");
+    expect(await (await waitForPolicy(syntheticPolicies.excluded.productName)).getText())
+      .toContain("35,000원");
+
+    await $(".detail-breadcrumb a").click();
+    await searchCustomers(syntheticCustomer.updatedName);
+    const persistedCustomer = await waitForOneCustomer(syntheticCustomer.updatedName);
+    await removeCustomer(persistedCustomer);
     await searchCustomers(syntheticCustomer.seed);
     expect((await customerRows()).length).toBe(0);
+
   });
 });

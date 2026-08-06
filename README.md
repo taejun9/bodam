@@ -2,7 +2,7 @@
 
 보험설계사 한 명이 고객, 가족, 보험계약, 보장, 상담, 일정과 백업을 인터넷 없이 관리하는 Windows 우선 개인용 데스크톱 CRM입니다.
 
-현재 첫 수직 기능인 고객 관리가 동작합니다. Tauri 데스크톱 앱에서 고객을 검색하고 생성·수정·soft delete할 수 있으며, 데이터는 앱 전용 SQLite 파일에 저장됩니다. 가족·보험계약·달력·데이터 관리는 화면에 `준비 중`으로 표시되며 후속 실행 계획에서 순차 구현합니다.
+현재 고객 관리와 고객별 보험계약 관리가 동작합니다. Tauri 데스크톱 앱에서 고객과 계약을 생성·수정·soft delete하고, 합계대상 계약의 월보험료를 확인할 수 있습니다. 데이터는 앱 전용 SQLite 파일에 저장됩니다. 가족·보장·상담·달력·데이터 관리는 후속 실행 계획에서 순차 구현합니다.
 
 ## 핵심 원칙
 
@@ -40,6 +40,9 @@ Windows 배포 대상은 WebView2 offline installer를 포함하도록 구성되
 - 이름 필수 고객 등록과 입력 검증
 - 고객 정보 및 관리 대상 여부 수정
 - 확인 대화상자를 거친 `deletedAt` soft delete
+- 고객 상세의 보험계약 생성·조회·수정·soft delete
+- 합계 포함 여부를 반영한 고객별 월보험료 합계
+- KRW 원 단위 정수와 가입일·만기일 date-only 검증
 - SQLite migration checksum/history/runtime schema drift 검사
 - light/dark 테마, 키보드 접근성, 모바일 반응형 브라우저 화면
 - loading, empty, success, validation, adapter error 상태
@@ -69,7 +72,7 @@ SQLite 파일은 Tauri가 결정한 운영체제별 app-data 디렉터리의 `bo
 
 `qa`는 일상적으로 실행 가능한 비-GUI 검사입니다. `verify`는 `qa` 다음에 release-mode Tauri 앱을 실제로 두 번 실행하는 WebdriverIO E2E까지 수행합니다. E2E는 별도의 합성 고객과 임시 SQLite만 사용하며 종료 시 DB 파일을 삭제합니다.
 
-네이티브 앱의 고객 생성·수정·검색·soft delete와 프로세스 재시작 후 SQLite 지속성만 다시 확인하려면 다음 명령을 사용합니다.
+네이티브 앱의 고객·보험계약 생성·수정·합계·soft delete와 프로세스 재시작 후 SQLite 지속성만 다시 확인하려면 다음 명령을 사용합니다.
 
     npm run test:e2e
 

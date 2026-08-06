@@ -1,0 +1,33 @@
+.insurance-form {
+  margin: 0;
+}
+
+.money-input {
+  position: relative;
+}
+
+.money-input input {
+  padding-right: 72px;
+}
+
+.money-input > span {
+  position: absolute;
+  top: 50%;
+  right: 11px;
+  color: var(--text-muted);
+  font-size: 10px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.policy-switches {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 560px) {
+  .policy-switches {
+    grid-template-columns: 1fr;
+  }
+}

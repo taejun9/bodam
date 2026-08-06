@@ -2,7 +2,7 @@
 
 ## 상태
 
-이 문서는 개념 모델과 불변 규칙만 정의한다. Prisma schema, column type, enum, index와 migration은 SQLite 구성 계획에서 승인한다.
+이 문서는 개념 모델과 불변 규칙을 정의한다. Customer와 InsurancePolicy의 실제 Prisma schema·index·migration은 plan-002와 plan-003에서 승인·구현했으며, 나머지 entity는 후속 계획에서 확정한다.
 
 ## 개념 관계
 
@@ -29,7 +29,7 @@ FamilyMember와 ScheduleLink는 관계를 설명하기 위한 후보 이름이�
 
 ### InsurancePolicy
 
-고객의 보험계약 정보를 소유한다. 보험료와 기간의 단위, 갱신 상세는 아직 확정하지 않는다.
+고객의 보험계약 정보를 소유한다. customer, 보험사, 상품명, 월보험료는 필수이며 가입일·만기일, 보험기간·납입기간 원문, 고지플랜, 계약 상태는 선택이다. 월보험료는 KRW 원 단위 정수이고, 갱신 여부와 합계대상 여부는 boolean이다. 갱신주기와 특약별 보험료는 MVP 범위에 두지 않는다.
 
 ### CoverageCategory / Coverage
 
@@ -54,6 +54,7 @@ CoverageCategory는 표준 카테고리를, Coverage는 계약별 보장금액�
 - soft delete가 기본이므로 cascade hard delete를 업무 삭제 흐름으로 사용하지 않는다.
 - orphan 허용 여부는 관계별 계획에서 결정한다.
 - 조회는 기본적으로 deletedAt이 null인 행만 사용한다.
+- Customer와 InsurancePolicy FK는 hard delete `RESTRICT`이며 부모 soft delete 시 자식 원본을 유지하고 기본 조회·집계에서 숨긴다.
 
 ## Soft Delete
 
@@ -68,7 +69,7 @@ CoverageCategory는 표준 카테고리를, Coverage는 계약별 보장금액�
 - product service에서 SQLite 전용 SQL 또는 pragma에 의존하지 않는다.
 - DB 고유 최적화가 필요하면 adapter에 격리하고 계획 Decision Log에 기록한다.
 - 날짜를 locale 문자열로 저장하지 않는다.
-- 금액은 부동소수점으로 계산하지 않는다. 저장 단위와 Prisma type은 schema 계획에서 확정한다.
+- 금액은 부동소수점으로 계산하지 않는다. InsurancePolicy 월보험료는 Prisma `BigInt`, SQLite `INTEGER`, IPC decimal string, TypeScript `bigint`를 사용한다.
 - provider가 바뀌면 migration history와 데이터 이전 절차가 새로 필요함을 전제로 한다.
 
 ## 날짜와 시간

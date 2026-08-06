@@ -1,0 +1,146 @@
+.insurance-page {
+  position: relative;
+}
+
+.detail-breadcrumb {
+  display: flex;
+  margin: -3px 0 14px;
+  color: var(--text-muted);
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+}
+
+.detail-breadcrumb a {
+  color: var(--brand-700);
+  text-decoration: none;
+}
+
+.detail-breadcrumb a:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.policy-overview {
+  display: grid;
+  min-height: 116px;
+  margin-bottom: 22px;
+  padding: 22px 24px;
+  grid-template-columns: minmax(210px, 1fr) auto auto;
+  align-items: center;
+  gap: 30px;
+}
+
+.policy-customer {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 13px;
+}
+
+.policy-customer .customer-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  font-size: 16px;
+}
+
+.policy-customer h2 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: -0.03em;
+}
+
+.policy-customer p {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.premium-summary {
+  display: grid;
+  min-width: 180px;
+  padding-left: 26px;
+  border-left: 1px solid var(--border);
+}
+
+.premium-summary > span,
+.premium-summary small {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.premium-summary strong {
+  margin: 2px 0;
+  color: var(--brand-700);
+  font-family: var(--font-mono);
+  font-size: 23px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+}
+
+.policy-list-heading {
+  display: flex;
+  margin: 0 2px 11px;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.policy-list-heading h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.policy-list-heading p {
+  margin: 3px 0 0;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.policy-list {
+  overflow: hidden;
+}
+
+.policy-empty {
+  min-height: 290px;
+}
+
+.state-link {
+  padding: 8px 12px;
+  color: var(--brand-700);
+  background: var(--brand-50);
+  border: 1px solid var(--brand-100);
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+@media (max-width: 900px) {
+  .policy-overview {
+    grid-template-columns: 1fr auto;
+  }
+
+  .policy-overview .app-button {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+  }
+}
+
+@media (max-width: 600px) {
+  .policy-overview {
+    padding: 18px;
+    grid-template-columns: 1fr;
+    gap: 17px;
+  }
+
+  .premium-summary {
+    padding: 15px 0 0;
+    border-top: 1px solid var(--border);
+    border-left: 0;
+  }
+
+  .premium-summary strong {
+    font-size: 21px;
+  }
+}

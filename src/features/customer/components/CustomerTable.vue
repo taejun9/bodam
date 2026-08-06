@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { RouterLink } from "vue-router";
+
 import type { Customer } from "@/features/customer/types/customer";
 
 defineProps<{
@@ -36,7 +38,11 @@ function dateOrDash(value: string | null): string {
       <tbody>
         <tr v-for="customer in customers" :key="customer.id" data-testid="customer-row">
           <td>
-            <button class="customer-name" type="button" @click="emit('edit', customer)">
+            <RouterLink
+              class="customer-name"
+              :to="{ name: 'customer-detail', params: { customerId: customer.id } }"
+              data-testid="customer-detail-link"
+            >
               <span class="customer-avatar" aria-hidden="true">
                 {{ customer.name.slice(0, 1) }}
               </span>
@@ -44,7 +50,7 @@ function dateOrDash(value: string | null): string {
                 <strong>{{ customer.name }}</strong>
                 <small>{{ textOrDash(customer.gender) }}</small>
               </span>
-            </button>
+            </RouterLink>
           </td>
           <td>{{ textOrDash(customer.phone) }}</td>
           <td class="numeric-cell">{{ dateOrDash(customer.birthDate) }}</td>
@@ -60,6 +66,11 @@ function dateOrDash(value: string | null): string {
           </td>
           <td>
             <div class="row-actions">
+              <RouterLink
+                :to="{ name: 'customer-detail', params: { customerId: customer.id } }"
+              >
+                계약
+              </RouterLink>
               <button type="button" @click="emit('edit', customer)">수정</button>
               <button class="danger-action" type="button" @click="emit('remove', customer)">
                 제외
@@ -73,13 +84,18 @@ function dateOrDash(value: string | null): string {
     <div class="customer-cards" aria-label="고객 목록">
       <article v-for="customer in customers" :key="customer.id" class="customer-card">
         <header>
-          <span class="customer-avatar" aria-hidden="true">
-            {{ customer.name.slice(0, 1) }}
-          </span>
-          <div>
-            <strong>{{ customer.name }}</strong>
-            <small>{{ textOrDash(customer.phone) }}</small>
-          </div>
+          <RouterLink
+            class="customer-card-identity"
+            :to="{ name: 'customer-detail', params: { customerId: customer.id } }"
+          >
+            <span class="customer-avatar" aria-hidden="true">
+              {{ customer.name.slice(0, 1) }}
+            </span>
+            <span>
+              <strong>{{ customer.name }}</strong>
+              <small>{{ textOrDash(customer.phone) }}</small>
+            </span>
+          </RouterLink>
           <span class="managed-state" :class="{ 'is-off': !customer.isManaged }">
             <i aria-hidden="true" />
             {{ customer.isManaged ? "관리 중" : "제외" }}
@@ -96,6 +112,11 @@ function dateOrDash(value: string | null): string {
           </div>
         </dl>
         <footer>
+          <RouterLink
+            :to="{ name: 'customer-detail', params: { customerId: customer.id } }"
+          >
+            계약 보기
+          </RouterLink>
           <button type="button" @click="emit('edit', customer)">수정</button>
           <button class="danger-action" type="button" @click="emit('remove', customer)">
             목록에서 제외

@@ -7,6 +7,7 @@ use serde::ser::{Serialize, SerializeStruct, Serializer};
 pub enum AppError {
     Validation(BTreeMap<String, String>),
     CustomerNotFound,
+    InsurancePolicyNotFound,
     Database,
     Migration,
     MigrationDrift,
@@ -18,6 +19,7 @@ impl AppError {
         match self {
             Self::Validation(_) => "VALIDATION_ERROR",
             Self::CustomerNotFound => "CUSTOMER_NOT_FOUND",
+            Self::InsurancePolicyNotFound => "INSURANCE_POLICY_NOT_FOUND",
             Self::Database => "DATABASE_ERROR",
             Self::Migration => "DATABASE_MIGRATION_ERROR",
             Self::MigrationDrift => "DATABASE_MIGRATION_DRIFT",
@@ -29,6 +31,7 @@ impl AppError {
         match self {
             Self::Validation(_) => "입력값을 확인해 주세요.",
             Self::CustomerNotFound => "고객을 찾을 수 없습니다.",
+            Self::InsurancePolicyNotFound => "보험계약을 찾을 수 없습니다.",
             Self::Database => "데이터를 처리하지 못했습니다. 다시 시도해 주세요.",
             Self::Migration | Self::MigrationDrift => "로컬 데이터베이스를 준비하지 못했습니다.",
             Self::StateUnavailable => "앱 상태를 불러오지 못했습니다.",
