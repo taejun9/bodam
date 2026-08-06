@@ -1,0 +1,87 @@
+:root {
+  color-scheme: light;
+  font-family:
+    "Segoe UI Variable", "Segoe UI", "Pretendard", "Apple SD Gothic Neo",
+    sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+
+  --font-mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+  --sidebar-width: 248px;
+  --sidebar-compact-width: 72px;
+  --topbar-height: 76px;
+
+  --brand-50: #f0f9ff;
+  --brand-100: #e0f2fe;
+  --brand-200: #bae6fd;
+  --brand-500: #0ea5e9;
+  --brand-600: #0284c7;
+  --brand-700: #0369a1;
+  --brand-900: #0c4a6e;
+
+  --bg-app: #f4f6f8;
+  --bg-surface: #ffffff;
+  --bg-subtle: #f8fafc;
+  --bg-muted: #eef2f6;
+  --bg-sidebar: #101c2a;
+  --bg-sidebar-hover: #1b2a3b;
+  --bg-sidebar-active: #143954;
+  --text-main: #172033;
+  --text-secondary: #5d6878;
+  --text-muted: #7d8794;
+  --text-inverse: #f7fafc;
+  --text-sidebar: #c7d0db;
+  --border: #dce2e8;
+  --border-strong: #c4cdd7;
+  --focus: #0b79b7;
+  --danger: #c73737;
+  --danger-bg: #fff1f1;
+  --success: #137a54;
+  --success-bg: #eaf8f1;
+  --warning: #9a5b09;
+  --warning-bg: #fff7df;
+
+  --shadow-sm: 0 1px 2px rgb(15 23 42 / 7%);
+  --shadow-md: 0 12px 30px rgb(15 23 42 / 12%);
+  --shadow-dialog: 0 24px 70px rgb(2 8 23 / 28%);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --brand-50: #102b3a;
+  --brand-100: #12374b;
+  --brand-200: #185474;
+  --brand-500: #38bdf8;
+  --brand-600: #48c5fa;
+  --brand-700: #7dd3fc;
+  --brand-900: #e0f2fe;
+
+  --bg-app: #10151c;
+  --bg-surface: #171e27;
+  --bg-subtle: #1c2530;
+  --bg-muted: #242e3a;
+  --bg-sidebar: #0a1018;
+  --bg-sidebar-hover: #172331;
+  --bg-sidebar-active: #12344a;
+  --text-main: #edf2f7;
+  --text-secondary: #b1bdc9;
+  --text-muted: #8d9bab;
+  --text-inverse: #f8fafc;
+  --text-sidebar: #b9c5d1;
+  --border: #303c49;
+  --border-strong: #455261;
+  --focus: #38bdf8;
+  --danger: #ff8080;
+  --danger-bg: #3a2024;
+  --success: #5cdda9;
+  --success-bg: #17342a;
+  --warning: #f2c165;
+  --warning-bg: #382e18;
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 24%);
+  --shadow-md: 0 14px 32px rgb(0 0 0 / 26%);
+  --shadow-dialog: 0 28px 80px rgb(0 0 0 / 52%);
+}

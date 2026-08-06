@@ -1,0 +1,240 @@
+.customer-page {
+  position: relative;
+}
+
+.customer-toolbar {
+  display: flex;
+  margin-bottom: 18px;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.customer-toolbar h2 {
+  margin: 0;
+  font-size: 22px;
+  letter-spacing: -0.035em;
+}
+
+.customer-toolbar p {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.button-plus {
+  margin-top: -2px;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.customer-controls {
+  display: flex;
+  min-height: 62px;
+  margin-bottom: 14px;
+  padding: 11px 13px;
+  align-items: center;
+}
+
+.search-field {
+  display: flex;
+  width: min(100%, 480px);
+  height: 38px;
+  padding: 0 10px;
+  color: var(--text-muted);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  align-items: center;
+  gap: 8px;
+}
+
+.search-field:focus-within {
+  background: var(--bg-surface);
+  border-color: var(--focus);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 14%, transparent);
+}
+
+.search-field input {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  color: var(--text-main);
+  background: transparent;
+  border: 0;
+  outline: 0;
+}
+
+.search-field input::placeholder {
+  color: var(--text-muted);
+}
+
+.search-field input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.search-field button {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  color: var(--text-muted);
+  background: transparent;
+  border-radius: 5px;
+  cursor: pointer;
+  place-items: center;
+  font-size: 18px;
+}
+
+.search-field button:hover {
+  color: var(--text-main);
+  background: var(--bg-muted);
+}
+
+.refresh-state {
+  display: inline-flex;
+  margin-left: auto;
+  color: var(--text-muted);
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+}
+
+.refresh-state i,
+.large-spinner {
+  border: 2px solid var(--border-strong);
+  border-top-color: var(--brand-600);
+  border-radius: 50%;
+  animation: customer-spin 750ms linear infinite;
+}
+
+.refresh-state i {
+  width: 14px;
+  height: 14px;
+}
+
+.large-spinner {
+  width: 34px;
+  height: 34px;
+  margin-bottom: 6px;
+  border-width: 3px;
+}
+
+@keyframes customer-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.state-panel {
+  display: flex;
+  min-height: 330px;
+  padding: 48px 24px;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.state-panel strong {
+  margin-top: 10px;
+  font-size: 16px;
+}
+
+.state-panel > span:not(.state-symbol) {
+  max-width: 470px;
+  margin: 6px 0 18px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.state-symbol {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  margin-bottom: 4px;
+  color: var(--brand-700);
+  background: var(--brand-50);
+  border: 1px solid var(--brand-100);
+  border-radius: 17px;
+  place-items: center;
+}
+
+.state-symbol.is-error {
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-color: color-mix(in srgb, var(--danger) 22%, transparent);
+  border-radius: 50%;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.inline-alert {
+  display: flex;
+  margin-bottom: 14px;
+  padding: 10px 13px;
+  color: var(--danger);
+  background: var(--danger-bg);
+  border: 1px solid color-mix(in srgb, var(--danger) 20%, transparent);
+  border-radius: 8px;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.inline-alert button {
+  margin-left: auto;
+  padding: 3px 7px;
+  color: inherit;
+  background: transparent;
+  border-radius: 4px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.toast-notice {
+  position: fixed;
+  z-index: 100;
+  right: 28px;
+  bottom: 26px;
+  margin: 0;
+  padding: 11px 15px;
+  color: var(--text-inverse);
+  background: #173d31;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 8px;
+  box-shadow: var(--shadow-md);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.customer-list {
+  overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .customer-toolbar {
+    align-items: center;
+  }
+
+  .customer-toolbar h2 {
+    font-size: 19px;
+  }
+
+  .customer-controls {
+    padding: 9px;
+  }
+
+  .refresh-state {
+    display: none;
+  }
+
+  .toast-notice {
+    right: 16px;
+    bottom: 16px;
+    left: 16px;
+    text-align: center;
+  }
+}

@@ -1,6 +1,6 @@
 # 공식 자료
 
-확인일: 2026-08-05 KST
+확인일: 2026-08-06 KST
 
 현재 변경 가능성이 있는 기술 사실은 아래 공식/1차 문서를 기준으로 한다. 링크를 재확인하지 않고 버전·요구사항을 단정하지 않는다.
 
@@ -15,6 +15,12 @@
 | Tauri Capabilities | https://v2.tauri.app/security/capabilities/ | command와 scope 권한 | 최소 권한 설계 |
 | Tauri SQL Plugin | https://v2.tauri.app/plugin/sql/ | SQLite driver와 migration 선택지 | Prisma와 이중 migration 방지 검토 |
 | Tauri Node Sidecar | https://v2.tauri.app/learn/sidecar-nodejs/ | Node sidecar packaging | Prisma runtime option A |
+| Tauri Rust Commands | https://v2.tauri.app/develop/calling-rust/ | typed custom command | feature IPC adapter |
+| Tauri Permissions | https://v2.tauri.app/security/permissions/ | app command permission | main window command 제한 |
+| Tauri WebDriver | https://v2.tauri.app/develop/tests/webdriver/ | 실제 desktop UI 자동화 | macOS·Windows E2E |
+| Tauri WebDriver CI | https://v2.tauri.app/develop/tests/webdriver/ci/ | Windows runner 예제 | Windows release app QA |
+| WebdriverIO Tauri Service | https://webdriver.io/docs/desktop-testing/tauri/ | embedded WebDriver service | 단일 cross-platform E2E 구성 |
+| WebdriverIO Tauri Plugin Setup | https://webdriver.io/docs/desktop-testing/tauri/plugin-setup/ | test-only plugin과 권한 | production surface 분리 |
 | Vue TypeScript Guide | https://vuejs.org/guide/typescript/overview | Vue 3 TypeScript와 typecheck | vue-tsc 분리 QA |
 | Vite Guide | https://vite.dev/guide/ | 개발 서버와 build | frontend bootstrap |
 | Vite Features | https://vite.dev/guide/features.html | TypeScript transpile 동작 | typecheck를 별도 gate로 유지 |
@@ -29,6 +35,7 @@
 | Prisma Generators | https://www.prisma.io/docs/orm/prisma-schema/overview/generators | generator runtime | Tauri runtime ADR |
 | Prisma Migrate Limitations | https://www.prisma.io/docs/orm/prisma-migrate/understanding-prisma-migrate/limitations-and-known-issues | provider별 migration | PostgreSQL 이전 한계 |
 | Prisma Migration Histories | https://www.prisma.io/docs/orm/prisma-migrate/understanding-prisma-migrate/migration-histories | migration history | provider 전환 계획 |
+| Prisma CLI Reference | https://www.prisma.io/docs/orm/reference/prisma-cli-reference | migrate diff와 exit code | schema·runtime DB drift gate |
 | Apache ECharts Get Started | https://echarts.apache.org/handbook/en/get-started/ | chart setup | dashboard presentation |
 | Apache ECharts Dataset | https://echarts.apache.org/handbook/en/concepts/dataset/ | data/chart 분리 | service 결과 표현 |
 | Zod | https://zod.dev/ | TypeScript schema validation | form/import/IPC 경계 |
@@ -39,11 +46,13 @@
 ## 확인된 설계 영향
 
 - Vite의 transpile과 TypeScript typecheck는 별도 단계로 둔다.
-- Windows에서 앱 실행뿐 아니라 설치도 완전 offline이어야 한다면 WebView2 offlineInstaller 또는 fixedVersion 검토가 필요하다.
-- Prisma Client를 Tauri WebView나 Rust core에서 자동으로 실행할 수 있다고 가정하지 않는다. ADR-001에서 Node sidecar 또는 다른 경계를 검증한다.
+- Windows installer는 WebView2 offlineInstaller를 포함한다. hosted runner는 WebView2 미설치 환경을 증명하지 못하므로 clean VM 수동 검증을 분리한다.
+- Prisma Client는 Rust runtime을 제공하지 않는다. ADR-001은 Prisma schema/migration artifact와 Rust executor의 경계를 명시한다.
 - Prisma provider 변경 시 SQLite migration history를 PostgreSQL에 그대로 재사용한다고 가정하지 않는다.
 - dayjs는 달력 UI component가 아니다.
-- Tauri SQL migration과 Prisma Migration을 동시에 schema source로 사용하지 않는다.
+- Prisma schema와 migration SQL만 schema source로 사용하고 Rust는 동일 file을 실행한다. executor history가 Prisma와 같다고 주장하지 않는다.
+- renderer-only browser test와 실제 Tauri WebDriver E2E 증거를 구분한다.
+- WebdriverIO Tauri service의 embedded provider는 macOS·Windows·Linux를 지원한다. WebDriver plugin은 test build에만 등록하고 production release에서는 활성화하지 않는다.
 
 ## Source Rules
 

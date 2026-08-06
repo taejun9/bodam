@@ -6,6 +6,7 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
+import application_checks
 import base_checks
 import repository_checks
 
@@ -57,6 +58,48 @@ def test_line_limit_extensions(failures: list[str]) -> None:
             expect_error(errors, "worker.mjs has 300 lines", failures)
     finally:
         repository_checks.ROOT = original_root
+
+
+def test_generated_cache_and_vue_sql_detection(failures: list[str]) -> None:
+    original_repository_root = repository_checks.ROOT
+    original_application_root = application_checks.ROOT
+    try:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            repository_checks.ROOT = root
+            generated = root / "src-tauri/gen/schemas/desktop-schema.json"
+            generated.parent.mkdir(parents=True)
+            generated.write_text("\n".join("{}" for _ in range(300)), encoding="utf-8")
+            errors: list[str] = []
+            repository_checks.check_line_limits(errors)
+            if errors:
+                failures.append(f"transient Tauri cache was incorrectly scanned: {errors}")
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            component = root / "src/features/customer/TestForm.vue"
+            component.parent.mkdir(parents=True)
+            component.write_text(
+                '<script setup lang="ts">const label = "safe";</script>\n'
+                '<template><select><option>{{ label }}</option></select></template>\n',
+                encoding="utf-8",
+            )
+            application_checks.ROOT = root
+            errors = []
+            application_checks.check_layers(errors)
+            if errors:
+                failures.append(f"Vue select element was incorrectly treated as SQL: {errors}")
+
+            component.write_text(
+                '<script setup lang="ts">const query = "SELECT * FROM customers";</script>\n',
+                encoding="utf-8",
+            )
+            errors = []
+            application_checks.check_layers(errors)
+            expect_error(errors, "Vue UI contains raw SQL", failures)
+    finally:
+        repository_checks.ROOT = original_repository_root
+        application_checks.ROOT = original_application_root
 
 
 def test_plan_approval_and_qa(failures: list[str]) -> None:
@@ -152,6 +195,7 @@ def run_negative_controls() -> list[str]:
     failures: list[str] = []
     test_sensitive_artifacts(failures)
     test_line_limit_extensions(failures)
+    test_generated_cache_and_vue_sql_detection(failures)
     test_plan_approval_and_qa(failures)
     test_main_worktree_rejection(failures)
     return failures

@@ -28,7 +28,7 @@ REQUIRED_EVIDENCE = {
         "상세 병력",
     ),
     "docs/references/official-sources.md": (
-        "2026-08-05",
+        "확인일:",
         "https://v2.tauri.app/",
         "https://www.prisma.io/",
     ),

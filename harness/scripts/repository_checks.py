@@ -34,10 +34,12 @@ REQUIRED_FILES = (
     "docs/references/official-sources.md",
     "docs/references/input-artifacts.md",
     "harness/scripts/base_checks.py",
+    "harness/scripts/database_contract_checks.py",
     "harness/scripts/repository_checks.py",
     "harness/scripts/run_qa.py",
     "harness/scripts/run_review.py",
     "harness/scripts/test_harness.py",
+    "harness/scripts/test_database_contract.py",
     "harness/templates/exec-plan.md",
     "harness/templates/review.md",
     "harness/templates/meeting.md",
@@ -50,6 +52,7 @@ REQUIRED_DIRS = (
     "harness/scripts",
 )
 SKIP_PARTS = {".git", ".worktree", "node_modules", "target", "dist"}
+SKIP_PATH_PREFIXES = (("src-tauri", "gen"),)
 LINE_LIMIT_EXEMPT_SUFFIXES = {".lock"}
 LINE_LIMIT_EXEMPT_NAMES = {
     "package-lock.json",
@@ -93,6 +96,10 @@ def source_files() -> list[Path]:
         if path.is_file()
         and path.suffix.lower() in SOURCE_SUFFIXES
         and not SKIP_PARTS.intersection(path.relative_to(ROOT).parts)
+        and not any(
+            path.relative_to(ROOT).parts[: len(prefix)] == prefix
+            for prefix in SKIP_PATH_PREFIXES
+        )
     ]
 
 

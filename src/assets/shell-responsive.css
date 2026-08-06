@@ -1,0 +1,49 @@
+@media (max-width: 860px) {
+  .app-shell,
+  .app-shell.is-collapsed {
+    display: block;
+  }
+
+  .sidebar {
+    position: fixed;
+    width: min(var(--sidebar-width), calc(100vw - 48px));
+    visibility: hidden;
+    transform: translateX(-102%);
+    transition: transform 180ms ease;
+    pointer-events: none;
+  }
+
+  .is-mobile-open .sidebar {
+    visibility: visible;
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+
+  .is-mobile-open .sidebar-backdrop {
+    position: fixed;
+    z-index: 35;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: rgb(3 10 18 / 52%);
+    border: 0;
+  }
+
+  .topbar {
+    padding-right: 16px;
+  }
+
+  .navigation-toggle .app-icon {
+    transform: none;
+  }
+
+  .page-heading p,
+  .local-badge {
+    display: none;
+  }
+
+  .main-content {
+    padding: 20px 16px;
+  }
+}

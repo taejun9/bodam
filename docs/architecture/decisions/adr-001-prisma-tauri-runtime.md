@@ -2,7 +2,7 @@
 
 ## Status
 
-proposed
+accepted — 2026-08-06, plan-002
 
 ## Context
 
@@ -50,7 +50,40 @@ proposed
 
 ## Decision
 
-미결정. plan-002 또는 별도 architecture spike에서 최소 CRUD, migration, Windows packaging, offline 실행을 비교한 뒤 사용자가 승인한다.
+Option B를 채택한다.
+
+- `schema.prisma`와 Prisma가 생성한 전체 migration SQL history를 schema artifact의 단일 source로 둔다.
+- 개발 시 `prisma migrate dev --create-only`로 migration을 만들고 검토한 뒤 커밋한다.
+- 설치 앱은 Node sidecar 없이 Tauri Rust adapter에서 SQLite를 연다.
+- Rust migration runner는 SQL을 복사하지 않고 Prisma migration file을 `include_str!`로 포함한다.
+- Rust executor와 그 history가 Prisma Migrate executor 또는 `_prisma_migrations`와 같다고 주장하지 않는다.
+- generic SQL guest API 대신 Zod로 검증된 feature application 입력을 좁은 custom command로 전달한다.
+- DB 기능에는 shell, process, network, broad filesystem capability를 허용하지 않는다.
+
+이 결정은 사용자가 실사용 가능한 전체 MVP 구현을 위임한 요청과 plan-002의 versioned 운영 프로필을 승인 근거로 한다.
+
+## Verification
+
+- Prisma schema와 migration history의 diff가 없어야 한다.
+- Rust runner가 clean DB에 적용한 결과와 Prisma schema의 diff가 없어야 한다.
+- migration directory와 Rust 등록 목록이 1:1이고 적용된 SQL checksum이 변경되지 않아야 한다.
+- clean DB, 기존 합성 fixture DB, 실패 migration rollback을 테스트한다.
+- Customer CRUD와 재실행 persistence를 실제 Tauri 앱에서 확인한다.
+
+## Consequences
+
+장점:
+
+- 별도 Node process, port/socket/stdin protocol과 shell execute capability가 없다.
+- Windows installer에 target별 Node/Prisma sidecar binary를 추가하지 않는다.
+- DB command를 feature use case 수준으로 제한할 수 있다.
+
+비용과 잔여 위험:
+
+- Prisma Client의 type-safe query를 runtime에 사용하지 않는다.
+- Prisma schema, migration SQL, Rust DTO/query 사이 drift를 CI와 integration test로 막아야 한다.
+- Prisma artifact source와 Rust executor history가 분리된다.
+- 향후 Prisma Migrate executor 자체가 설치 앱에 반드시 필요해지면 Option A를 새 ADR로 재검토한다.
 
 ## Evidence Needed
 

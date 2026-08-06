@@ -20,6 +20,7 @@
 
 - 300줄 이상이 되기 전에 책임 단위로 분리한다.
 - package manager와 Cargo lockfile처럼 분리할 수 없는 lockfile만 줄 수 검사에서 제외한다.
+- `node_modules`, `target`, `dist`, `src-tauri/gen`처럼 도구가 매 실행마다 다시 만드는 gitignored cache는 저장소 산출물이 아니므로 줄 수 검사 입력에서 제외한다. 커밋하거나 프로젝트가 직접 생성·배포하는 artifact에는 이 예외를 적용하지 않는다.
 - TypeScript strict mode를 유지한다.
 - UI component와 Pinia store에 보험 비즈니스 계산을 넣지 않는다.
 - domain service는 Vue, Pinia, Router, Tauri, Prisma, ECharts에 의존하지 않는다.

@@ -45,6 +45,7 @@ src-tauri/target/
 !tests/fixtures/synthetic/synthetic-*.tsv
 
 runtime-data/
+.runtime/
 backups/
 exports/
 imports/

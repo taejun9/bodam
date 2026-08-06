@@ -1,0 +1,45 @@
+name: Tauri E2E - Windows hosted
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hosted-windows-e2e:
+    name: Embedded WebDriver on hosted Windows
+    runs-on: windows-2025
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Run embedded WebDriver E2E
+        run: npm run test:e2e
+      - name: Record evidence boundary
+        if: always()
+        shell: pwsh
+        run: |
+          "## Windows E2E evidence scope" >> $env:GITHUB_STEP_SUMMARY
+          "This job verifies a GitHub-hosted Windows runner with embedded WebDriver." >> $env:GITHUB_STEP_SUMMARY
+          "It does not replace the separately recorded offline Windows VM acceptance run." >> $env:GITHUB_STEP_SUMMARY
+      - name: Upload hosted-runner logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hosted-windows-e2e-logs
+          path: .runtime/wdio-logs
+          if-no-files-found: ignore
+          retention-days: 7
