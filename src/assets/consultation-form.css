@@ -1,0 +1,81 @@
+.consultation-form {
+  min-width: 0;
+  margin: 0;
+}
+
+.consultation-form textarea {
+  min-height: 130px;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.consultation-form .privacy-hint {
+  padding: 8px 10px;
+  color: var(--warning);
+  background: var(--warning-bg);
+  border: 1px solid color-mix(in srgb, var(--warning) 22%, transparent);
+  border-radius: 7px;
+  line-height: 1.5;
+}
+
+.consultation-limit-hint {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.consultation-delete-content {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.consultation-delete-symbol {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-radius: 50%;
+  flex: 0 0 auto;
+  font-weight: 800;
+  place-items: center;
+}
+
+.consultation-delete-content div {
+  min-width: 0;
+}
+
+.consultation-delete-content p {
+  margin: 1px 0 6px;
+  overflow-wrap: anywhere;
+}
+
+.consultation-delete-content small {
+  color: var(--text-muted);
+}
+
+.consultation-delete-error {
+  margin: 16px 0 0;
+  padding: 10px 12px;
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+}
+
+.consultation-delete-actions {
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 560px) {
+  .consultation-form textarea {
+    min-height: 116px;
+  }
+
+  .consultation-delete-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}

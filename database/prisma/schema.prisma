@@ -3,20 +3,21 @@ datasource db {
 }
 
 model Customer {
-  id                String            @id @default(uuid())
+  id                String             @id @default(uuid())
   name              String
-  birthDate         String?           @map("birth_date")
+  birthDate         String?            @map("birth_date")
   gender            String?
   phone             String?
   address           String?
   memo              String?
   status            String?
-  isManaged         Boolean           @default(true) @map("is_managed")
-  createdAt         DateTime          @default(now()) @map("created_at")
-  updatedAt         DateTime          @default(now()) @updatedAt @map("updated_at")
-  deletedAt         DateTime?         @map("deleted_at")
+  isManaged         Boolean            @default(true) @map("is_managed")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @default(now()) @updatedAt @map("updated_at")
+  deletedAt         DateTime?          @map("deleted_at")
   insurancePolicies InsurancePolicy[]
   familyMemberships FamilyMembership[]
+  consultations     Consultation[]
 
   @@index([deletedAt])
   @@index([name, deletedAt])
@@ -25,24 +26,40 @@ model Customer {
   @@map("customers")
 }
 
+model Consultation {
+  id            String    @id @default(uuid())
+  customerId    String    @map("customer_id")
+  consultedAt   DateTime  @map("consulted_at")
+  content       String?
+  nextContactOn String?   @map("next_contact_on")
+  result        String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  customer      Customer  @relation(fields: [customerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([customerId, deletedAt, consultedAt])
+  @@map("consultations")
+}
+
 model InsurancePolicy {
-  id                String    @id @default(uuid())
-  customerId        String    @map("customer_id")
+  id                String     @id @default(uuid())
+  customerId        String     @map("customer_id")
   insurer           String
-  productName       String    @map("product_name")
-  joinedOn          String?   @map("joined_on")
-  coverageTerm      String?   @map("coverage_term")
-  paymentTerm       String?   @map("payment_term")
-  monthlyPremiumWon BigInt    @map("monthly_premium_won")
-  disclosurePlan    String?   @map("disclosure_plan")
-  maturesOn         String?   @map("matures_on")
-  renewable         Boolean   @default(false)
+  productName       String     @map("product_name")
+  joinedOn          String?    @map("joined_on")
+  coverageTerm      String?    @map("coverage_term")
+  paymentTerm       String?    @map("payment_term")
+  monthlyPremiumWon BigInt     @map("monthly_premium_won")
+  disclosurePlan    String?    @map("disclosure_plan")
+  maturesOn         String?    @map("matures_on")
+  renewable         Boolean    @default(false)
   status            String?
-  isIncluded        Boolean   @default(true) @map("is_included")
-  createdAt         DateTime  @default(now()) @map("created_at")
-  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at")
-  deletedAt         DateTime? @map("deleted_at")
-  customer          Customer  @relation(fields: [customerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  isIncluded        Boolean    @default(true) @map("is_included")
+  createdAt         DateTime   @default(now()) @map("created_at")
+  updatedAt         DateTime   @default(now()) @updatedAt @map("updated_at")
+  deletedAt         DateTime?  @map("deleted_at")
+  customer          Customer   @relation(fields: [customerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   coverages         Coverage[]
 
   @@index([customerId, deletedAt])

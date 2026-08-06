@@ -69,7 +69,7 @@ function dateOrDash(value: string | null): string {
               <RouterLink
                 :to="{ name: 'customer-detail', params: { customerId: customer.id } }"
               >
-                계약
+                상세
               </RouterLink>
               <button type="button" @click="emit('edit', customer)">수정</button>
               <button class="danger-action" type="button" @click="emit('remove', customer)">
@@ -115,7 +115,7 @@ function dateOrDash(value: string | null): string {
           <RouterLink
             :to="{ name: 'customer-detail', params: { customerId: customer.id } }"
           >
-            계약 보기
+            상세 보기
           </RouterLink>
           <button type="button" @click="emit('edit', customer)">수정</button>
           <button class="danger-action" type="button" @click="emit('remove', customer)">

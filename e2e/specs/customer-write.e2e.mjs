@@ -47,6 +47,7 @@ import {
   waitForPolicyPage,
   waitForPremium,
 } from "../policy.fixture.mjs";
+import { runConsultationWriteScenario } from "../scenarios/consultation-write.mjs";
 
 describe("BODAM native write flow", () => {
   it("persists customer and policy totals through real Tauri IPC", async () => {
@@ -269,5 +270,9 @@ describe("BODAM native write flow", () => {
     expect(await (await waitForFamilyMember(dialog, syntheticFamilyCustomer.name)).getText())
       .toContain(syntheticFamilies.secondaryRelationship);
     await closeFamilyMembers(dialog);
+  });
+
+  it("persists consultation records through real Tauri IPC", async () => {
+    await runConsultationWriteScenario();
   });
 });

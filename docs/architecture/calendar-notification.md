@@ -10,11 +10,13 @@
 |---|---|---|
 | Customer | 생년월일에서 계산된 상령일 | 상령 예정 |
 | InsurancePolicy | 만기일 | 30/60/90일 만기 예정 |
-| Consultation | 상담일 | 상담 이력 |
-| Consultation | 다음 연락일 | 오늘 연락 및 예정 연락 |
+| Consultation | `consultedAt` UTC timestamp를 OS local 날짜·시간으로 표시 | 상담 이력 |
+| Consultation | `nextContactOn` date-only | 오늘 연락 및 예정 연락 |
 | Schedule | 승인될 일정 날짜/시간 | 사용자 스케줄 |
 
 상령일은 저장된 값으로 단정하지 않는다. 승인된 산식과 기준일을 사용하는 service 계산 결과여야 한다.
+
+Consultation 원본 CRUD와 두 날짜 source의 저장 계약은 구현되어 있다. 이를 합치는 Calendar event, 오늘 연락·최근 상담·미상담 판정과 같은 Customer의 여러 대상 grouping은 후속 Dashboard·Calendar 계획 범위다.
 
 ## 계산 경계
 

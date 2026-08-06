@@ -45,6 +45,7 @@ import {
   waitForPolicy,
   waitForPremium,
 } from "../policy.fixture.mjs";
+import { runConsultationPersistenceScenario } from "../scenarios/consultation-persistence.mjs";
 
 describe("BODAM native restart flow", () => {
   it("persists Family relations and applies active parent visibility after restart", async () => {
@@ -162,6 +163,8 @@ describe("BODAM native restart flow", () => {
     await waitForCoverageSummaryMissing(coverageCategoryIds.hospital);
     expect(await (await waitForPolicy(syntheticPolicies.excluded.productName)).getText())
       .toContain("35,000원");
+
+    await runConsultationPersistenceScenario();
 
     await $(".detail-breadcrumb a").click();
     await searchCustomers(syntheticCustomer.updatedName);

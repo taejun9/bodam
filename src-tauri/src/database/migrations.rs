@@ -43,6 +43,13 @@ pub(crate) const MIGRATIONS: &[Migration] = &[
             "../../../database/prisma/migrations/20260806030000_add_family/migration.sql"
         ),
     },
+    Migration {
+        name: "20260806040000_add_consultation",
+        checksum_sha256: "48601ed0c5561661fd165634a44dcbd575474c3cb4f85b873fa190b9e0a41254",
+        sql: include_str!(
+            "../../../database/prisma/migrations/20260806040000_add_consultation/migration.sql"
+        ),
+    },
 ];
 
 const HISTORY_TABLE_SQL: &str = r#"

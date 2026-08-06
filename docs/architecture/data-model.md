@@ -2,7 +2,7 @@
 
 ## 상태
 
-이 문서는 개념 모델과 불변 규칙을 정의한다. Customer, InsurancePolicy, CoverageCategory, Coverage, Family와 FamilyMembership의 실제 Prisma schema·index·migration은 plan-002부터 plan-005에서 승인·구현했다. 나머지 entity는 후속 계획에서 확정한다.
+이 문서는 개념 모델과 불변 규칙을 정의한다. Customer, InsurancePolicy, CoverageCategory, Coverage, Family, FamilyMembership과 Consultation의 실제 Prisma schema·index·migration은 plan-002부터 plan-006에서 승인·구현했다. 나머지 entity는 후속 계획에서 확정한다.
 
 ## 개념 관계
 
@@ -49,7 +49,11 @@ Coverage는 InsurancePolicy 하나와 CoverageCategory 하나에 연결된 계�
 
 ### Consultation
 
-상담일, 내용, 다음 연락일, 결과를 소유한다. calendar와 dashboard는 read model로 참조한다.
+Consultation은 `id`, `customerId`, 필수 `consultedAt`, 선택 `content`, `nextContactOn`, `result`, timestamps와 `deletedAt`을 소유한다. `consultedAt`은 timezone offset이 있는 RFC 3339 입력을 UTC millisecond `Z` timestamp로 정규화하고 화면에서 OS local 상담 일시로 표시한다. `nextContactOn`은 시각과 timezone이 없는 실제 `YYYY-MM-DD` date-only다.
+
+`content`와 `result`는 trim 후 빈 값을 null로 저장하는 plain text다. 기술 경계는 각각 Unicode scalar 4,000자와 200자이며 결과는 enum으로 고정하지 않는 자유입력이다. 내용 입력에는 민감 병력과 상세 병력을 저장하지 말라는 안내를 표시하며 문자열에서 의료 의미를 추론하지 않는다.
+
+같은 Customer와 같은 `consultedAt`의 여러 행을 허용하고 자동 병합하지 않는다. 기본 목록은 활성 Customer의 활성 Consultation만 `consultedAt DESC, id ASC`로 정렬한다. 생성 뒤 Customer를 다른 ID로 옮기지 않는다. Calendar와 Dashboard는 원본을 복제하지 않고 후속 계획의 read model로 참조한다.
 
 ### Schedule
 
@@ -67,6 +71,7 @@ Coverage는 InsurancePolicy 하나와 CoverageCategory 하나에 연결된 계�
 - Coverage에는 Policy·Category 조합 unique 제약이 없으므로 동일 조합의 여러 행을 모두 보존한다.
 - FamilyMembership의 Family·Customer FK는 hard delete `RESTRICT`, key update `CASCADE`이며 `(familyId, customerId)`는 unique다.
 - Family 또는 Customer를 soft delete하면 membership 원본은 유지하고 구성원 목록·가족 보험료에서 숨긴다.
+- Consultation의 Customer FK는 hard delete `RESTRICT`, key update `CASCADE`다. 활성 Customer만 Consultation을 생성·조회·변경할 수 있다.
 
 ## Soft Delete
 
@@ -77,6 +82,7 @@ Coverage는 InsurancePolicy 하나와 CoverageCategory 하나에 연결된 계�
 - migration metadata처럼 업무 데이터가 아닌 내부 table의 처리까지 무조건 동일하게 만들지 않는다.
 - CoverageCategory를 soft delete하면 연결 Coverage 행은 함께 수정하지 않고 숨긴다. 현재 Category와 연결 Coverage의 복원 UI는 없다.
 - Family를 soft delete하면 membership 행은 함께 수정하지 않는다. Membership을 제거한 뒤 같은 Customer를 명시적으로 재추가하는 흐름만 기존 행을 재활성화한다.
+- Consultation을 soft delete하면 Customer와 다른 업무 원본을 수정하지 않는다. Customer를 soft delete하면 연결 Consultation 원본은 유지하되 기본 상담 조회에서 숨긴다.
 
 ## 이식성
 
@@ -89,11 +95,11 @@ Coverage는 InsurancePolicy 하나와 CoverageCategory 하나에 연결된 계�
 ## 날짜와 시간
 
 - 생년월일, 가입일, 만기일처럼 날짜 의미만 있는 값과 상담 시각처럼 시간 의미가 있는 값을 구분한다.
-- DB 저장 방식, UTC 변환 여부, Windows local timezone 경계는 날짜 규칙 계획에서 승인한다.
+- Consultation의 상담 일시는 UTC millisecond `Z` timestamp로 저장하고 OS local timezone으로 입력·표시한다. 다음 연락일은 date-only로 저장한다.
 - 동일 기준일을 service에 주입해 dashboard, calendar, notification 계산이 재현 가능해야 한다.
 
 ## Index
 
-현재 migration은 Customer의 삭제·이름·상태·담당 여부, InsurancePolicy의 customer FK·만기일, CoverageCategory의 삭제·이름 조회를 위한 index를 갖는다. Coverage는 `(policyId, deletedAt)`과 `(categoryId, deletedAt)` 복합 index로 계약별 관리 목록과 활성 카테고리별 조회를 지원한다. Family는 삭제·이름 조회 index를 가지며 FamilyMembership은 Family·Customer별 active 조회 index와 pair unique로 구성원 조회와 중복 방지를 지원한다.
+현재 migration은 Customer의 삭제·이름·상태·담당 여부, InsurancePolicy의 customer FK·만기일, CoverageCategory의 삭제·이름 조회를 위한 index를 갖는다. Coverage는 `(policyId, deletedAt)`과 `(categoryId, deletedAt)` 복합 index로 계약별 관리 목록과 활성 카테고리별 조회를 지원한다. Family는 삭제·이름 조회 index를 가지며 FamilyMembership은 Family·Customer별 active 조회 index와 pair unique로 구성원 조회와 중복 방지를 지원한다. Consultation은 `(customerId, deletedAt, consultedAt)` index로 고객별 최신 활성 이력 조회를 지원한다.
 
-Consultation과 CoverageBenchmark의 index는 entity와 query가 승인될 때 실제 query plan과 데이터 규모를 확인해 결정한다.
+CoverageBenchmark의 index는 entity와 query가 승인될 때 실제 query plan과 데이터 규모를 확인해 결정한다. 다음 연락일의 Dashboard·Calendar 조회 index도 해당 read model 계획에서 실제 query를 근거로 추가한다.

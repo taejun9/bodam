@@ -1,0 +1,216 @@
+.consultation-table-wrap {
+  width: 100%;
+  min-width: 0;
+}
+
+.consultation-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.consultation-table th,
+.consultation-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.consultation-table th {
+  height: 45px;
+  color: var(--text-muted);
+  background: var(--bg-subtle);
+  font-size: 10px;
+  font-weight: 650;
+  vertical-align: middle;
+}
+
+.consultation-table td {
+  min-width: 0;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.consultation-table th:nth-child(1) {
+  width: 150px;
+}
+
+.consultation-table th:nth-child(3) {
+  width: 112px;
+}
+
+.consultation-table th:nth-child(4) {
+  width: 150px;
+}
+
+.consultation-table th:nth-child(5) {
+  width: 94px;
+}
+
+.consultation-table th:first-child,
+.consultation-table td:first-child {
+  padding-left: 20px;
+}
+
+.consultation-table th:last-child,
+.consultation-table td:last-child {
+  padding-right: 20px;
+}
+
+.consultation-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.consultation-table tbody tr:hover td {
+  background: var(--bg-subtle);
+}
+
+.consultation-date,
+.consultation-next-contact {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.consultation-date {
+  color: var(--text-main) !important;
+  font-weight: 700;
+}
+
+.consultation-content,
+.consultation-result,
+.consultation-card-content,
+.consultation-card header > span {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.consultation-actions,
+.consultation-card footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 3px;
+}
+
+.consultation-actions button,
+.consultation-card footer button {
+  min-height: 32px;
+  padding: 5px 8px;
+  color: var(--text-secondary);
+  background: transparent;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.consultation-actions button:hover,
+.consultation-card footer button:hover {
+  color: var(--text-main);
+  background: var(--bg-muted);
+}
+
+.consultation-actions .danger-action:hover,
+.consultation-card footer .danger-action:hover {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.consultation-cards {
+  display: none;
+}
+
+@media (max-width: 840px) {
+  .consultation-table {
+    display: none;
+  }
+
+  .consultation-cards {
+    display: grid;
+    min-width: 0;
+    padding: 10px;
+    gap: 9px;
+  }
+
+  .consultation-card {
+    min-width: 0;
+    padding: 15px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+
+  .consultation-card header {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr) minmax(0, auto);
+    align-items: start;
+    gap: 12px;
+  }
+
+  .consultation-card header time {
+    color: var(--text-main);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+  }
+
+  .consultation-card header > span {
+    max-width: 160px;
+    color: var(--text-muted);
+    font-size: 10px;
+    text-align: right;
+  }
+
+  .consultation-card-content {
+    min-width: 0;
+    margin: 14px 0;
+    color: var(--text-secondary);
+    font-size: 11px;
+    line-height: 1.65;
+  }
+
+  .consultation-card dl {
+    margin: 0;
+  }
+
+  .consultation-card dl > div {
+    padding: 9px 10px;
+    background: var(--bg-subtle);
+    border-radius: 7px;
+  }
+
+  .consultation-card dt {
+    color: var(--text-muted);
+    font-size: 9px;
+  }
+
+  .consultation-card dd {
+    margin: 2px 0 0;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .consultation-card footer {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+
+  .consultation-card footer button {
+    min-height: 36px;
+  }
+}
+
+@media (max-width: 420px) {
+  .consultation-card header {
+    grid-template-columns: 1fr;
+  }
+
+  .consultation-card header > span {
+    max-width: none;
+    text-align: left;
+  }
+}

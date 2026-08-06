@@ -5,18 +5,15 @@
 ## 도메인 규칙
 
 - 상령일의 정확한 산식, 기준 시간, 윤년·2월 29일 처리
-- 담당상태와 상담 결과의 허용 값
 - 월 보험료에 특약 보험료가 포함되는지 여부
 - 보험기간·납입기간의 저장 단위와 종신 표현
 - 갱신 계약의 갱신 주기와 다음 갱신일 관리 여부
 - 보장금액의 통화·단위와 중복 특약 합산 규칙
 - 보장 benchmark의 연령 구간 경계 및 부족·적정·과다 판정식
-- 최근 상담/미상담의 기준 기간과 비활성 고객 처리
 
 ## 데이터 관계
 
 - 보험계약과 보장 레코드의 필수/선택 관계
-- soft-deleted 고객에 연결된 계약·상담의 표시와 복원 규칙
 
 ## Excel / CSV
 
@@ -41,3 +38,11 @@
 - Windows installer가 인터넷 없이 설치되어야 하는지, 실행만 오프라인이면 되는지
 - SQLite 파일과 백업의 기본 경로
 - 백업 암호화와 앱 잠금 필요 여부
+
+## 승인 프로필로 해결된 항목
+
+- 담당상태와 상담 결과는 선택 자유입력으로 시작하며 enum을 고정하지 않는다.
+- 최근 상담은 최근 30일, 미상담은 90일 이상 상담이 없었던 관리대상 Customer로 계산한다. soft-deleted Customer는 제외하며 Dashboard 구현은 후속 계획 범위다.
+- Customer를 soft delete하면 연결 계약·상담 원본은 유지하되 기본 조회·집계·Dashboard·Calendar·export에서 숨긴다. Customer 복원 시 개별 soft delete되지 않은 자식만 다시 노출한다.
+
+위 결정은 `docs/product/proposed-operating-profile.md`의 승인 상태와 공통 데이터·Customer/Consultation·Dashboard 규칙을 근거로 한다.

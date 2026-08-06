@@ -71,12 +71,16 @@
 
 ## Consultation
 
-- 상담일
-- 상담내용
-- 다음 연락일
-- 상담 결과
-- 고객과의 Foreign Key
-- 삭제 시 deletedAt을 기록
+- 활성 Customer와 상담 일시는 필수
+- 상담 일시는 UTC timestamp로 저장하고 OS local timezone으로 입력·표시
+- 상담내용, 다음 연락일, 상담 결과는 선택
+- 다음 연락일은 `YYYY-MM-DD` date-only
+- 상담 결과는 enum이 아닌 자유입력
+- 상담내용 4,000자, 상담 결과 200자의 기술 입력 경계
+- 같은 Customer와 같은 상담 instant의 여러 행을 ID별로 유지
+- 고객별 활성 상담을 최신 일시 우선, 같은 instant는 ID 순서로 조회
+- Customer와의 Foreign Key 및 활성 부모 확인
+- 삭제 시 deletedAt을 기록하고 기본 조회에서 제외
 
 상담 메모에도 민감 병력과 상세 병력을 저장하지 않는다.
 

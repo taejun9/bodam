@@ -180,7 +180,9 @@ onBeforeUnmount(closeDialog);
 }
 
 @media (max-width: 560px) {
-  .app-dialog {
+  .app-dialog,
+  .app-dialog.is-small,
+  .app-dialog.is-large {
     width: 100vw;
     max-width: none;
     max-height: calc(100vh - 16px);

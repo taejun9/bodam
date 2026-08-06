@@ -7,6 +7,7 @@ use serde::ser::{Serialize, SerializeStruct, Serializer};
 pub enum AppError {
     Validation(BTreeMap<String, String>),
     CustomerNotFound,
+    ConsultationNotFound,
     InsurancePolicyNotFound,
     CoverageCategoryNotFound,
     CoverageNotFound,
@@ -24,6 +25,7 @@ impl AppError {
         match self {
             Self::Validation(_) => "VALIDATION_ERROR",
             Self::CustomerNotFound => "CUSTOMER_NOT_FOUND",
+            Self::ConsultationNotFound => "CONSULTATION_NOT_FOUND",
             Self::InsurancePolicyNotFound => "INSURANCE_POLICY_NOT_FOUND",
             Self::CoverageCategoryNotFound => "COVERAGE_CATEGORY_NOT_FOUND",
             Self::CoverageNotFound => "COVERAGE_NOT_FOUND",
@@ -41,6 +43,7 @@ impl AppError {
         match self {
             Self::Validation(_) => "입력값을 확인해 주세요.",
             Self::CustomerNotFound => "고객을 찾을 수 없습니다.",
+            Self::ConsultationNotFound => "상담을 찾을 수 없습니다.",
             Self::InsurancePolicyNotFound => "보험계약을 찾을 수 없습니다.",
             Self::CoverageCategoryNotFound => "보장 카테고리를 찾을 수 없습니다.",
             Self::CoverageNotFound => "보장을 찾을 수 없습니다.",

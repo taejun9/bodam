@@ -1,0 +1,64 @@
+.consultation-section {
+  position: relative;
+  min-width: 0;
+  margin-top: 28px;
+}
+
+.consultation-heading {
+  display: flex;
+  margin: 0 2px 11px;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.consultation-heading h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.consultation-heading p {
+  margin: 3px 0 0;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.consultation-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.consultation-list {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.consultation-state {
+  min-height: 230px;
+}
+
+.consultation-alert {
+  min-height: 54px;
+  margin-bottom: 0;
+}
+
+@media (max-width: 600px) {
+  .consultation-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .consultation-heading-actions {
+    justify-content: space-between;
+  }
+
+  .consultation-heading-actions .app-button {
+    flex: 1;
+  }
+
+  .consultation-state {
+    min-height: 210px;
+    padding-inline: 18px;
+  }
+}

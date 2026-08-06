@@ -4,6 +4,7 @@ import { RouterLink, useRoute } from "vue-router";
 
 import { customerApplication } from "@/app/composition/customer";
 import { insuranceApplication } from "@/app/composition/insurance";
+import CustomerConsultationSection from "@/features/consultation/components/CustomerConsultationSection.vue";
 import type { Customer } from "@/features/customer/types/customer";
 import { customerSafeMessage } from "@/features/customer/types/customer-error";
 import CustomerCoverageSection from "@/features/coverage/components/CustomerCoverageSection.vue";
@@ -203,6 +204,8 @@ onBeforeUnmount(() => {
           @remove="requestDelete"
         />
       </section>
+
+      <CustomerConsultationSection :customer-id="customerId()" />
     </template>
 
     <InsurancePolicyFormDialog

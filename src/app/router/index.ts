@@ -35,7 +35,7 @@ const router = createRouter({
       component: CustomerInsurancePage,
       meta: {
         title: "고객 상세",
-        description: "고객별 보험계약과 월보험료를 관리합니다.",
+        description: "고객별 보험계약, 보장과 상담 기록을 관리합니다.",
       },
     },
     {
