@@ -76,27 +76,7 @@ impl CustomerRepository {
 
     pub(crate) fn create(&self, input: CustomerWrite) -> Result<Customer, AppError> {
         let connection = self.lock()?;
-        let id = Uuid::new_v4().to_string();
-        let now = now_utc();
-        connection.execute(
-            r#"INSERT INTO customers (
-                id, name, birth_date, gender, phone, address, memo, status,
-                is_managed, created_at, updated_at
-            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?10)"#,
-            params![
-                id,
-                input.name,
-                input.birth_date,
-                input.gender,
-                input.phone,
-                input.address,
-                input.memo,
-                input.status,
-                input.is_managed,
-                now,
-            ],
-        )?;
-        find_active(&connection, &id)
+        create_with_connection(&connection, input)
     }
 
     pub(crate) fn update(&self, id: &str, input: CustomerWrite) -> Result<Customer, AppError> {
@@ -144,6 +124,74 @@ impl CustomerRepository {
             .lock()
             .map_err(|_| AppError::StateUnavailable)
     }
+}
+
+pub(crate) fn create_with_connection(
+    connection: &Connection,
+    input: CustomerWrite,
+) -> Result<Customer, AppError> {
+    let id = Uuid::new_v4().to_string();
+    let now = now_utc();
+    connection.execute(
+        r#"INSERT INTO customers (
+            id, name, birth_date, gender, phone, address, memo, status,
+            is_managed, created_at, updated_at
+        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?10)"#,
+        params![
+            id,
+            input.name,
+            input.birth_date,
+            input.gender,
+            input.phone,
+            input.address,
+            input.memo,
+            input.status,
+            input.is_managed,
+            now,
+        ],
+    )?;
+    find_active(connection, &id)
+}
+
+pub(crate) fn ensure_active_with_connection(
+    connection: &Connection,
+    id: &str,
+) -> Result<(), AppError> {
+    let exists = connection.query_row(
+        "SELECT EXISTS(SELECT 1 FROM customers WHERE id = ?1 AND deleted_at IS NULL)",
+        [id],
+        |row| row.get::<_, bool>(0),
+    )?;
+    if !exists {
+        return Err(AppError::CustomerNotFound);
+    }
+    Ok(())
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct ImportCustomerBase {
+    pub id: String,
+    pub name: String,
+    pub updated_at: String,
+}
+
+pub(crate) fn list_import_customer_bases(
+    connection: &Connection,
+) -> Result<Vec<ImportCustomerBase>, AppError> {
+    let mut statement = connection.prepare(
+        "SELECT id, name, updated_at FROM customers
+         WHERE deleted_at IS NULL ORDER BY name ASC, id ASC",
+    )?;
+    let customers = statement
+        .query_map([], |row| {
+            Ok(ImportCustomerBase {
+                id: row.get(0)?,
+                name: row.get(1)?,
+                updated_at: row.get(2)?,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(customers)
 }
 
 fn find_active(connection: &Connection, id: &str) -> Result<Customer, AppError> {

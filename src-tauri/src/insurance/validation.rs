@@ -4,6 +4,7 @@ use chrono::NaiveDate;
 use uuid::Uuid;
 
 use crate::error::AppError;
+use crate::text::trim_ecmascript_whitespace;
 
 use super::model::{CreateInsurancePolicyInput, InsurancePolicyWrite, UpdateInsurancePolicyInput};
 
@@ -103,7 +104,7 @@ fn normalize_required(
     label: &str,
     fields: &mut BTreeMap<String, String>,
 ) -> String {
-    let normalized = value.trim().to_owned();
+    let normalized = trim_ecmascript_whitespace(&value).to_owned();
     if normalized.is_empty() {
         fields.insert(field.to_owned(), format!("{label}을(를) 입력해 주세요."));
     } else if normalized.chars().count() > MAX_TEXT_CHARS {
@@ -121,7 +122,7 @@ fn normalize_optional_text(
     fields: &mut BTreeMap<String, String>,
 ) -> Option<String> {
     let normalized = value.and_then(|value| {
-        let trimmed = value.trim().to_owned();
+        let trimmed = trim_ecmascript_whitespace(&value).to_owned();
         (!trimmed.is_empty()).then_some(trimmed)
     });
     if normalized
@@ -142,7 +143,7 @@ fn normalize_date(
     fields: &mut BTreeMap<String, String>,
 ) -> Option<String> {
     let normalized = value.and_then(|value| {
-        let trimmed = value.trim().to_owned();
+        let trimmed = trim_ecmascript_whitespace(&value).to_owned();
         (!trimmed.is_empty()).then_some(trimmed)
     });
     if normalized

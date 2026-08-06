@@ -47,9 +47,18 @@ form, import schema, memo 도움말, test fixture, log에도 위 항목을 위�
 - soft delete된 일정과 soft delete된 Customer에 연결된 일정 원본은 SQLite에 남지만 기본 Calendar에서 숨긴다.
 - 현재 Schedule 전용 export는 없다. 전체 DB backup이 구현되면 Schedule도 같은 민감도의 원본으로 포함하며 별도 계획에서 경로·보존·복원 경계를 승인한다.
 
+## Contract Import Source
+
+- 선택한 workbook·CSV bytes와 전체 경로는 영구 저장하거나 log에 남기지 않는다. native dialog로 읽은 뒤 preview 교체·성공·화면 이탈 때 메모리에서 해제한다.
+- XLSX는 압축 해제 크기뿐 아니라 shared-string 105,021 item과 대상 sheet decoded UTF-8 text 20 MiB를 소유 preview 생성 전에 제한한다. ZIP 이름 정규화 충돌도 거부해 검사한 entry와 실제 parser entry가 달라지지 않게 한다.
+- 21열 source text/null은 재업로드 duplicate 판정과 승인된 같은 열 export를 위해 Policy별 이름 있는 column으로만 저장한다. 검색·분석용 raw JSON이나 원본 파일 사본은 만들지 않는다.
+- source는 연결 Policy와 같은 기간 보존한다. Policy 또는 Customer가 soft delete되면 기본 조회·duplicate·향후 export에서 숨고 복원 시 다시 포함된다.
+- plan-010은 저장된 source의 별도 조회·수정·삭제 UI를 제공하지 않는다. preview에서만 사용자가 펼쳐 볼 수 있다.
+- 향후 export와 SQLite backup에는 원본 DB와 같은 민감도로 포함한다. hard purge·암호화·보존 기간 변경은 별도 승인 계획이 필요하다.
+
 ## Tauri Capability
 
-- dialog로 사용자가 선택한 파일과 필요한 app data 디렉터리만 접근한다.
+- dialog로 사용자가 선택한 import/export 파일과 필요한 app data 디렉터리만 접근한다.
 - broad filesystem scope를 기본값으로 열지 않는다.
 - shell, process, sidecar 권한은 Prisma runtime 결정 뒤 최소 command만 허용한다.
 - remote URL과 network capability는 MVP 기본값에서 허용하지 않는다.

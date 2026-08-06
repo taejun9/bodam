@@ -1,0 +1,28 @@
+-- CreateTable
+CREATE TABLE "insurance_policy_import_sources" (
+    "policy_id" TEXT NOT NULL PRIMARY KEY,
+    "no" TEXT,
+    "collection_reflected_on" TEXT,
+    "affiliation" TEXT,
+    "manager" TEXT,
+    "collection_code" TEXT,
+    "contract" TEXT,
+    "insurer" TEXT,
+    "product_name" TEXT,
+    "policy_number" TEXT,
+    "contracted_on" TEXT,
+    "status" TEXT,
+    "final_payment_month" TEXT,
+    "payment_sequence" TEXT,
+    "payment_premium" TEXT,
+    "contractor" TEXT,
+    "insured" TEXT,
+    "coverage_starts_on" TEXT,
+    "coverage_ends_on" TEXT,
+    "collection_method" TEXT,
+    "payment_term" TEXT,
+    "original_recruiter_name" TEXT,
+    "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "insurance_policy_import_sources_policy_id_fkey" FOREIGN KEY ("policy_id") REFERENCES "insurance_policies" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);

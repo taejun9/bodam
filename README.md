@@ -2,7 +2,7 @@
 
 보험설계사 한 명이 고객, 가족, 보험계약, 보장, 상담, 일정과 백업을 인터넷 없이 관리하는 Windows 우선 개인용 데스크톱 CRM입니다.
 
-현재 고객·가족·보험계약·계약별 보장·고객별 상담·사용자 일정과 보장 기준 관리가 동작합니다. Tauri 데스크톱 앱에서 각 원본을 생성·수정·soft delete하고, 고객·가족 월보험료와 고객 카테고리별 보장 판정, 오늘의 Dashboard와 월간 Calendar를 확인할 수 있습니다. 원본 데이터는 앱 전용 SQLite 파일에 저장되고 Dashboard·Calendar read model은 저장 없이 요청 시 다시 계산됩니다. 데이터 관리는 후속 실행 계획에서 순차 구현합니다.
+현재 고객·가족·보험계약·계약별 보장·고객별 상담·사용자 일정과 보장 기준 관리가 동작합니다. Tauri 데스크톱 앱에서 각 원본을 생성·수정·soft delete하고, 고객·가족 월보험료와 고객 카테고리별 보장 판정, 오늘의 Dashboard와 월간 Calendar를 확인할 수 있습니다. 승인된 21열 계약조회 `.xlsx`/`.csv`도 검증·미리보기 뒤 로컬 SQLite에 가져올 수 있습니다. Dashboard·Calendar read model은 저장 없이 요청 시 다시 계산됩니다.
 
 ## 핵심 원칙
 
@@ -63,6 +63,18 @@ Windows 배포 대상은 WebView2 offline installer를 포함하도록 구성되
 - SQLite migration checksum/history/runtime schema drift 검사
 - light/dark 테마, 키보드 접근성, 모바일 반응형 브라우저 화면
 - loading, empty, success, validation, adapter error 상태
+- native 파일 선택을 통한 21열 계약조회 `.xlsx`/UTF-8 BOM CSV 검증·미리보기
+- 행별 기존/새 Customer 명시 연결과 duplicate 기본 skip·exact update·별도 생성
+- 선택한 유효 행의 Customer·Policy·21열 source 단일 transaction 반영과 전체 rollback
+
+### 계약 파일 가져오기 사용 흐름
+
+1. 왼쪽 `데이터 관리`에서 승인된 `.xlsx` 또는 UTF-8 BOM·CRLF CSV를 선택합니다. 원본 파일은 읽기만 하며 수정하거나 앱 데이터에 복사하지 않습니다.
+2. 유효·오류·중복 행과 21열 원본을 확인합니다. 새 계약은 활성 고객을 고르거나 새 고객 이름을 직접 정의해야 하며 계약자·피보험자 이름으로 자동 병합하지 않습니다.
+3. 보험사+증권번호가 같은 활성 계약은 기본 `건너뛰기`입니다. 정확한 기존 계약 갱신이나 별도 계약 생성을 의도한 경우에만 행 결정을 바꿉니다.
+4. 확인 dialog에서 모두 반영하면 선택한 유효 행을 한 transaction으로 처리합니다. 중복 상태나 부모가 바뀌었거나 어느 한 행이 실패하면 전체를 취소하고 새 미리보기를 요구합니다.
+
+파일에는 민감한 고객·계약 정보가 포함될 수 있습니다. 주민등록번호, 보험사 로그인 정보, 민감 병력·상세 병력이 든 파일은 가져오지 마세요. 저장된 21열 source는 재업로드 duplicate와 향후 같은 열 export를 위한 값이며 별도 source 수정 UI는 아직 없습니다.
 
 ### 보장 사용 흐름
 
@@ -127,6 +139,7 @@ SQLite 파일은 Tauri가 결정한 운영체제별 app-data 디렉터리의 `bo
 - Dashboard 기간·표시 건수 사용자 설정, chart와 OS notification은 아직 제공하지 않습니다.
 - Calendar의 주·일 보기, 반복·우선순위·drag and drop, 완료 일정 자동 숨김과 일정 복원은 제공하지 않습니다.
 - 상담 복원·purge, 상담 유형·채널·태그·첨부와 외부 전화·메시지 연동은 제공하지 않습니다.
+- 계약 파일 export, source 수정·purge, 여러 파일 동시 처리와 background import는 제공하지 않습니다.
 
 ## 시작 위치
 
@@ -149,9 +162,9 @@ SQLite 파일은 Tauri가 결정한 운영체제별 app-data 디렉터리의 `bo
     npm run qa
     npm run verify
 
-`qa`는 일상적으로 실행 가능한 비-GUI 검사입니다. `verify`는 `qa` 다음에 release-mode Tauri 앱을 실제로 두 번 실행하는 WebdriverIO E2E까지 수행합니다. E2E는 별도의 합성 고객과 임시 SQLite만 사용하며 종료 시 DB 파일을 삭제합니다.
+`qa`는 일상적으로 실행 가능한 비-GUI 검사입니다. `verify`는 `qa` 다음에 release-mode Tauri 앱을 실제로 실행하는 WebdriverIO E2E까지 수행합니다. E2E는 분리된 합성 고객·XLSX·CSV·rollback 임시 SQLite만 사용하며 종료 시 DB와 runtime fixture를 삭제합니다.
 
-네이티브 앱의 고객·가족·보험계약·보장·Benchmark 판정·상담·일정 생성·수정·합계·soft delete, Dashboard 8개 카드, Calendar 5종 event와 프로세스 재시작 후 SQLite 지속성만 다시 확인하려면 다음 명령을 사용합니다.
+네이티브 앱의 고객·가족·보험계약·보장·Benchmark 판정·상담·일정, Dashboard 8개 카드, Calendar 5종 event와 XLSX/CSV 계약 가져오기·원자 rollback·프로세스 재시작 지속성을 다시 확인하려면 다음 명령을 사용합니다.
 
     npm run test:e2e
 

@@ -1,15 +1,14 @@
 use std::path::Path;
 use std::sync::{Mutex, MutexGuard};
 
-use chrono::{DateTime, NaiveDateTime, SecondsFormat, Utc};
-use rusqlite::types::Type;
-use rusqlite::{params, Connection, Row};
+use rusqlite::{params, Connection};
 use uuid::Uuid;
 
 use crate::database;
 use crate::error::AppError;
 
 use super::model::{DeletedInsurancePolicy, InsurancePolicy, InsurancePolicyWrite};
+use super::repository_mapping::{map_policy, now_utc};
 
 const SELECT_ACTIVE_BY_CUSTOMER: &str = r#"
 SELECT p.id, p.customer_id, p.insurer, p.product_name, p.joined_on,
@@ -52,40 +51,7 @@ impl InsurancePolicyRepository {
         input: InsurancePolicyWrite,
     ) -> Result<InsurancePolicy, AppError> {
         let connection = self.lock()?;
-        let id = Uuid::new_v4().to_string();
-        let now = now_utc();
-        let changed = connection.execute(
-            r#"INSERT INTO insurance_policies (
-                   id, customer_id, insurer, product_name, joined_on,
-                   coverage_term, payment_term, monthly_premium_won,
-                   disclosure_plan, matures_on, renewable, status,
-                   is_included, created_at, updated_at
-               )
-               SELECT ?2, id, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10,
-                      ?11, ?12, ?13, ?14, ?14
-               FROM customers
-               WHERE id = ?1 AND deleted_at IS NULL"#,
-            params![
-                customer_id,
-                id,
-                input.insurer,
-                input.product_name,
-                input.joined_on,
-                input.coverage_term,
-                input.payment_term,
-                input.monthly_premium_won,
-                input.disclosure_plan,
-                input.matures_on,
-                input.renewable,
-                input.status,
-                input.is_included,
-                now,
-            ],
-        )?;
-        if changed == 0 {
-            return Err(AppError::CustomerNotFound);
-        }
-        find_active(&connection, &id)
+        create_with_connection(&connection, customer_id, input)
     }
 
     pub(crate) fn update(
@@ -156,6 +122,115 @@ impl InsurancePolicyRepository {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct ImportPolicyBase {
+    pub id: String,
+    pub customer_id: String,
+    pub insurer: String,
+    pub product_name: String,
+    pub updated_at: String,
+}
+
+pub(crate) fn create_with_connection(
+    connection: &Connection,
+    customer_id: &str,
+    input: InsurancePolicyWrite,
+) -> Result<InsurancePolicy, AppError> {
+    let id = Uuid::new_v4().to_string();
+    let now = now_utc();
+    let changed = connection.execute(
+        r#"INSERT INTO insurance_policies (
+               id, customer_id, insurer, product_name, joined_on,
+               coverage_term, payment_term, monthly_premium_won,
+               disclosure_plan, matures_on, renewable, status,
+               is_included, created_at, updated_at
+           )
+           SELECT ?2, id, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10,
+                  ?11, ?12, ?13, ?14, ?14
+           FROM customers
+           WHERE id = ?1 AND deleted_at IS NULL"#,
+        params![
+            customer_id,
+            id,
+            input.insurer,
+            input.product_name,
+            input.joined_on,
+            input.coverage_term,
+            input.payment_term,
+            input.monthly_premium_won,
+            input.disclosure_plan,
+            input.matures_on,
+            input.renewable,
+            input.status,
+            input.is_included,
+            now,
+        ],
+    )?;
+    if changed == 0 {
+        return Err(AppError::CustomerNotFound);
+    }
+    find_active(connection, &id)
+}
+
+pub(crate) fn update_import_fields_with_connection(
+    connection: &Connection,
+    id: &str,
+    input: InsurancePolicyWrite,
+) -> Result<InsurancePolicy, AppError> {
+    let changed = connection.execute(
+        r#"UPDATE insurance_policies SET
+               insurer = ?2, product_name = ?3, joined_on = ?4,
+               payment_term = ?5, monthly_premium_won = ?6,
+               matures_on = ?7, status = ?8, updated_at = ?9
+           WHERE id = ?1 AND deleted_at IS NULL
+             AND EXISTS (
+               SELECT 1 FROM customers c
+               WHERE c.id = insurance_policies.customer_id
+                 AND c.deleted_at IS NULL
+             )"#,
+        params![
+            id,
+            input.insurer,
+            input.product_name,
+            input.joined_on,
+            input.payment_term,
+            input.monthly_premium_won,
+            input.matures_on,
+            input.status,
+            now_utc(),
+        ],
+    )?;
+    if changed == 0 {
+        return Err(AppError::InsurancePolicyNotFound);
+    }
+    find_active(connection, id)
+}
+
+pub(crate) fn list_import_policy_bases(
+    connection: &Connection,
+) -> Result<Vec<ImportPolicyBase>, AppError> {
+    let mut statement = connection.prepare(
+        "SELECT p.id, p.customer_id, p.insurer, p.product_name, p.updated_at
+         FROM insurance_policies p
+         JOIN customers c ON c.id = p.customer_id
+         WHERE p.deleted_at IS NULL AND c.deleted_at IS NULL
+         ORDER BY p.id ASC",
+    )?;
+    let policies = statement
+        .query_map([], |row| {
+            Ok(ImportPolicyBase {
+                id: row.get(0)?,
+                customer_id: row.get(1)?,
+                insurer: row.get(2)?,
+                product_name: row.get(3)?,
+                updated_at: row.get(4)?,
+            })
+        })?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(AppError::from)?;
+    Ok(policies)
+}
+
 fn ensure_active_customer(connection: &Connection, customer_id: &str) -> Result<(), AppError> {
     let exists = connection.query_row(
         "SELECT EXISTS(SELECT 1 FROM customers WHERE id = ?1 AND deleted_at IS NULL)",
@@ -185,48 +260,4 @@ fn find_active(connection: &Connection, id: &str) -> Result<InsurancePolicy, App
             rusqlite::Error::QueryReturnedNoRows => AppError::InsurancePolicyNotFound,
             _ => AppError::Database,
         })
-}
-
-fn map_policy(row: &Row<'_>) -> rusqlite::Result<InsurancePolicy> {
-    Ok(InsurancePolicy {
-        id: row.get(0)?,
-        customer_id: row.get(1)?,
-        insurer: row.get(2)?,
-        product_name: row.get(3)?,
-        joined_on: row.get(4)?,
-        coverage_term: row.get(5)?,
-        payment_term: row.get(6)?,
-        monthly_premium_won: row.get::<_, i64>(7)?.to_string(),
-        disclosure_plan: row.get(8)?,
-        matures_on: row.get(9)?,
-        renewable: row.get(10)?,
-        status: row.get(11)?,
-        is_included: row.get(12)?,
-        created_at: read_utc_timestamp(row, 13)?,
-        updated_at: read_utc_timestamp(row, 14)?,
-    })
-}
-
-fn read_utc_timestamp(row: &Row<'_>, index: usize) -> rusqlite::Result<String> {
-    let value = row.get::<_, String>(index)?;
-    normalize_utc_timestamp(&value).map_err(|error| {
-        rusqlite::Error::FromSqlConversionFailure(index, Type::Text, Box::new(error))
-    })
-}
-
-fn normalize_utc_timestamp(value: &str) -> Result<String, chrono::ParseError> {
-    if let Ok(timestamp) = DateTime::parse_from_rfc3339(value) {
-        return Ok(timestamp
-            .with_timezone(&Utc)
-            .to_rfc3339_opts(SecondsFormat::Millis, true));
-    }
-    NaiveDateTime::parse_from_str(value, "%Y-%m-%d %H:%M:%S").map(|timestamp| {
-        timestamp
-            .and_utc()
-            .to_rfc3339_opts(SecondsFormat::Millis, true)
-    })
-}
-
-fn now_utc() -> String {
-    Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true)
 }

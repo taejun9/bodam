@@ -1,0 +1,72 @@
+.row-controls {
+  display: grid;
+  min-width: 210px;
+  padding: 0;
+  border: 0;
+  gap: 8px;
+}
+
+.row-selection {
+  display: inline-flex;
+  width: max-content;
+  color: var(--text-secondary);
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.control-field {
+  display: grid;
+  gap: 4px;
+}
+
+.control-field > span {
+  color: var(--text-secondary);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.control-field select {
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  padding: 0 28px 0 8px;
+  color: var(--text-main);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 10px;
+}
+
+.control-field select[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+
+.create-state {
+  margin: 0;
+  color: var(--success);
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.customer-resolution {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 5px;
+}
+
+.customer-resolution :deep(.app-button) {
+  min-height: 34px;
+  padding-inline: 8px;
+  font-size: 9px;
+}
+
+@media (max-width: 560px) {
+  .row-controls,
+  .customer-resolution {
+    min-width: 0;
+    grid-template-columns: 1fr;
+  }
+}

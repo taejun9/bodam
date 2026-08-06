@@ -16,7 +16,7 @@ const BENCHMARK_ID: &str = "80000000-0000-4000-8000-000000000001";
 const SCHEDULE_ID: &str = "90000000-0000-4000-8000-000000000001";
 
 #[test]
-fn clean_database_applies_v7_schedule_schema_and_history() {
+fn current_database_contains_v7_schedule_schema_and_history() {
     let mut connection = Connection::open_in_memory().expect("clean database");
     run(&mut connection).expect("apply v7 migrations");
 
@@ -34,10 +34,7 @@ fn clean_database_applies_v7_schedule_schema_and_history() {
         .expect("history count");
     assert_eq!(table, "schedules");
     assert_eq!(history_count, MIGRATIONS.len() as i64);
-    assert_eq!(
-        MIGRATIONS.last().expect("v7 migration").name,
-        "20260806060000_add_schedule"
-    );
+    assert_eq!(MIGRATIONS[6].name, "20260806060000_add_schedule");
     verify_schedule_schema_for_test(&connection).expect("schedule schema contract");
 }
 

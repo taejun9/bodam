@@ -41,6 +41,19 @@ fn validates_and_normalizes_policy_input_without_float_conversion() {
 }
 
 #[test]
+fn manual_policy_text_matches_ecmascript_whitespace_semantics() {
+    let mut input = create_input("1");
+    input.insurer = "\u{0085}합성보험사\u{0085}".to_owned();
+    input.product_name = "\u{0085}합성상품\u{0085}".to_owned();
+    input.payment_term = Some("\u{0085}20년\u{0085}".to_owned());
+    let write = validate_create(input).expect("ECMAScript next-line is text, not whitespace");
+
+    assert_eq!(write.insurer, "\u{0085}합성보험사\u{0085}");
+    assert_eq!(write.product_name, "\u{0085}합성상품\u{0085}");
+    assert_eq!(write.payment_term.as_deref(), Some("\u{0085}20년\u{0085}"));
+}
+
+#[test]
 fn rejects_noncanonical_or_out_of_range_money_and_invalid_dates() {
     for invalid in [
         "-1",

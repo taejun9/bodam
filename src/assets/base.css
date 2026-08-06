@@ -111,6 +111,14 @@ a {
   box-shadow: var(--shadow-sm);
 }
 
+@media (max-width: 420px) {
+  html,
+  body,
+  #app {
+    min-width: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -2,7 +2,7 @@
 
 ## 상태
 
-첨부 workbook을 읽기 전용으로 분석한 기준 계약이다. 라이브러리, 영구 field mapping, duplicate와 partial success 정책은 아직 승인되지 않았다.
+첨부 workbook을 읽기 전용으로 분석한 뒤 plan-010에서 계약 가져오기 범위를 승인·구현한 기준 계약이다. `.xlsx`/`.csv` 가져오기, 영구 field mapping, duplicate와 transaction 정책은 확정되었고 같은 형식 내보내기는 plan-011 범위다.
 
 ## 기준 workbook
 
@@ -77,46 +77,41 @@ macOS와 Windows 사이 한글 조합 차이 때문에 sheet명과 header를 비
 
 동일 형식 export의 기본 의미는 sheet명, 21개 header와 순서, text cell 계약, 빈 cell, 위 표시 형식을 재현하는 것이다. OOXML byte-for-byte 동일성은 목표가 아니다.
 
-## Domain Mapping 상태
+## Domain Mapping
 
-확정과 후보를 구분한다.
-
-| Excel header | BODAM 후보 | 상태 |
+| source header | InsurancePolicy field | 규칙 |
 |---|---|---|
-| 보험사 | Insurance.보험사 | 명시 요구와 일치 |
-| 상품명 | Insurance.상품명 | 명시 요구와 일치 |
-| 계약일자 | Insurance.가입일 후보 | 용어 차이 승인 필요 |
-| 보험시기 | Insurance.가입일 후보 | 계약일자와 우선순위 승인 필요 |
-| 납입보험료 | Insurance.월 보험료 후보 | 금액 의미 승인 필요 |
-| 보험종기 | Insurance.만기일 후보 | 빈 값·종신 처리 승인 필요 |
-| 납기 | Insurance.납입기간 후보 | 단위와 표현 승인 필요 |
-| 상태 | 계약 상태 후보 | 허용 값 승인 필요 |
-| 계약자 | Customer 관계 후보 | 계약자 model 미정 |
-| 피보험자 | Customer 관계 후보 | 빈 값과 복수 관계 미정 |
-| No | export 순번 후보 | 저장 여부 미정 |
-| 나머지 열 | 현재 명시 model에 직접 대응 없음 | 보관·파생·제외 결정 필요 |
+| 보험사 | insurer | trim+NFC, 필수 1–200자 |
+| 상품명 | productName | trim+NFC, 필수 1–200자 |
+| 계약일자 | joinedOn | 빈 값 또는 실제 `YYYY-MM-DD` |
+| 상태 | status | 빈 값 또는 trim+NFC 1–200자 |
+| 납입보험료 | monthlyPremiumWon | ASCII digit, SQLite signed 64-bit 원 단위 정수 |
+| 보험종기 | maturesOn | 빈 값 또는 실제 `YYYY-MM-DD` |
+| 납기 | paymentTerm | 빈 값 또는 trim+NFC 1–200자 |
 
-현재 model에 없는 열을 raw JSON으로 전부 저장하거나 조용히 버리지 않는다. 동일 형식 다운로드에 필요한 값의 source를 mapping plan에서 열별로 승인해야 한다.
+새 계약의 나머지 field는 `coverageTerm=null`, `disclosurePlan=null`, `renewable=false`, `isIncluded=true`다. 원본 21열은 raw JSON이 아니라 Policy와 1:1인 `insurance_policy_import_sources`의 이름 있는 nullable text column에 보존한다.
 
-계약자·피보험자를 이름만으로 기존 Customer와 자동 병합하지 않는다. 동명이인을 구분할 승인된 matching key 또는 사용자의 명시적 선택이 필요하다.
+계약자·피보험자는 참고값이다. 이름으로 기존 Customer를 자동 검색·병합하지 않고, 사용자가 활성 Customer 또는 이번 가져오기에 직접 정의한 Customer를 행별로 선택한다.
 
-## Import Pipeline 후보
-
-아래는 원본 보호와 검증을 위한 권고 흐름이다. preview 화면, 사용자 확인 단계, transaction 범위는 승인 전 구현하지 않는다.
+## Import Pipeline
 
     파일 선택
       → 확장자·크기·sheet 확인
       → header와 순서 확인
       → text cell 추출
       → trim/normalize 후보 생성
-      → Zod row validation
+      → Rust file 검증과 Zod row validation
       → domain mapping
-      → 오류/경고 전달 후보
-      → 사용자 확인 후보
-      → 승인된 범위로 commit
+      → 행 오류와 duplicate preview
+      → Customer·create/skip/update/separate-create 명시 결정
+      → Rust 재검증과 단일 transaction commit
       → 결과 요약
 
-원본 파일을 수정하지 않는다.
+원본 파일을 수정하지 않는다. 파일을 복사·보관하지도 않는다. 실제 파일 선택은 Tauri native dialog가 수행하며 UI IPC는 임의 경로를 받지 않는다.
+
+duplicate key는 활성 Customer의 활성 Policy 중 trim+NFC 보험사와 source 증권번호가 모두 같은 경우이며 case-sensitive다. 빈 증권번호, source 없는 수동 계약과 soft-deleted 부모는 제외한다. DB duplicate는 default skip, exact update 또는 separate-create를 사용자가 고른다. 같은 파일 안 뒤쪽 중복 행도 default skip이다.
+
+선택한 유효 행은 `BEGIN IMMEDIATE` 하나에서 모두 반영한다. commit에서 raw→mapped parity, 활성 Customer, 정확한 update target과 duplicate snapshot을 다시 검사하며 어느 한 행이라도 달라지거나 실패하면 새 Customer·Policy·source를 모두 rollback한다.
 
 ### 오류 결과
 
@@ -124,9 +119,9 @@ macOS와 Windows 사이 한글 조합 차이 때문에 sheet명과 header를 비
 - row number
 - field name
 - error code와 사용자가 이해할 수 있는 설명
-- 정상화 전 실제 고객 값은 log에 기록하지 않음
+- 정상화 전 실제 고객 값, 전체 경로와 row 전체는 log에 기록하지 않음
 
-전체 rollback과 정상 행만 반영 중 어느 정책을 사용할지는 승인 전 정하지 않는다.
+file 계약 오류는 commit 전에 전체 파일을 거부한다. row mapping 오류는 preview에서 선택할 수 없고, 사용자가 선택한 유효 행은 전부 성공하거나 전부 rollback한다.
 
 ## Export Pipeline
 
@@ -147,9 +142,21 @@ macOS와 Windows 사이 한글 조합 차이 때문에 sheet명과 header를 비
 
 ## CSV
 
-- 동일한 21열 계약을 지원할지 feature별 CSV를 지원할지 미정이다.
-- encoding, delimiter, quote, line ending은 Windows와 Excel 호환성을 test한 뒤 승인한다.
+- Excel과 같은 21개 header와 열 순서를 사용한다.
+- UTF-8 BOM, comma delimiter, CRLF record ending, RFC 4180 quoting과 행마다 정확히 21개 field를 요구한다.
+- 잘못된 UTF-8, LF-only, 중복 BOM과 field count mismatch는 file error다.
 - CSV에는 sheet명과 style이 없으므로 Excel 동일 형식이라는 표현을 적용하지 않는다.
+
+## 가져오기 한도
+
+- 파일 10 MiB, data row 5,000개, source cell 4,000 Unicode scalar
+- XLSX archive entry 1,000개, 단일 uncompressed entry 20 MiB, 합계 50 MiB
+- XLSX shared-string item 105,021개, 대상 sheet의 header 포함 decoded UTF-8 text 출현 합계 20 MiB
+- Calamine 기준으로 정규화한 ZIP entry 이름이 충돌하거나 shared-string 예약·논리 text 상한을 소유 preview 생성 전에 넘으면 거부한다.
+- 모든 worksheet의 `sheetData`에서 raw cell type과 payload 조합을 검사한다. shared index·implicit numeric·inline string·formula string을 Calamine이 임의 문자열로 보정하거나 복수 값으로 덮어쓸 수 있는 malformed 구조는 대상 sheet 여부와 무관하게 거부한다.
+- 대상 sheet는 NFC 비교로 정확히 `계약조회(엑셀변환)_장기` 하나여야 한다.
+- header는 A:U에 정확한 표기·순서로 있어야 하고 A:U 밖 data는 허용하지 않는다.
+- Excel의 채워진 source cell은 string만 허용하며 formula·number·boolean·date/error cell은 거부한다. blank는 null이다.
 
 ## Synthetic Test Contract
 
@@ -177,9 +184,6 @@ macOS와 Windows 사이 한글 조합 차이 때문에 sheet명과 header를 비
 
 ## 미결정
 
-- Excel 처리 라이브러리와 Tauri 실행 위치
-- 파일 최대 크기와 row 상한
-- duplicate key와 재업로드
-- partial success
-- 21개 열의 최종 저장·파생·제외 mapping
+- 같은 형식 export에서 source 없는 수동 Policy와 사용자가 수정한 domain/source 충돌의 표현
+- export 대상 선택, 정렬, 파일명, 기존 파일 덮어쓰기와 취소 결과
 - 같은 format의 보존 수준에 인쇄 설정·페이지 설정 포함 여부

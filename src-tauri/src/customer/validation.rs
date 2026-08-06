@@ -38,7 +38,7 @@ pub(crate) fn validate_update(input: UpdateCustomerInput) -> Result<CustomerWrit
 
 pub(crate) fn validate_search(search: Option<String>) -> Result<Option<String>, AppError> {
     let normalized = search
-        .map(|value| value.trim().to_owned())
+        .map(|value| trim_ecmascript_whitespace(&value).to_owned())
         .filter(|value| !value.is_empty());
     if normalized
         .as_deref()
@@ -73,7 +73,7 @@ fn validate(
     status: Option<String>,
     is_managed: bool,
 ) -> Result<CustomerWrite, AppError> {
-    let name = name.trim().to_owned();
+    let name = trim_ecmascript_whitespace(&name).to_owned();
     let birth_date = normalize_optional(birth_date);
     let mut fields = BTreeMap::new();
 
@@ -106,7 +106,7 @@ fn validate(
 
 fn normalize_optional(value: Option<String>) -> Option<String> {
     value.and_then(|value| {
-        let normalized = value.trim().to_owned();
+        let normalized = trim_ecmascript_whitespace(&value).to_owned();
         (!normalized.is_empty()).then_some(normalized)
     })
 }
@@ -183,6 +183,28 @@ mod tests {
                 .gender
                 .as_deref(),
             Some("\u{0085}합성 성별\u{0085}")
+        );
+    }
+
+    #[test]
+    fn preserves_next_line_that_ecmascript_does_not_trim() {
+        let result = validate_create(CreateCustomerInput {
+            name: "\u{0085}합성 이름\u{0085}".to_owned(),
+            birth_date: None,
+            gender: None,
+            phone: None,
+            address: None,
+            memo: None,
+            status: Some("\u{0085}합성 상태\u{0085}".to_owned()),
+            is_managed: true,
+        })
+        .expect("ECMAScript next-line preservation");
+
+        assert_eq!(result.name, "\u{0085}합성 이름\u{0085}");
+        assert_eq!(result.status.as_deref(), Some("\u{0085}합성 상태\u{0085}"));
+        assert_eq!(
+            validate_search(Some("\u{0085}합성 검색\u{0085}".to_owned())).unwrap(),
+            Some("\u{0085}합성 검색\u{0085}".to_owned())
         );
     }
 

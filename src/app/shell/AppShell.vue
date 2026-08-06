@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import { RouterLink, RouterView, useRoute } from "vue-router";
 
 import { useUiStore } from "@/app/stores/ui";
@@ -11,6 +11,9 @@ const route = useRoute();
 const pageTitle = computed(() => String(route.meta.title ?? "BODAM"));
 const pageDescription = computed(() => String(route.meta.description ?? ""));
 const mobileViewport = ref(false);
+const navigationToggle = ref<HTMLButtonElement>();
+const sidebar = ref<HTMLElement>();
+const mainContent = ref<HTMLElement>();
 let mobileQuery: MediaQueryList | undefined;
 
 const navigationToggleLabel = computed(() => {
@@ -23,20 +26,49 @@ const navigationToggleLabel = computed(() => {
 const navigationExpanded = computed(() =>
   mobileViewport.value ? ui.mobileNavigationOpen : !ui.sidebarCollapsed,
 );
+const mobileNavigationActive = computed(
+  () => mobileViewport.value && ui.mobileNavigationOpen,
+);
 
 function updateMobileViewport(event: MediaQueryListEvent) {
   mobileViewport.value = event.matches;
   if (!event.matches) ui.closeMobileNavigation();
 }
 
+function closeMobileNavigation(focusTarget?: "toggle" | "main") {
+  const wasMobileOpen = mobileNavigationActive.value;
+  ui.closeMobileNavigation();
+  if (!wasMobileOpen || focusTarget === undefined) return;
+  void nextTick(() => {
+    if (focusTarget === "toggle") navigationToggle.value?.focus();
+    else mainContent.value?.focus();
+  });
+}
+
+async function toggleNavigation() {
+  const openingMobile = mobileViewport.value && !ui.mobileNavigationOpen;
+  ui.toggleNavigation();
+  if (!openingMobile) return;
+  await nextTick();
+  sidebar.value?.querySelector<HTMLElement>(".nav-item:not([disabled])")?.focus();
+}
+
+function handleWindowKeydown(event: KeyboardEvent) {
+  if (event.key !== "Escape" || !mobileViewport.value || !ui.mobileNavigationOpen) return;
+  event.preventDefault();
+  closeMobileNavigation("toggle");
+}
+
 onMounted(() => {
   mobileQuery = window.matchMedia("(max-width: 860px)");
   mobileViewport.value = mobileQuery.matches;
   mobileQuery.addEventListener("change", updateMobileViewport);
+  window.addEventListener("keydown", handleWindowKeydown);
 });
 
 onBeforeUnmount(() => {
   mobileQuery?.removeEventListener("change", updateMobileViewport);
+  window.removeEventListener("keydown", handleWindowKeydown);
 });
 
 const navigation = [
@@ -48,13 +80,15 @@ const navigation = [
 ];
 
 const utilities = [
-  { label: "데이터 관리", icon: "database" as const, pending: true },
+  { label: "데이터 관리", icon: "database" as const, to: "/data-exchange" },
   { label: "설정", icon: "settings" as const, to: "/settings" },
 ];
 </script>
 
 <template>
-  <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
+  <a class="skip-link" href="#main-content" :inert="mobileNavigationActive">
+    본문으로 건너뛰기
+  </a>
   <div
     class="app-shell"
     :class="{
@@ -67,10 +101,10 @@ const utilities = [
       class="sidebar-backdrop"
       type="button"
       aria-label="메뉴 닫기"
-      @click="ui.closeMobileNavigation"
+      @click="closeMobileNavigation('toggle')"
     />
 
-    <aside class="sidebar" aria-label="주 메뉴">
+    <aside id="primary-navigation" ref="sidebar" class="sidebar" aria-label="주 메뉴">
       <div class="brand">
         <span class="brand-mark" aria-hidden="true">B</span>
         <span class="brand-copy">
@@ -87,7 +121,7 @@ const utilities = [
             class="nav-item"
             :to="item.to"
             :title="ui.sidebarCollapsed ? item.label : undefined"
-            @click="ui.closeMobileNavigation"
+            @click="closeMobileNavigation('main')"
           >
             <AppIcon :name="item.icon" />
             <span>{{ item.label }}</span>
@@ -112,7 +146,7 @@ const utilities = [
             class="nav-item"
             :to="item.to"
             :title="ui.sidebarCollapsed ? item.label : undefined"
-            @click="ui.closeMobileNavigation"
+            @click="closeMobileNavigation('main')"
           >
             <AppIcon :name="item.icon" />
             <span>{{ item.label }}</span>
@@ -137,14 +171,16 @@ const utilities = [
       </div>
     </aside>
 
-    <section class="workspace">
+    <section class="workspace" :inert="mobileNavigationActive">
       <header class="topbar">
         <button
+          ref="navigationToggle"
           class="icon-button navigation-toggle"
           type="button"
           :aria-label="navigationToggleLabel"
           :aria-expanded="navigationExpanded"
-          @click="ui.toggleNavigation"
+          aria-controls="primary-navigation"
+          @click="toggleNavigation"
         >
           <AppIcon
             :name="mobileViewport
@@ -175,7 +211,7 @@ const utilities = [
         </div>
       </header>
 
-      <main id="main-content" class="main-content" tabindex="-1">
+      <main id="main-content" ref="mainContent" class="main-content" tabindex="-1">
         <RouterView />
       </main>
     </section>

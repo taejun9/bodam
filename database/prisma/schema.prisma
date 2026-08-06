@@ -62,28 +62,59 @@ model Consultation {
 }
 
 model InsurancePolicy {
-  id                String     @id @default(uuid())
-  customerId        String     @map("customer_id")
+  id                String                       @id @default(uuid())
+  customerId        String                       @map("customer_id")
   insurer           String
-  productName       String     @map("product_name")
-  joinedOn          String?    @map("joined_on")
-  coverageTerm      String?    @map("coverage_term")
-  paymentTerm       String?    @map("payment_term")
-  monthlyPremiumWon BigInt     @map("monthly_premium_won")
-  disclosurePlan    String?    @map("disclosure_plan")
-  maturesOn         String?    @map("matures_on")
-  renewable         Boolean    @default(false)
+  productName       String                       @map("product_name")
+  joinedOn          String?                      @map("joined_on")
+  coverageTerm      String?                      @map("coverage_term")
+  paymentTerm       String?                      @map("payment_term")
+  monthlyPremiumWon BigInt                       @map("monthly_premium_won")
+  disclosurePlan    String?                      @map("disclosure_plan")
+  maturesOn         String?                      @map("matures_on")
+  renewable         Boolean                      @default(false)
   status            String?
-  isIncluded        Boolean    @default(true) @map("is_included")
-  createdAt         DateTime   @default(now()) @map("created_at")
-  updatedAt         DateTime   @default(now()) @updatedAt @map("updated_at")
-  deletedAt         DateTime?  @map("deleted_at")
-  customer          Customer   @relation(fields: [customerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  isIncluded        Boolean                      @default(true) @map("is_included")
+  createdAt         DateTime                     @default(now()) @map("created_at")
+  updatedAt         DateTime                     @default(now()) @updatedAt @map("updated_at")
+  deletedAt         DateTime?                    @map("deleted_at")
+  customer          Customer                     @relation(fields: [customerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   coverages         Coverage[]
+  importSource      InsurancePolicyImportSource?
 
   @@index([customerId, deletedAt])
   @@index([maturesOn, deletedAt])
   @@map("insurance_policies")
+}
+
+model InsurancePolicyImportSource {
+  policyId              String          @id @map("policy_id")
+  no                    String?
+  collectionReflectedOn String?         @map("collection_reflected_on")
+  affiliation           String?
+  manager               String?
+  collectionCode        String?         @map("collection_code")
+  contract              String?
+  insurer               String?
+  productName           String?         @map("product_name")
+  policyNumber          String?         @map("policy_number")
+  contractedOn          String?         @map("contracted_on")
+  status                String?
+  finalPaymentMonth     String?         @map("final_payment_month")
+  paymentSequence       String?         @map("payment_sequence")
+  paymentPremium        String?         @map("payment_premium")
+  contractor            String?
+  insured               String?
+  coverageStartsOn      String?         @map("coverage_starts_on")
+  coverageEndsOn        String?         @map("coverage_ends_on")
+  collectionMethod      String?         @map("collection_method")
+  paymentTerm           String?         @map("payment_term")
+  originalRecruiterName String?         @map("original_recruiter_name")
+  createdAt             DateTime        @default(now()) @map("created_at")
+  updatedAt             DateTime        @default(now()) @updatedAt @map("updated_at")
+  policy                InsurancePolicy @relation(fields: [policyId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@map("insurance_policy_import_sources")
 }
 
 model CoverageCategory {

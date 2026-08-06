@@ -8,11 +8,15 @@ const props = withDefaults(
     description?: string | undefined;
     size?: "small" | "medium" | "large";
     closeLabel?: string;
+    dismissDisabled?: boolean;
+    busy?: boolean;
   }>(),
   {
     description: undefined,
     size: "medium",
     closeLabel: "닫기",
+    dismissDisabled: false,
+    busy: false,
   },
 );
 
@@ -22,6 +26,7 @@ const emit = defineEmits<{
 
 const dialog = ref<HTMLDialogElement>();
 const titleId = useId();
+const descriptionId = useId();
 let previouslyFocused: HTMLElement | null = null;
 
 async function openDialog() {
@@ -39,6 +44,7 @@ function closeDialog() {
 }
 
 function requestClose() {
+  if (props.dismissDisabled) return;
   emit("close");
 }
 
@@ -72,6 +78,8 @@ onBeforeUnmount(closeDialog);
       class="app-dialog"
       :class="`is-${size}`"
       :aria-labelledby="titleId"
+      :aria-describedby="description ? descriptionId : undefined"
+      :aria-busy="busy ? 'true' : undefined"
       @cancel.prevent="requestClose"
       @click="handleBackdrop"
       @keydown.esc.stop.prevent="requestClose"
@@ -80,12 +88,13 @@ onBeforeUnmount(closeDialog);
         <header class="dialog-header">
           <div>
             <h2 :id="titleId">{{ title }}</h2>
-            <p v-if="description">{{ description }}</p>
+            <p v-if="description" :id="descriptionId">{{ description }}</p>
           </div>
           <button
             class="dialog-close"
             type="button"
             :aria-label="closeLabel"
+            :disabled="dismissDisabled"
             @click="requestClose"
           >
             <span aria-hidden="true">×</span>
@@ -152,7 +161,7 @@ onBeforeUnmount(closeDialog);
 
 .dialog-header p {
   margin: 4px 0 0;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-size: 12px;
 }
 
@@ -173,6 +182,11 @@ onBeforeUnmount(closeDialog);
 .dialog-close:hover {
   color: var(--text-main);
   background: var(--bg-muted);
+}
+
+.dialog-close:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
 }
 
 .dialog-body {

@@ -5,6 +5,7 @@ import CalendarPage from "@/features/calendar/pages/CalendarPage.vue";
 import DashboardPage from "@/features/dashboard/pages/DashboardPage.vue";
 import FamilyListPage from "@/features/family/pages/FamilyListPage.vue";
 import CustomerInsurancePage from "@/features/insurance/pages/CustomerInsurancePage.vue";
+import DataExchangePage from "@/features/data-exchange/pages/DataExchangePage.vue";
 import SettingsPage from "@/features/settings/pages/SettingsPage.vue";
 
 const router = createRouter({
@@ -57,6 +58,15 @@ const router = createRouter({
       meta: {
         title: "고객 상세",
         description: "고객별 보험계약, 보장과 상담 기록을 관리합니다.",
+      },
+    },
+    {
+      path: "/data-exchange",
+      name: "data-exchange",
+      component: DataExchangePage,
+      meta: {
+        title: "데이터 관리",
+        description: "계약조회 Excel·CSV 파일을 확인하고 안전하게 가져옵니다.",
       },
     },
     {

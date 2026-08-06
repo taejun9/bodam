@@ -15,12 +15,9 @@
 
 ## Excel / CSV
 
-- 첨부 파일 헤더와 내부 도메인 필드의 최종 매핑
-- 계약을 식별하는 키와 재업로드 시 중복 처리
-- 빈 셀, 수식 셀, 잘못된 날짜·금액의 처리
-- 업로드를 전체 성공/실패로 할지 정상 행만 반영할지 여부
 - 동일 양식 export가 값·헤더·열 순서만 의미하는지, 열 너비·색·병합·인쇄 설정까지 의미하는지
-- 사용할 Excel 라이브러리와 Tauri 실행 경계
+- source 없는 수동 계약과 import 뒤 사용자가 수정한 domain/source 값을 동일 양식 export에서 어떻게 표현할지
+- export 대상·정렬·파일명과 기존 파일 덮어쓰기 기본값
 
 ## Notification
 
@@ -48,5 +45,8 @@
 - Calendar는 모든 활성 Customer의 상담일·다음 연락일·상령일·만기일과 사용자 일정을 월 보기로 제공한다. 상담 한 건의 상담일과 다음 연락일은 각각 보존한다.
 - 사용자 일정은 제목과 Calendar에서 접근 가능한 `9998-12-31` 이하 날짜 필수, 분 단위 local 시간·메모·활성 고객 연결 선택, 완료 boolean이다. 완료 일정도 표시하며 삭제는 soft delete다.
 - Calendar의 주·일 보기, 반복·우선순위·drag and drop은 후속 범위이고 새 달력 UI library는 사용하지 않는다.
+- 계약 가져오기는 G/H/J/K/N/R/T를 Policy에 mapping하고 21열 text/null을 이름 있는 1:1 source로 보존한다. 계약자·피보험자는 참고만 하며 Customer를 자동 병합하지 않는다.
+- 보험사+증권번호 duplicate는 trim+NFC·case-sensitive로 비교한다. 기본 skip, exact update와 separate-create를 명시 선택하며 선택한 유효 행 전체를 한 transaction으로 반영한다.
+- `.xlsx`는 Rust native dialog와 엄격한 sheet/header/string cell 계약, `.csv`는 UTF-8 BOM·CRLF·RFC 4180의 같은 21열 계약을 사용한다.
 
 위 결정은 `docs/product/proposed-operating-profile.md`의 승인 상태와 공통 데이터·Customer/Consultation·Dashboard·Calendar 규칙을 근거로 한다.

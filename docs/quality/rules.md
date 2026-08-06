@@ -40,9 +40,13 @@
 ## Excel / CSV Gate
 
 - 원본 파일을 수정하지 않는다.
-- import는 parse, normalize, validate와 commit 책임을 분리한다. preview와 사용자 확인 UX는 승인된 계획이 있을 때만 gate에 추가한다.
+- import는 parse, normalize, validate와 commit 책임을 분리하고 raw→mapped parity를 native commit 경계에서 다시 검증한다.
 - 행 번호와 필드별 오류를 반환하되 실제 고객 값을 로그에 남기지 않는다.
-- duplicate와 partial success 정책을 승인 전 구현하지 않는다.
+- 활성 Policy의 보험사+source 증권번호 duplicate와 preview snapshot을 commit 직전에 다시 검사한다.
+- 선택한 유효 행은 Customer·Policy·source를 한 transaction에서 모두 성공시키거나 모두 rollback한다.
+- 실제 파일 선택은 native dialog가 소유하고 UI command에 임의 경로나 broad filesystem capability를 노출하지 않는다.
+- XLSX는 실제 압축 해제 byte, Calamine식 ZIP name collision, shared-string 선언/실제 item과 target sheet decoded UTF-8 text 반복 참조 상한을 소유 preview allocation 전에 합성 공격 fixture로 검증한다.
+- raw worksheet fixture로 shared index alias, implicit numeric text fallback, inline type 혼동, nested·복수 formula-string 값을 file error로 거부하고 정상 numeric·inline·entity text와 `sheetData` 밖 extension 호환을 고정한다.
 - export는 승인된 열 순서·헤더·날짜·금액 형식을 golden fixture와 비교한다.
 - 실제 첨부 파일은 repository fixture로 사용하지 않고 synthetic fixture를 만든다.
 

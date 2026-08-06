@@ -8,6 +8,8 @@ mod coverage_benchmark_tests;
 #[cfg(test)]
 mod coverage_tests;
 #[cfg(test)]
+mod data_exchange_tests;
+#[cfg(test)]
 mod family_tests;
 #[cfg(test)]
 mod insurance_tests;

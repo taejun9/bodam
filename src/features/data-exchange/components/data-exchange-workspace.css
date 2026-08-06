@@ -1,0 +1,169 @@
+.data-exchange-workspace {
+  display: grid;
+  min-width: 0;
+  gap: 14px;
+}
+
+.import-intro {
+  display: flex;
+  min-width: 0;
+  padding: 19px 20px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.import-intro-copy {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 13px;
+}
+
+.intro-icon,
+.import-empty > span {
+  display: grid;
+  color: var(--brand-700);
+  background: var(--brand-50);
+  border: 1px solid var(--brand-100);
+  place-items: center;
+}
+
+.intro-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 11px;
+  flex: 0 0 auto;
+}
+
+.import-intro-copy > div > span {
+  color: var(--brand-700);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.import-intro h2 {
+  margin: 2px 0 0;
+  font-size: 17px;
+}
+
+.import-intro p,
+.privacy-notice p,
+.import-state p,
+.import-empty p,
+.commit-bar p {
+  margin: 4px 0 0;
+  color: var(--text-secondary);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.browser-runtime-note,
+.privacy-notice,
+.file-contract {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.browser-runtime-note {
+  color: var(--warning);
+  background: var(--warning-bg);
+  border: 1px solid color-mix(in srgb, var(--warning) 22%, transparent);
+}
+
+.privacy-notice {
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+}
+
+.privacy-notice strong {
+  font-size: 11px;
+}
+
+.file-contract {
+  padding-block: 2px;
+  color: var(--text-secondary);
+  font-size: 9px;
+}
+
+.import-state,
+.import-empty {
+  display: flex;
+  min-height: 260px;
+  padding: 36px 22px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+}
+
+.import-state:focus {
+  outline: 3px solid color-mix(in srgb, var(--focus) 32%, transparent);
+}
+
+.import-state.is-error p,
+.decision-error {
+  color: var(--danger);
+}
+
+.import-spinner {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 10px;
+  border: 3px solid var(--border-strong);
+  border-top-color: var(--brand-600);
+  border-radius: 50%;
+  animation: import-spin 750ms linear infinite;
+}
+
+@keyframes import-spin {
+  to { transform: rotate(360deg); }
+}
+
+.import-empty > span {
+  width: 56px;
+  height: 56px;
+  margin-bottom: 10px;
+  border-radius: 16px;
+}
+
+.commit-bar {
+  display: flex;
+  min-width: 0;
+  padding: 16px 18px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.commit-bar strong {
+  font-size: 12px;
+}
+
+.decision-error {
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .import-intro,
+  .commit-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .import-intro :deep(.app-button),
+  .commit-bar :deep(.app-button) {
+    width: 100%;
+  }
+
+  .intro-icon {
+    width: 38px;
+    height: 38px;
+  }
+}
