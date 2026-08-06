@@ -53,7 +53,7 @@ export async function runConsultationWriteScenario() {
   )).toBe("create-consultation");
   expect(await fullRow.getText()).toContain(syntheticConsultations.updated.content);
   expect(await fullRow.getText()).toContain(syntheticConsultations.updated.result);
-  expect(await fullRow.getText()).toContain("2026. 08. 25");
+  expect(await fullRow.getText()).toContain("2026. 08. 04");
   expect(await fullRow.$("[data-testid='consulted-at']").getAttribute("datetime"))
     .toBe(utcForLocalDateTime(syntheticConsultations.updated.consultedAtLocal));
   expect(await fullRow.$("[data-testid='next-contact-on']").getAttribute("datetime"))

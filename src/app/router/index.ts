@@ -1,6 +1,7 @@
 import { createRouter, createWebHashHistory } from "vue-router";
 
 import CustomerListPage from "@/features/customer/pages/CustomerListPage.vue";
+import DashboardPage from "@/features/dashboard/pages/DashboardPage.vue";
 import FamilyListPage from "@/features/family/pages/FamilyListPage.vue";
 import CustomerInsurancePage from "@/features/insurance/pages/CustomerInsurancePage.vue";
 import SettingsPage from "@/features/settings/pages/SettingsPage.vue";
@@ -10,7 +11,16 @@ const router = createRouter({
   routes: [
     {
       path: "/",
-      redirect: "/customers",
+      redirect: "/dashboard",
+    },
+    {
+      path: "/dashboard",
+      name: "dashboard",
+      component: DashboardPage,
+      meta: {
+        title: "대시보드",
+        description: "오늘의 연락과 고객·계약 업무를 한눈에 확인합니다.",
+      },
     },
     {
       path: "/customers",

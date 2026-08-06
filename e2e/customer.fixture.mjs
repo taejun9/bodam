@@ -3,7 +3,7 @@ import { $, $$, browser, expect } from "@wdio/globals";
 export const syntheticCustomer = Object.freeze({
   seed: "합성 고객 WDIO 002",
   updatedName: "합성 고객 WDIO 002 수정",
-  birthDate: "2000-01-15",
+  birthDate: "2000-02-15",
   gender: "합성 E2E 007",
   phone: "010-0000-0002",
   status: "합성 상담 중",
@@ -18,8 +18,11 @@ export const syntheticFamilyCustomer = Object.freeze({
 export async function waitForNativeApp() {
   const body = await $("body");
   await body.waitForExist({ timeout: 15_000 });
+  const customerLink = await $("a[href='#/customers']");
+  await customerLink.waitForDisplayed({ timeout: 10_000 });
   const createButton = await $("[data-testid='create-customer']");
   try {
+    if (!(await createButton.isDisplayed())) await customerLink.click();
     await createButton.waitForDisplayed({ timeout: 10_000 });
   } catch (error) {
     const source = (await browser.getPageSource()).slice(0, 2_000);

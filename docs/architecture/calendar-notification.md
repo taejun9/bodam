@@ -16,14 +16,14 @@
 
 상령일은 저장된 값으로 단정하지 않는다. 승인된 산식과 기준일을 사용하는 service 계산 결과여야 한다.
 
-Consultation 원본 CRUD와 두 날짜 source의 저장 계약은 구현되어 있다. 이를 합치는 Calendar event, 오늘 연락·최근 상담·미상담 판정과 같은 Customer의 여러 대상 grouping은 후속 Dashboard·Calendar 계획 범위다.
+Consultation 원본 CRUD와 두 날짜 source의 저장 계약은 구현되어 있다. Dashboard는 오늘 연락·상령·만기·최근 상담·미상담을 요청 시 read model로 조합한다. 같은 source를 날짜별 `CalendarEvent`로 합치는 월 달력은 후속 계획 범위다.
 
 ## 계산 경계
 
 - 입력: 명시적 기준일, local timezone, 활성 record 목록
 - 출력: event type, 날짜, 관련 entity id, 사용자 표시용 최소 정보
 - UI는 날짜 차이 또는 대상 판정을 다시 계산하지 않는다.
-- 30/60/90 구간의 포함·중복 규칙은 구현 계획에서 승인한다.
+- Dashboard의 상령·만기는 0–30, 31–60, 61–90일의 비중복 구간을 사용한다. Calendar의 날짜별 표시는 bucket을 저장하지 않는다.
 - 날짜가 없는 레코드는 대상에서 제외하되 data-quality 경고 여부를 결정한다.
 
 ## 달력 read model

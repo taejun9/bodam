@@ -14,9 +14,9 @@ export const syntheticConsultations = Object.freeze({
     result: null,
   }),
   updated: Object.freeze({
-    consultedAtLocal: "2026-08-05T09:30",
+    consultedAtLocal: "2026-08-05T09:31",
     content: "합성 상담 기록 WDIO 006 수정 — 다음 단계 정리",
-    nextContactOn: "2026-08-25",
+    nextContactOn: "2026-08-04",
     result: "합성 일정 조정",
   }),
 });

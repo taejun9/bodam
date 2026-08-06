@@ -47,8 +47,13 @@ import {
 } from "../policy.fixture.mjs";
 import { runBenchmarkPersistenceScenario } from "../scenarios/benchmark-persistence.mjs";
 import { runConsultationPersistenceScenario } from "../scenarios/consultation-persistence.mjs";
+import { runDashboardPersistenceScenario } from "../scenarios/dashboard-persistence.mjs";
 
 describe("BODAM native restart flow", () => {
+  it("rebuilds all Dashboard cards with the same persisted native sources", async () => {
+    await runDashboardPersistenceScenario();
+  });
+
   it("persists Family relations and applies active parent visibility after restart", async () => {
     await waitForNativeApp();
     await navigateToFamilies();

@@ -49,6 +49,7 @@ import {
 } from "../policy.fixture.mjs";
 import { runBenchmarkWriteScenario } from "../scenarios/benchmark-write.mjs";
 import { runConsultationWriteScenario } from "../scenarios/consultation-write.mjs";
+import { runDashboardWriteScenario } from "../scenarios/dashboard-write.mjs";
 
 describe("BODAM native write flow", () => {
   it("persists customer and policy totals through real Tauri IPC", async () => {
@@ -281,5 +282,9 @@ describe("BODAM native write flow", () => {
 
   it("persists consultation records through real Tauri IPC", async () => {
     await runConsultationWriteScenario();
+  });
+
+  it("renders all Dashboard cards from persisted native sources", async () => {
+    await runDashboardWriteScenario();
   });
 });

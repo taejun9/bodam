@@ -11,6 +11,7 @@ export const syntheticPolicies = Object.freeze({
     productName: "합성 생활보험 003",
     premium: "30000",
     updatedPremium: "35000",
+    maturesOn: "2026-08-20",
   }),
   familyMember: Object.freeze({
     insurer: "합성가족보험",
@@ -78,6 +79,9 @@ export async function createPolicy(policy, verifyInvalidMoney = false) {
 
   await premium.setValue(policy.premium);
   await dialog.$("input[name='joinedOn']").setValue("2026-01-15");
+  if (policy.maturesOn) {
+    await dialog.$("input[name='maturesOn']").setValue(policy.maturesOn);
+  }
   await dialog.$("input[name='paymentTerm']").setValue("20년납");
   await dialog.$("input[name='status']").setValue("합성 유지");
   await dialog.$("button[type='submit']").click();

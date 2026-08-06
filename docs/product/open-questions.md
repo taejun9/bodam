@@ -4,7 +4,6 @@
 
 ## 도메인 규칙
 
-- 상령일의 정확한 산식, 기준 시간, 윤년·2월 29일 처리
 - 월 보험료에 특약 보험료가 포함되는지 여부
 - 보험기간·납입기간의 저장 단위와 종신 표현
 - 갱신 계약의 갱신 주기와 다음 갱신일 관리 여부
@@ -43,7 +42,10 @@
 - 담당상태와 상담 결과는 선택 자유입력으로 시작하며 enum을 고정하지 않는다.
 - Coverage Benchmark는 카테고리·정확히 같은 자유입력 성별·포함 만 나이 구간별 적정하한과 과다하한을 사용한다. 겹치는 활성 구간은 거부하고 일치 기준이 없으면 부족으로 간주하지 않는다.
 - Benchmark 판정은 `< 적정하한` 부족, `적정하한 ≤ 금액 < 과다하한` 적정, `≥ 과다하한` 과다이며 권고금액 seed나 우선순위를 만들지 않는다.
-- 최근 상담은 최근 30일, 미상담은 90일 이상 상담이 없었던 관리대상 Customer로 계산한다. soft-deleted Customer는 제외하며 Dashboard 구현은 후속 계획 범위다.
+- 최근 상담은 최근 30일, 미상담은 90일 이상 상담이 없었던 관리대상 Customer로 계산한다. soft-deleted Customer는 제외하며 Dashboard에서 요청 시 계산한다.
 - Customer를 soft delete하면 연결 계약·상담 원본은 유지하되 기본 조회·집계·Dashboard·Calendar·export에서 숨긴다. Customer 복원 시 개별 soft delete되지 않은 자식만 다시 노출한다.
+- 상령은 생일에서 6개월 뒤 local date부터 증가하며 존재하지 않는 날짜는 월말로 clamp한다. Dashboard는 명시적 기준일·IANA local timezone으로 다음 상령일을 계산하고 저장하지 않는다.
+- Dashboard는 관리대상 Customer 기반 7개 read card와 기존 Family summary 기반 1개 card를 각각 최대 10건 표시한다. 오늘 연락은 최신 상담의 연락일, 최근 상담은 오늘 포함 30일, 미상담은 exact 90일 이상 또는 상담 없음으로 계산한다.
+- 상령·만기 bucket은 0–30, 31–60, 61–90일이고 날짜·금액·부족 Category 수 우선 뒤 이름·stable id로 동점을 정렬한다.
 
 위 결정은 `docs/product/proposed-operating-profile.md`의 승인 상태와 공통 데이터·Customer/Consultation·Dashboard 규칙을 근거로 한다.

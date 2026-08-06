@@ -40,7 +40,7 @@ onBeforeUnmount(() => {
 });
 
 const navigation = [
-  { label: "대시보드", icon: "dashboard" as const, pending: true },
+  { label: "대시보드", icon: "dashboard" as const, to: "/dashboard" },
   { label: "고객", icon: "customers" as const, to: "/customers" },
   { label: "가족", icon: "family" as const, to: "/families" },
   { label: "보험계약", icon: "policy" as const, pending: true, customerScoped: true },
