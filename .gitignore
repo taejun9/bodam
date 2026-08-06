@@ -1,6 +1,7 @@
 .worktree/
 node_modules/
 dist/
+dist-e2e/
 .vite/
 /coverage/
 __pycache__/

@@ -8,6 +8,9 @@ export default defineConfig(({ mode }) => ({
   define: {
     __BODAM_E2E__: JSON.stringify(mode === "e2e"),
   },
+  build: {
+    outDir: mode === "e2e" ? "dist-e2e" : "dist",
+  },
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),

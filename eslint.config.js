@@ -5,7 +5,14 @@ import vueParser from "vue-eslint-parser";
 
 export default tseslint.config(
   {
-    ignores: ["dist", "node_modules", "src-tauri/target", "src-tauri/gen", "coverage"],
+    ignores: [
+      "dist",
+      "dist-e2e",
+      "node_modules",
+      "src-tauri/target",
+      "src-tauri/gen",
+      "coverage",
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

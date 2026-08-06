@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, ref } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 
 import AppButton from "@/shared/components/AppButton.vue";
 import AppIcon from "@/shared/components/AppIcon.vue";
@@ -14,7 +14,13 @@ import { useDataExchangeWorkspace } from "./use-data-exchange-workspace";
 const props = defineProps<{
   nativeRuntime: boolean;
   port: ImportUiPort;
+  externalBusy?: boolean;
   createClientKey?: (() => string) | undefined;
+}>();
+
+const emit = defineEmits<{
+  busyChange: [busy: boolean];
+  dataChange: [];
 }>();
 
 interface PreviewFocusApi {
@@ -46,9 +52,20 @@ const {
   skippingCount,
   usedNewCustomerCount,
 } = workspace;
+const selectorDescription = computed(() => [
+  props.nativeRuntime ? "import-file-contract" : "browser-runtime-note",
+  props.externalBusy ? "import-operation-note" : null,
+].filter(Boolean).join(" "));
+
+watch(
+  () => selecting.value || committing.value || commitOpen.value ||
+    customerDialogRow.value !== undefined,
+  (busy) => emit("busyChange", busy),
+  { immediate: true },
+);
 
 async function selectFile() {
-  if (!props.nativeRuntime || selecting.value || committing.value) return;
+  if (!props.nativeRuntime || props.externalBusy || selecting.value || committing.value) return;
   const selected = await workspace.selectFile();
   await nextTick();
   if (selected) previewComponent.value?.focusFirstError();
@@ -61,6 +78,7 @@ async function selectFile() {
 }
 
 async function requestCommit() {
+  if (props.externalBusy) return;
   if (workspace.requestCommit()) return;
   await nextTick();
   if (decisionIssueRow.value !== undefined) {
@@ -69,6 +87,7 @@ async function requestCommit() {
 }
 
 async function commitImport() {
+  if (props.externalBusy) return;
   const imported = await workspace.commitImport();
   if (!imported) {
     await nextTick();
@@ -77,6 +96,7 @@ async function commitImport() {
   }
   await nextTick();
   workspaceRoot.value?.querySelector<HTMLElement>("[data-testid='import-result']")?.focus();
+  emit("dataChange");
 }
 
 async function reset() {
@@ -85,6 +105,7 @@ async function reset() {
   workspaceRoot.value
     ?.querySelector<HTMLElement>("[data-testid='select-import-file']")
     ?.focus();
+  emit("dataChange");
 }
 </script>
 
@@ -109,9 +130,9 @@ async function reset() {
       <AppButton
         variant="primary"
         :loading="selecting"
-        :disabled="!nativeRuntime || committing"
+        :disabled="!nativeRuntime || externalBusy || committing"
         data-testid="select-import-file"
-        :aria-describedby="nativeRuntime ? 'import-file-contract' : 'browser-runtime-note'"
+        :aria-describedby="selectorDescription"
         @click="selectFile"
       >
         {{ preview ? "다른 파일 선택" : "파일 선택" }}
@@ -121,6 +142,10 @@ async function reset() {
     <p v-if="!nativeRuntime" id="browser-runtime-note" class="browser-runtime-note" role="status">
       Browser 미리보기에서는 실제 고객 파일을 열지 않습니다. 계약 가져오기는 설치한 BODAM
       데스크톱 앱에서 사용해 주세요.
+    </p>
+
+    <p v-if="externalBusy" id="import-operation-note" class="browser-runtime-note" role="status">
+      진행 중인 내보내기를 마치면 가져오기를 계속할 수 있습니다.
     </p>
 
     <section class="privacy-notice" data-testid="data-risk-notice" aria-labelledby="privacy-title">
@@ -152,7 +177,13 @@ async function reset() {
       <span class="state-symbol is-error" aria-hidden="true">!</span>
       <strong>가져오기를 계속할 수 없습니다</strong>
       <p>{{ fileError }}</p>
-      <AppButton :disabled="!nativeRuntime" @click="selectFile">다시 선택</AppButton>
+      <AppButton
+        :disabled="!nativeRuntime || externalBusy"
+        :aria-describedby="externalBusy ? 'import-operation-note' : undefined"
+        @click="selectFile"
+      >
+        다시 선택
+      </AppButton>
     </section>
 
     <DataExchangeResultPanel
@@ -167,7 +198,7 @@ async function reset() {
         :preview="preview"
         :decisions="decisions"
         :new-customers="newCustomers"
-        :disabled="committing"
+        :disabled="committing || externalBusy"
         @change="workspace.replaceDecision"
         @create-customer="workspace.openCustomerDialog"
       />
@@ -182,8 +213,9 @@ async function reset() {
         </div>
         <AppButton
           variant="primary"
-          :disabled="committing"
+          :disabled="committing || externalBusy"
           data-testid="commit-import"
+          :aria-describedby="externalBusy ? 'import-operation-note' : undefined"
           @click="requestCommit"
         >
           선택 행 반영
@@ -212,6 +244,7 @@ async function reset() {
       :skipping="skippingCount"
       :new-customers="usedNewCustomerCount"
       :committing="committing"
+      :blocked="externalBusy"
       :error="commitError"
       @close="commitOpen = false"
       @confirm="commitImport"

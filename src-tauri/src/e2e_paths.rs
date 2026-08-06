@@ -33,7 +33,7 @@ pub(crate) fn validate_import_path(
         .is_some_and(|value| {
             value.eq_ignore_ascii_case("xlsx") || value.eq_ignore_ascii_case("csv")
         });
-    if !path.is_absolute() || !basename.starts_with("synthetic-") || !valid_extension {
+    if !path.is_absolute() || !is_synthetic_basename(basename) || !valid_extension {
         return Err(invalid_path());
     }
 
@@ -56,6 +56,37 @@ pub(crate) fn validate_import_path(
         return Err(invalid_path());
     }
     Ok(resolved_file)
+}
+
+pub(crate) fn validate_export_path(
+    export_value: Option<OsString>,
+    database_value: Option<OsString>,
+    expected_extension: &str,
+) -> io::Result<PathBuf> {
+    let database_path = validate_database_path(database_value)?;
+    let runtime = database_path.parent().ok_or_else(invalid_path)?;
+    let path = export_value.map(PathBuf::from).ok_or_else(invalid_path)?;
+    let basename = path
+        .file_name()
+        .and_then(|value| value.to_str())
+        .ok_or_else(invalid_path)?;
+    let valid_extension = path
+        .extension()
+        .and_then(|value| value.to_str())
+        .is_some_and(|value| value.eq_ignore_ascii_case(expected_extension));
+    if !path.is_absolute() || !is_synthetic_basename(basename) || !valid_extension {
+        return Err(invalid_path());
+    }
+    let parent = path.parent().ok_or_else(invalid_path)?;
+    let metadata = fs::symlink_metadata(parent).map_err(|_| invalid_path())?;
+    if !metadata.file_type().is_dir() || metadata.file_type().is_symlink() {
+        return Err(invalid_path());
+    }
+    if fs::canonicalize(parent).map_err(|_| invalid_path())? != runtime {
+        return Err(invalid_path());
+    }
+    validate_existing_regular_file(&path)?;
+    Ok(runtime.join(basename))
 }
 
 fn validate_runtime_directory(path: &Path) -> io::Result<PathBuf> {
@@ -86,13 +117,20 @@ fn validate_existing_regular_file(path: &Path) -> io::Result<()> {
     }
 }
 
+fn is_synthetic_basename(value: &str) -> bool {
+    value.starts_with("synthetic-")
+        && value
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b'_' | b'-'))
+}
+
 fn invalid_path() -> io::Error {
     io::Error::other("BODAM E2E path is invalid")
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{validate_database_path, validate_import_path};
+    use super::{validate_database_path, validate_export_path, validate_import_path};
     use std::ffi::OsString;
     use std::fs;
     use std::path::{Path, PathBuf};
@@ -128,6 +166,26 @@ mod tests {
     }
 
     #[test]
+    fn accepts_only_matching_synthetic_exports_in_the_database_runtime() {
+        let runtime = TestRuntime::new();
+        let database = runtime.path().join("data-exchange.sqlite3");
+        let export = runtime.path().join("synthetic-contracts.csv");
+        let expected = fs::canonicalize(runtime.path())
+            .unwrap()
+            .join("synthetic-contracts.csv");
+        assert_eq!(
+            validate_export_path(value(&export), value(&database), "csv").unwrap(),
+            expected
+        );
+        assert!(validate_export_path(value(&export), value(&database), "xlsx").is_err());
+
+        fs::write(&export, b"existing synthetic export").unwrap();
+        assert!(validate_export_path(value(&export), value(&database), "csv").is_ok());
+        let wrong_name = runtime.path().join("contracts.csv");
+        assert!(validate_export_path(value(&wrong_name), value(&database), "csv").is_err());
+    }
+
+    #[test]
     fn rejects_non_temp_runtime_and_existing_non_file_database_targets() {
         let outside = Path::new(env!("CARGO_MANIFEST_DIR")).join("outside.sqlite3");
         assert!(validate_database_path(value(&outside)).is_err());
@@ -160,6 +218,15 @@ mod tests {
         assert!(validate_import_path(
             value(&linked_import),
             value(&runtime.path().join("new.sqlite3")),
+        )
+        .is_err());
+
+        let linked_export = runtime.path().join("synthetic-export.csv");
+        symlink(&source, &linked_export).unwrap();
+        assert!(validate_export_path(
+            value(&linked_export),
+            value(&runtime.path().join("new.sqlite3")),
+            "csv",
         )
         .is_err());
 

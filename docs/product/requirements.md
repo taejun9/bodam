@@ -132,7 +132,17 @@ plan-009에서 월 보기와 Schedule 저장·표시 계약을 승인했다. 주
 - CSV import/export
 - 첨부 계약조회 양식의 열 계약과 표시 형식 지원
 - 행 단위 검증, 오류 표시와 반영 확인 UX는 구현 계획에서 승인
+- export 대상은 active Customer의 active Policy 중 1:1 import source가 있고, G/H/J/K/N/R/T를 현재 Policy로 mapping한 값이 정확히 같은 행
+- `isManaged`·`isIncluded` 계산 flag는 export 대상 여부를 바꾸지 않음
+- source 없는 수동 Policy와 domain/source 불일치는 각각 제외 사유와 건수만 표시하며 값을 합성하거나 한쪽을 자동 우선하지 않음
+- 계약일자 blank-last, Customer 이름, Policy id 순서의 안정 정렬
+- XLSX는 승인된 sheet·A:U header·text/blank·열 너비·행 높이·border 계약, CSV는 UTF-8 BOM·CRLF·RFC 4180·21 field 계약
+- CSV formula trigger는 source를 변경하지 않고 파일 전체를 거부하며 XLSX 사용을 안내
+- native save 취소는 파일·DB를 변경하지 않고, 기존 파일 교체는 사용자가 저장 창에서 승인한 경우에만 수행
+- 성공 결과는 format·파일 basename·내보낸 건수·두 제외 건수만 표시
 - PDF export는 MVP 제외
+
+source 없는 수동 Policy의 21열 합성과 domain/source 충돌 해결 UI, 고객·기간 선택 export는 후속 승인 범위다.
 
 ## Backup
 

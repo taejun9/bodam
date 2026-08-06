@@ -2,7 +2,7 @@
 
 ## 상태
 
-첨부 workbook을 읽기 전용으로 분석한 뒤 plan-010에서 계약 가져오기 범위를 승인·구현한 기준 계약이다. `.xlsx`/`.csv` 가져오기, 영구 field mapping, duplicate와 transaction 정책은 확정되었고 같은 형식 내보내기는 plan-011 범위다.
+첨부 workbook을 읽기 전용으로 분석한 뒤 plan-010에서 계약 가져오기를, plan-011에서 보존 source 기반 계약 내보내기를 승인·구현한 기준 계약이다. `.xlsx`/`.csv` 가져오기, 영구 field mapping, duplicate·transaction 정책과 source/domain parity export 경계가 확정되었다.
 
 ## 기준 workbook
 
@@ -125,20 +125,23 @@ file 계약 오류는 commit 전에 전체 파일을 거부한다. row mapping �
 
 ## Export Pipeline
 
-    export 대상 query
-      → domain DTO
-      → 승인된 21열 mapping
-      → text serialization
-      → 기준 sheet와 style 생성
-      → 임시 파일 validation
+    active Customer·Policy와 1:1 source query
+      → source의 G/H/J/K/N/R/T 재해석과 현재 domain exact parity
+      → 대상·원본 없음·불일치 건수 분리
+      → 계약일자 blank-last, Customer 이름, Policy id 안정 정렬
+      → 보존된 21열 text/null 직렬화
       → native save dialog
-      → 선택한 경로에 저장
+      → 같은 directory의 임시 파일 생성·flush·reparse 검증
+      → 사용자 승인 target에 원자 교체
 
-- 날짜는 내부 typed value에서 승인된 text format으로 직렬화한다.
-- 금액·회차는 내부 계산 type과 Excel 표시 text를 분리한다.
-- 식별자는 항상 text로 쓴다.
-- 빈 값은 임의의 0, 공백 문자열, N/A로 치환하지 않는다.
-- export 중 기존 파일 덮어쓰기 확인은 native dialog 동작과 함께 검증한다.
+- `isManaged`와 `isIncluded`는 export 대상 여부를 바꾸지 않는다. soft-deleted Customer·Policy에 연결된 source는 기본 export에서 숨긴다.
+- source 없는 수동 Policy와 source를 현재 mapping 규칙으로 해석한 값이 현재 Policy와 다른 행은 각각 제외 건수로 표시한다. 21열을 domain에서 합성하거나 과거 source를 현재값처럼 내보내지 않는다.
+- 식별자·날짜·금액·회차를 포함한 source cell은 모두 보존 text로 쓰고 null은 빈 cell/field로 둔다. 임의의 0, 공백 문자열, N/A로 치환하지 않는다.
+- 대상 0건, 5,000행 초과 또는 생성 파일 10 MiB 초과는 저장 dialog 전에 거부한다.
+- 기본 basename은 local timestamp가 포함된 `BODAM-contracts-YYYYMMDD-HHmmss`이며 사용자가 native dialog에서 최종 위치와 이름을 정한다.
+- 취소는 파일과 DB를 바꾸지 않는다. 기존 target 교체는 native dialog에서 사용자가 승인한 경우에만 진행한다.
+- 같은 directory의 예측 불가능한 임시 파일에 기록하고 close·flush·같은 parser 재검증 뒤 원자 교체한다. 실패하면 기존 target을 보존하고 임시 파일을 정리한다.
+- 성공 결과는 format, basename, 내보낸 건수, source 없음 건수와 source/domain 불일치 건수만 반환한다. 전체 경로와 row 값은 반환·기록하지 않는다.
 
 ## CSV
 
@@ -146,6 +149,7 @@ file 계약 오류는 commit 전에 전체 파일을 거부한다. row mapping �
 - UTF-8 BOM, comma delimiter, CRLF record ending, RFC 4180 quoting과 행마다 정확히 21개 field를 요구한다.
 - 잘못된 UTF-8, LF-only, 중복 BOM과 field count mismatch는 file error다.
 - CSV에는 sheet명과 style이 없으므로 Excel 동일 형식이라는 표현을 적용하지 않는다.
+- trim 전후 첫 문자가 `=`, `+`, `-`, `@`, tab 또는 CR인 nonblank source cell이 하나라도 있으면 값을 escape하거나 변경하지 않고 전체 CSV export를 거부한다. XLSX는 formula가 아닌 string cell로 기록한다.
 
 ## 가져오기 한도
 
@@ -184,6 +188,6 @@ file 계약 오류는 commit 전에 전체 파일을 거부한다. row mapping �
 
 ## 미결정
 
-- 같은 형식 export에서 source 없는 수동 Policy와 사용자가 수정한 domain/source 충돌의 표현
-- export 대상 선택, 정렬, 파일명, 기존 파일 덮어쓰기와 취소 결과
-- 같은 format의 보존 수준에 인쇄 설정·페이지 설정 포함 여부
+- source 없는 수동 Policy의 21열 합성과 각 미매핑 열의 값
+- domain/source 충돌의 source 반영, domain 우선 또는 사용자 해결 UI
+- 고객·기간·계약 선택 filter와 사용자 지정 정렬

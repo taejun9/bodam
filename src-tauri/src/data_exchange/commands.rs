@@ -6,7 +6,7 @@ use tauri_plugin_dialog::DialogExt;
 
 #[cfg(feature = "e2e")]
 #[path = "commands_e2e.rs"]
-mod e2e;
+pub(super) mod e2e;
 
 #[tauri::command]
 pub(crate) async fn choose_contract_import_file(

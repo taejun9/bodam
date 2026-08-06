@@ -15,9 +15,9 @@
 
 ## Excel / CSV
 
-- 동일 양식 export가 값·헤더·열 순서만 의미하는지, 열 너비·색·병합·인쇄 설정까지 의미하는지
-- source 없는 수동 계약과 import 뒤 사용자가 수정한 domain/source 값을 동일 양식 export에서 어떻게 표현할지
-- export 대상·정렬·파일명과 기존 파일 덮어쓰기 기본값
+- source 없는 수동 계약의 21열을 향후 합성할지와 미매핑 열을 어떤 값으로 채울지
+- import 뒤 사용자가 수정한 domain/source 충돌에 source 반영, domain 우선 또는 충돌 해결 UI 중 무엇을 제공할지
+- 전체 export 외 고객·기간·계약 선택 filter와 사용자 지정 정렬이 필요한지
 
 ## Notification
 
@@ -48,5 +48,9 @@
 - 계약 가져오기는 G/H/J/K/N/R/T를 Policy에 mapping하고 21열 text/null을 이름 있는 1:1 source로 보존한다. 계약자·피보험자는 참고만 하며 Customer를 자동 병합하지 않는다.
 - 보험사+증권번호 duplicate는 trim+NFC·case-sensitive로 비교한다. 기본 skip, exact update와 separate-create를 명시 선택하며 선택한 유효 행 전체를 한 transaction으로 반영한다.
 - `.xlsx`는 Rust native dialog와 엄격한 sheet/header/string cell 계약, `.csv`는 UTF-8 BOM·CRLF·RFC 4180의 같은 21열 계약을 사용한다.
+- export는 active Customer의 active Policy 중 보존 source와 G/H/J/K/N/R/T mapping이 정확히 같은 행만 포함한다. 수동·충돌 행은 값을 만들거나 우선하지 않고 별도 제외 건수로 표시한다.
+- export는 계약일자 blank-last, Customer 이름, Policy id 순으로 정렬하며 XLSX의 열 너비·행 높이·border까지 재현하고 인쇄·페이지 설정은 제외한다.
+- native save cancel은 무변경이고 덮어쓰기는 사용자가 저장 dialog에서 승인한다. 결과에는 basename과 건수만 표시한다.
+- CSV formula trigger는 원문을 변형하지 않고 전체 CSV 저장을 거부하며 XLSX 사용을 안내한다.
 
 위 결정은 `docs/product/proposed-operating-profile.md`의 승인 상태와 공통 데이터·Customer/Consultation·Dashboard·Calendar 규칙을 근거로 한다.

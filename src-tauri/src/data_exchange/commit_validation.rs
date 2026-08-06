@@ -68,8 +68,7 @@ pub(crate) fn validate_commit_request(
             return Err(invalid_request());
         }
         previous_row = row.source.source_row;
-        validate_source_cells(&row.source.cells)?;
-        if map_source(&row.source.cells)? != row.mapped {
+        if map_validated_source(&row.source.cells)? != row.mapped {
             return Err(invalid_request());
         }
         match &row.decision {
@@ -113,8 +112,8 @@ fn validate_customer_reference(
 }
 
 fn validate_source_cells(cells: &ImportSourceCells) -> Result<(), AppError> {
-    for value in source_values(cells).into_iter().flatten() {
-        if value.chars().count() > 4_000 {
+    for value in cells.values().into_iter().flatten() {
+        if value.is_empty() || value.chars().count() > 4_000 {
             return Err(invalid_request());
         }
     }
@@ -136,6 +135,13 @@ fn validate_source_cells(cells: &ImportSourceCells) -> Result<(), AppError> {
         return Err(invalid_request());
     }
     Ok(())
+}
+
+pub(super) fn map_validated_source(
+    cells: &ImportSourceCells,
+) -> Result<MappedContractPolicy, AppError> {
+    validate_source_cells(cells)?;
+    map_source(cells)
 }
 
 fn map_source(cells: &ImportSourceCells) -> Result<MappedContractPolicy, AppError> {
@@ -186,32 +192,6 @@ fn optional_domain_text(value: Option<&str>) -> Result<Option<String>, AppError>
         return Err(invalid_request());
     }
     Ok(value)
-}
-
-fn source_values(cells: &ImportSourceCells) -> [Option<&str>; 21] {
-    [
-        cells.no.as_deref(),
-        cells.collection_reflected_on.as_deref(),
-        cells.affiliation.as_deref(),
-        cells.manager.as_deref(),
-        cells.collection_code.as_deref(),
-        cells.contract.as_deref(),
-        cells.insurer.as_deref(),
-        cells.product_name.as_deref(),
-        cells.policy_number.as_deref(),
-        cells.contracted_on.as_deref(),
-        cells.status.as_deref(),
-        cells.final_payment_month.as_deref(),
-        cells.payment_sequence.as_deref(),
-        cells.payment_premium.as_deref(),
-        cells.contractor.as_deref(),
-        cells.insured.as_deref(),
-        cells.coverage_starts_on.as_deref(),
-        cells.coverage_ends_on.as_deref(),
-        cells.collection_method.as_deref(),
-        cells.payment_term.as_deref(),
-        cells.original_recruiter_name.as_deref(),
-    ]
 }
 
 fn normalize(value: &str) -> String {

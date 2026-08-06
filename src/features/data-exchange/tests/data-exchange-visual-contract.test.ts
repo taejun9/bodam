@@ -93,4 +93,19 @@ describe("data exchange visual contracts", () => {
       expect(rule).toContain("overflow-wrap: anywhere");
     }
   });
+
+  it("keeps export counts and long basenames bounded at 390px in both themes", () => {
+    const exportCss = readFileSync(
+      resolve(featureDirectory, "components/contract-export-panel.css"),
+      "utf8",
+    );
+
+    expect(cssBlock(exportCss, ".contract-export-panel")).toContain("min-width: 0");
+    expect(cssBlock(exportCss, ".export-summary"))
+      .toContain("repeat(3, minmax(0, 1fr))");
+    expect(cssBlock(exportCss, ".export-result p")).toContain("overflow-wrap: anywhere");
+    expect(exportCss).toContain("@media (max-width: 420px)");
+    expect(exportCss).toContain(".export-actions {\n    grid-template-columns: 1fr;");
+    expect(exportCss).not.toMatch(/#[0-9a-fA-F]{3,8}/);
+  });
 });

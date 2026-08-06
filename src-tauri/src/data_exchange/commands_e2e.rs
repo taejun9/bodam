@@ -1,6 +1,6 @@
 use std::ffi::OsStr;
 
-pub(super) fn native_dialog_enabled(value: Option<&OsStr>) -> bool {
+pub(in crate::data_exchange) fn native_dialog_enabled(value: Option<&OsStr>) -> bool {
     value == Some(OsStr::new("1"))
 }
 

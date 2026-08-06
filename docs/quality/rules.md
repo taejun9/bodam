@@ -47,7 +47,11 @@
 - 실제 파일 선택은 native dialog가 소유하고 UI command에 임의 경로나 broad filesystem capability를 노출하지 않는다.
 - XLSX는 실제 압축 해제 byte, Calamine식 ZIP name collision, shared-string 선언/실제 item과 target sheet decoded UTF-8 text 반복 참조 상한을 소유 preview allocation 전에 합성 공격 fixture로 검증한다.
 - raw worksheet fixture로 shared index alias, implicit numeric text fallback, inline type 혼동, nested·복수 formula-string 값을 file error로 거부하고 정상 numeric·inline·entity text와 `sheetData` 밖 extension 호환을 고정한다.
-- export는 승인된 열 순서·헤더·날짜·금액 형식을 golden fixture와 비교한다.
+- export는 active parent의 source/domain parity 행만 대상으로 하고 manual·conflict·soft-deleted 제외 건수와 안정 정렬을 test로 고정한다.
+- export는 승인된 열 순서·헤더·21개 text/null, XLSX style과 CSV BOM·CRLF·RFC 4180을 golden fixture와 비교한다.
+- XLSX formula 0/string cell과 CSV formula-trigger fail-closed를 검사하고, source 값을 안전을 이유로 조용히 변경하지 않는다.
+- native save cancel·overwrite와 temp write·flush·reparse·atomic replace 실패에서 target 보존과 잔여 임시 파일 0개를 검사한다.
+- release E2E는 생성 파일을 독립 parser와 앱 import preview로 다시 읽고 export 전후 DB 논리 스냅샷이 같은지 대사한다.
 - 실제 첨부 파일은 repository fixture로 사용하지 않고 synthetic fixture를 만든다.
 
 ## Date / Calendar Gate

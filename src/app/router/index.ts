@@ -66,7 +66,7 @@ const router = createRouter({
       component: DataExchangePage,
       meta: {
         title: "데이터 관리",
-        description: "계약조회 Excel·CSV 파일을 확인하고 안전하게 가져옵니다.",
+        description: "계약조회 Excel·CSV 파일을 안전하게 내보내고 가져옵니다.",
       },
     },
     {

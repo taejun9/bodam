@@ -3,7 +3,9 @@
 import { flushPromises, mount } from "@vue/test-utils";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import ContractExportPanel from "../components/ContractExportPanel.vue";
 import DataExchangeWorkspace from "../components/DataExchangeWorkspace.vue";
+import type { ContractExportUiPort } from "../components/contract-export-ui";
 import type { ImportUiPort } from "../components/data-exchange-ui";
 import {
   dataExchangeUiIds,
@@ -32,6 +34,29 @@ describe("data exchange error and focus contracts", () => {
   afterEach(() => {
     document.body.replaceChildren();
     vi.restoreAllMocks();
+  });
+
+  it("describes every disabled Browser export action with visible safe guidance", async () => {
+    const exportPort: ContractExportUiPort = {
+      loadSummary: vi.fn(),
+      save: vi.fn(),
+    };
+    const wrapper = mount(ContractExportPanel, {
+      attachTo: document.body,
+      props: { nativeRuntime: false, externalBusy: false, port: exportPort },
+    });
+    await flushPromises();
+
+    for (const testId of ["export-xlsx", "export-csv"]) {
+      const button = wrapper.get(`[data-testid='${testId}']`);
+      const describedBy = button.attributes("aria-describedby")?.split(" ") ?? [];
+      expect(button.attributes("disabled")).toBeDefined();
+      expect(describedBy.length).toBeGreaterThanOrEqual(3);
+      expect(describedBy.every((id) => document.getElementById(id) !== null)).toBe(true);
+    }
+    expect(wrapper.get("[data-testid='contract-export-panel']").attributes("aria-labelledby"))
+      .toBe("contract-export-title");
+    expect(exportPort.loadSummary).not.toHaveBeenCalled();
   });
 
   it("focuses a safe file alert without echoing unknown error content", async () => {

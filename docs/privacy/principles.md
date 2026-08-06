@@ -54,7 +54,15 @@ form, import schema, memo 도움말, test fixture, log에도 위 항목을 위�
 - 21열 source text/null은 재업로드 duplicate 판정과 승인된 같은 열 export를 위해 Policy별 이름 있는 column으로만 저장한다. 검색·분석용 raw JSON이나 원본 파일 사본은 만들지 않는다.
 - source는 연결 Policy와 같은 기간 보존한다. Policy 또는 Customer가 soft delete되면 기본 조회·duplicate·향후 export에서 숨고 복원 시 다시 포함된다.
 - plan-010은 저장된 source의 별도 조회·수정·삭제 UI를 제공하지 않는다. preview에서만 사용자가 펼쳐 볼 수 있다.
-- 향후 export와 SQLite backup에는 원본 DB와 같은 민감도로 포함한다. hard purge·암호화·보존 기간 변경은 별도 승인 계획이 필요하다.
+- plan-011 export와 향후 SQLite backup에는 원본 DB와 같은 민감도로 포함한다. hard purge·암호화·보존 기간 변경은 별도 승인 계획이 필요하다.
+
+## Contract Export
+
+- active Customer·Policy에 연결된 1:1 source와 현재 domain mapping이 일치하는 행만 내보낸다. source 없는 수동 계약이나 충돌 행을 추측해 합성하지 않고 제외 건수만 표시한다.
+- native save dialog가 반환한 path만 사용하고 UI command나 성공 결과에 전체 path를 노출하지 않는다. 결과와 log에는 format, basename, 단계와 건수만 둔다.
+- 생성 중간 파일은 선택 target과 같은 directory에서 예측 불가능한 이름으로 만들고 flush·재parse 검증 뒤 원자 교체한다. 취소·실패 뒤 임시 파일을 남기지 않고 기존 target을 보존한다.
+- CSV formula trigger는 원문에 escape 문자를 삽입하지 않고 전체 CSV 저장을 거부한다. XLSX cell은 formula가 아닌 string으로 기록한다.
+- export 파일은 암호화하지 않은 평문이며 DB와 같은 민감도로 안내한다. 공유·동기화 폴더를 기본값으로 권하지 않고 보관 위치의 OS 계정·디스크 보호 책임을 설명한다.
 
 ## Tauri Capability
 

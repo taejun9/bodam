@@ -33,8 +33,8 @@ use coverage::CoverageRepository;
 use customer::commands::{create_customer, delete_customer, list_customers, update_customer};
 use customer::CustomerRepository;
 use data_exchange::{
-    choose_contract_import_file, commit_contract_import, load_contract_import_context,
-    DataExchangeRepository,
+    choose_contract_import_file, commit_contract_import, load_contract_export_summary,
+    load_contract_import_context, save_contract_export, DataExchangeRepository,
 };
 use family::commands::{
     add_family_membership, create_family, delete_family, delete_family_membership, list_families,
@@ -117,6 +117,8 @@ pub fn run() {
             choose_contract_import_file,
             load_contract_import_context,
             commit_contract_import,
+            load_contract_export_summary,
+            save_contract_export,
             list_consultations,
             create_consultation,
             update_consultation,

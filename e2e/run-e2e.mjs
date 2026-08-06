@@ -7,11 +7,20 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 const projectRoot = fileURLToPath(new globalThis.URL("..", import.meta.url));
+const e2eTargetDirectory = resolve(projectRoot, "src-tauri", "target", "e2e");
+const baseEnvironment = {
+  ...process.env,
+  CARGO_TARGET_DIR: e2eTargetDirectory,
+};
 const runtimeDirectory = mkdtempSync(resolve(tmpdir(), "bodam-e2e-"));
 const customerDatabasePath = resolve(runtimeDirectory, "bodam-e2e.sqlite3");
 const dataExchangeDatabasePath = resolve(runtimeDirectory, "data-exchange-e2e.sqlite3");
 const csvDatabasePath = resolve(runtimeDirectory, "data-exchange-csv-e2e.sqlite3");
 const rollbackDatabasePath = resolve(runtimeDirectory, "data-exchange-rollback-e2e.sqlite3");
+const xlsxExportPath = resolve(runtimeDirectory, "synthetic-contracts-export.xlsx");
+const csvExportPath = resolve(runtimeDirectory, "synthetic-contracts-export.csv");
+const xlsxExportSnapshotPath = resolve(runtimeDirectory, "synthetic-export-xlsx.json");
+const csvExportSnapshotPath = resolve(runtimeDirectory, "synthetic-export-csv.json");
 const sourceXlsxFixture = resolve(
   projectRoot,
   "tests",
@@ -34,6 +43,12 @@ const databasePaths = [
   csvDatabasePath,
   rollbackDatabasePath,
 ];
+const generatedPaths = [
+  xlsxExportPath,
+  csvExportPath,
+  xlsxExportSnapshotPath,
+  csvExportSnapshotPath,
+];
 const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
 
 function cleanDatabase(databasePath) {
@@ -47,6 +62,7 @@ function removeRuntimeDirectory() {
     databasePaths.forEach(cleanDatabase);
     rmSync(runtimeXlsxFixture, { force: true });
     rmSync(runtimeCsvFixture, { force: true });
+    generatedPaths.forEach((path) => rmSync(path, { force: true }));
   } catch {
     // Recursive removal below retries locked Windows handles and remains authoritative.
   }
@@ -83,6 +99,33 @@ function runScript(name, environment = process.env) {
   }
 }
 
+function runContractExport(format, environment, exportPath, snapshotPath) {
+  const exportEnvironment = {
+    ...environment,
+    BODAM_E2E_EXPORT_FORMAT: format,
+    BODAM_E2E_EXPORT_PATH: exportPath,
+    BODAM_E2E_EXPORT_SNAPSHOT_PATH: snapshotPath,
+  };
+  runScript("e2e:data-exchange-export-prepare", exportEnvironment);
+  runScript("e2e:data-exchange-export-assert", {
+    ...exportEnvironment,
+    BODAM_E2E_EXPORT_ASSERT_MODE: "snapshot",
+  });
+  runScript("e2e:data-exchange-export", exportEnvironment);
+  runScript("e2e:data-exchange-export-assert", {
+    ...exportEnvironment,
+    BODAM_E2E_EXPORT_ASSERT_MODE: format,
+  });
+  runScript("e2e:data-exchange-export-roundtrip", {
+    ...exportEnvironment,
+    BODAM_E2E_IMPORT_PATH: exportPath,
+  });
+  runScript("e2e:data-exchange-export-assert", {
+    ...exportEnvironment,
+    BODAM_E2E_EXPORT_ASSERT_MODE: format,
+  });
+}
+
 try {
   if (!existsSync(sourceXlsxFixture) || !existsSync(sourceCsvFixture)) {
     throw new Error("synthetic contract import fixtures are unavailable");
@@ -90,20 +133,21 @@ try {
   databasePaths.forEach(cleanDatabase);
   rmSync(runtimeXlsxFixture, { force: true });
   rmSync(runtimeCsvFixture, { force: true });
+  generatedPaths.forEach((path) => rmSync(path, { force: true }));
   copyFileSync(sourceXlsxFixture, runtimeXlsxFixture);
   copyFileSync(sourceCsvFixture, runtimeCsvFixture);
   const xlsxDigest = fileDigest(runtimeXlsxFixture);
   const csvDigest = fileDigest(runtimeCsvFixture);
   const buildScript = process.platform === "darwin" ? "e2e:build:macos" : "e2e:build";
-  runScript(buildScript);
+  runScript(buildScript, baseEnvironment);
   const customerEnvironment = {
-    ...process.env,
+    ...baseEnvironment,
     BODAM_E2E_DB_PATH: customerDatabasePath,
   };
   runScript("e2e:write", customerEnvironment);
   runScript("e2e:persistence", customerEnvironment);
   const dataExchangeEnvironment = {
-    ...process.env,
+    ...baseEnvironment,
     BODAM_E2E_DB_PATH: dataExchangeDatabasePath,
     BODAM_E2E_IMPORT_PATH: runtimeXlsxFixture,
   };
@@ -113,10 +157,16 @@ try {
     BODAM_E2E_ASSERT_MODE: "xlsx",
   });
   runScript("e2e:data-exchange-persistence", dataExchangeEnvironment);
+  runContractExport(
+    "xlsx",
+    dataExchangeEnvironment,
+    xlsxExportPath,
+    xlsxExportSnapshotPath,
+  );
   assertFileUnchanged(runtimeXlsxFixture, xlsxDigest);
 
   const csvEnvironment = {
-    ...process.env,
+    ...baseEnvironment,
     BODAM_E2E_DB_PATH: csvDatabasePath,
     BODAM_E2E_IMPORT_PATH: runtimeCsvFixture,
   };
@@ -126,10 +176,11 @@ try {
     BODAM_E2E_ASSERT_MODE: "csv",
   });
   runScript("e2e:data-exchange-csv-persistence", csvEnvironment);
+  runContractExport("csv", csvEnvironment, csvExportPath, csvExportSnapshotPath);
   assertFileUnchanged(runtimeCsvFixture, csvDigest);
 
   const rollbackEnvironment = {
-    ...process.env,
+    ...baseEnvironment,
     BODAM_E2E_DB_PATH: rollbackDatabasePath,
     BODAM_E2E_IMPORT_PATH: runtimeXlsxFixture,
     BODAM_E2E_IMPORT_FAIL_SOURCE_ROW: "4",

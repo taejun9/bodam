@@ -88,4 +88,30 @@ impl ImportSourceCells {
             original_recruiter_name,
         }
     }
+
+    pub(crate) fn values(&self) -> [Option<&str>; 21] {
+        [
+            self.no.as_deref(),
+            self.collection_reflected_on.as_deref(),
+            self.affiliation.as_deref(),
+            self.manager.as_deref(),
+            self.collection_code.as_deref(),
+            self.contract.as_deref(),
+            self.insurer.as_deref(),
+            self.product_name.as_deref(),
+            self.policy_number.as_deref(),
+            self.contracted_on.as_deref(),
+            self.status.as_deref(),
+            self.final_payment_month.as_deref(),
+            self.payment_sequence.as_deref(),
+            self.payment_premium.as_deref(),
+            self.contractor.as_deref(),
+            self.insured.as_deref(),
+            self.coverage_starts_on.as_deref(),
+            self.coverage_ends_on.as_deref(),
+            self.collection_method.as_deref(),
+            self.payment_term.as_deref(),
+            self.original_recruiter_name.as_deref(),
+        ]
+    }
 }

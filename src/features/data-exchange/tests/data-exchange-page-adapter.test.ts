@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { createContractExportPagePort } from "../pages/contract-export-page-adapter";
 import { createDataExchangePagePort } from "../pages/data-exchange-page-adapter";
 import { buildImportPreview, prepareImportFile } from "../services/import-preview";
 import type { ImportCommitResult } from "../types/import-commit";
@@ -21,6 +22,29 @@ const committed: ImportCommitResult = {
 };
 
 describe("data exchange page adapter", () => {
+  it("preserves export ready, cancel, and stale operation states", async () => {
+    const summary = {
+      exportableCount: 2,
+      missingSourceCount: 1,
+      conflictCount: 1,
+      csvAllowed: true,
+    };
+    const application = {
+      loadSummary: vi.fn().mockResolvedValue({ status: "ready", summary }),
+      save: vi.fn()
+        .mockResolvedValueOnce({ status: "cancelled" })
+        .mockResolvedValueOnce({ status: "stale" }),
+      clear: vi.fn(),
+    };
+    const port = createContractExportPagePort(application);
+
+    await expect(port.loadSummary()).resolves.toEqual({ status: "ready", summary });
+    await expect(port.save("xlsx")).resolves.toEqual({ status: "cancelled" });
+    await expect(port.save("csv")).resolves.toEqual({ status: "stale" });
+    port.clear?.();
+    expect(application.clear).toHaveBeenCalledOnce();
+  });
+
   it("maps the core preview without losing source text or exposing customer ids in labels", async () => {
     const corePreview = buildImportPreview(
       prepareImportFile(parsedFile()),

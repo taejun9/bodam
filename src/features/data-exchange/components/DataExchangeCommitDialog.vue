@@ -9,6 +9,7 @@ const props = defineProps<{
   skipping: number;
   newCustomers: number;
   committing: boolean;
+  blocked?: boolean;
   error?: string | undefined;
 }>();
 
@@ -53,6 +54,7 @@ function requestClose() {
       <AppButton
         variant="primary"
         :loading="committing"
+        :disabled="blocked"
         data-testid="confirm-import"
         @click="emit('confirm')"
       >

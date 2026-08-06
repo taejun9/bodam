@@ -1,0 +1,244 @@
+.contract-export-panel {
+  display: grid;
+  min-width: 0;
+  padding: 19px 20px;
+  gap: 14px;
+}
+
+.export-header,
+.export-heading,
+.export-actions,
+.export-result,
+.export-result dl {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+}
+
+.export-header {
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.export-heading {
+  gap: 13px;
+}
+
+.export-heading > div,
+.export-result > div {
+  min-width: 0;
+}
+
+.export-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  color: var(--brand-700);
+  background: var(--brand-50);
+  border: 1px solid var(--brand-100);
+  border-radius: 11px;
+  flex: 0 0 auto;
+  place-items: center;
+}
+
+.export-heading > div > span {
+  color: var(--brand-700);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.export-heading h2 {
+  margin: 2px 0 0;
+  font-size: 17px;
+}
+
+.export-heading p,
+.export-security-note p,
+.export-alert p,
+.export-result p {
+  margin: 4px 0 0;
+  color: var(--text-secondary);
+  font-size: 10px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.export-actions {
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
+.export-runtime-note,
+.export-file-contract,
+.export-csv-note,
+.export-live-state,
+.export-security-note,
+.export-alert {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.export-runtime-note,
+.export-csv-note.is-blocked {
+  color: var(--warning);
+  background: var(--warning-bg);
+  border: 1px solid color-mix(in srgb, var(--warning) 22%, transparent);
+}
+
+.export-file-contract {
+  padding-block: 2px;
+  color: var(--text-secondary);
+}
+
+.export-summary {
+  display: grid;
+  min-width: 0;
+  margin: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.export-summary > div,
+.export-result dl > div {
+  display: grid;
+  min-width: 0;
+  padding: 10px 11px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  gap: 2px;
+}
+
+.export-summary dt,
+.export-result dt {
+  color: var(--text-secondary);
+  font-size: 9px;
+}
+
+.export-summary dd,
+.export-result dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 17px;
+  font-weight: 750;
+}
+
+.export-csv-note {
+  color: var(--text-secondary);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+}
+
+.export-security-note {
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+}
+
+.export-security-note strong,
+.export-alert strong,
+.export-result strong {
+  color: var(--text-main);
+  font-size: 11px;
+}
+
+.export-live-state {
+  color: var(--text-secondary);
+  background: var(--bg-subtle);
+}
+
+.export-alert {
+  color: var(--danger);
+  background: var(--danger-bg);
+  border: 1px solid color-mix(in srgb, var(--danger) 24%, transparent);
+}
+
+.export-alert p {
+  margin-bottom: 9px;
+  color: var(--danger);
+}
+
+.export-alert:focus,
+.export-result:focus {
+  outline: 3px solid color-mix(in srgb, var(--focus) 32%, transparent);
+  outline-offset: 2px;
+}
+
+.export-result {
+  padding: 13px 14px;
+  background: var(--success-bg);
+  border: 1px solid color-mix(in srgb, var(--success) 24%, transparent);
+  border-radius: 8px;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.export-result p {
+  max-width: 100%;
+}
+
+.export-result p span {
+  color: var(--success);
+  font-weight: 800;
+}
+
+.export-result dl {
+  margin: 0;
+  flex: 0 0 auto;
+  gap: 6px;
+}
+
+.export-result dl > div {
+  min-width: 76px;
+  background: color-mix(in srgb, var(--bg-surface) 72%, transparent);
+}
+
+@media (max-width: 720px) {
+  .contract-export-panel {
+    padding: 16px;
+  }
+
+  .export-header,
+  .export-result {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .export-actions,
+  .export-result dl {
+    display: grid;
+    width: 100%;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .export-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .export-result dl {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .export-result dl > div {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 420px) {
+  .export-heading {
+    align-items: flex-start;
+  }
+
+  .export-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .export-result dl {
+    grid-template-columns: 1fr;
+  }
+}

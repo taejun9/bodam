@@ -1,8 +1,8 @@
 # BODAM (보담)
 
-보험설계사 한 명이 고객, 가족, 보험계약, 보장, 상담, 일정과 백업을 인터넷 없이 관리하는 Windows 우선 개인용 데스크톱 CRM입니다.
+보험설계사 한 명이 고객, 가족, 보험계약, 보장, 상담과 일정을 인터넷 없이 관리하는 Windows 우선 개인용 데스크톱 CRM입니다.
 
-현재 고객·가족·보험계약·계약별 보장·고객별 상담·사용자 일정과 보장 기준 관리가 동작합니다. Tauri 데스크톱 앱에서 각 원본을 생성·수정·soft delete하고, 고객·가족 월보험료와 고객 카테고리별 보장 판정, 오늘의 Dashboard와 월간 Calendar를 확인할 수 있습니다. 승인된 21열 계약조회 `.xlsx`/`.csv`도 검증·미리보기 뒤 로컬 SQLite에 가져올 수 있습니다. Dashboard·Calendar read model은 저장 없이 요청 시 다시 계산됩니다.
+현재 고객·가족·보험계약·계약별 보장·고객별 상담·사용자 일정과 보장 기준 관리가 동작합니다. Tauri 데스크톱 앱에서 각 원본을 생성·수정·soft delete하고, 고객·가족 월보험료와 고객 카테고리별 보장 판정, 오늘의 Dashboard와 월간 Calendar를 확인할 수 있습니다. 승인된 21열 계약조회 `.xlsx`/`.csv`를 검증·미리보기 뒤 로컬 SQLite에 가져오고, 보존 source와 현재 계약 값이 일치하는 활성 계약을 같은 21열 파일로 내보낼 수 있습니다. Dashboard·Calendar read model은 저장 없이 요청 시 다시 계산됩니다.
 
 ## 핵심 원칙
 
@@ -66,6 +66,8 @@ Windows 배포 대상은 WebView2 offline installer를 포함하도록 구성되
 - native 파일 선택을 통한 21열 계약조회 `.xlsx`/UTF-8 BOM CSV 검증·미리보기
 - 행별 기존/새 Customer 명시 연결과 duplicate 기본 skip·exact update·별도 생성
 - 선택한 유효 행의 Customer·Policy·21열 source 단일 transaction 반영과 전체 rollback
+- 활성 Customer·Policy의 보존된 21열 source와 현재 7개 mapping 값이 일치하는 계약의 XLSX/CSV 내보내기
+- source 없는 수동 계약과 현재 값·source가 충돌하는 계약의 제외 건수, native 저장·취소·덮어쓰기 경계
 
 ### 계약 파일 가져오기 사용 흐름
 
@@ -75,6 +77,15 @@ Windows 배포 대상은 WebView2 offline installer를 포함하도록 구성되
 4. 확인 dialog에서 모두 반영하면 선택한 유효 행을 한 transaction으로 처리합니다. 중복 상태나 부모가 바뀌었거나 어느 한 행이 실패하면 전체를 취소하고 새 미리보기를 요구합니다.
 
 파일에는 민감한 고객·계약 정보가 포함될 수 있습니다. 주민등록번호, 보험사 로그인 정보, 민감 병력·상세 병력이 든 파일은 가져오지 마세요. 저장된 21열 source는 재업로드 duplicate와 향후 같은 열 export를 위한 값이며 별도 source 수정 UI는 아직 없습니다.
+
+### 계약 파일 내보내기 사용 흐름
+
+1. 왼쪽 `데이터 관리`에서 XLSX 또는 CSV 내보내기를 선택합니다. 활성 Customer의 활성 계약 중 가져오기에서 보존한 21열 source가 있고, source를 다시 해석한 7개 값이 현재 계약과 정확히 같은 행만 대상입니다.
+2. source 없는 수동 계약과 가져오기 뒤 현재 계약 값이 달라진 행은 각각 `원본 없음`, `현재 값과 원본 불일치`로 집계하고 파일에서 제외합니다. 앱은 어느 쪽 값도 조용히 우선하거나 21열을 추측해 만들지 않습니다.
+3. native 저장 창에서 위치와 파일명을 결정합니다. 취소하면 파일과 DB를 바꾸지 않으며, 기존 파일 교체는 저장 창에서 사용자가 승인한 경우에만 수행합니다.
+4. XLSX는 `계약조회(엑셀변환)_장기` sheet와 A:U text/blank/style 계약을, CSV는 UTF-8 BOM·CRLF·RFC 4180·정확히 21개 field 계약을 사용합니다. CSV cell이 spreadsheet formula로 해석될 수 있는 문자로 시작하면 원본을 바꾸지 않고 CSV 전체 저장을 거부하며 XLSX 사용을 안내합니다.
+
+내보낸 파일은 평문이며 SQLite와 같은 민감도의 고객·계약 정보를 포함할 수 있습니다. 공유 폴더·동기화 폴더를 피하고 운영체제 계정·디스크 접근 통제가 적용된 위치에 보관하세요. 성공 화면과 log에는 전체 경로나 행 값을 남기지 않고 파일명과 건수만 표시합니다.
 
 ### 보장 사용 흐름
 
@@ -139,7 +150,7 @@ SQLite 파일은 Tauri가 결정한 운영체제별 app-data 디렉터리의 `bo
 - Dashboard 기간·표시 건수 사용자 설정, chart와 OS notification은 아직 제공하지 않습니다.
 - Calendar의 주·일 보기, 반복·우선순위·drag and drop, 완료 일정 자동 숨김과 일정 복원은 제공하지 않습니다.
 - 상담 복원·purge, 상담 유형·채널·태그·첨부와 외부 전화·메시지 연동은 제공하지 않습니다.
-- 계약 파일 export, source 수정·purge, 여러 파일 동시 처리와 background import는 제공하지 않습니다.
+- source 없는 수동 계약의 21열 합성, 현재 계약 값과 source가 충돌할 때의 자동 우선순위, 선택 고객·기간 export는 제공하지 않습니다. source 수정·purge, 여러 파일 동시 처리와 background import/export도 제공하지 않습니다.
 
 ## 시작 위치
 
@@ -162,9 +173,9 @@ SQLite 파일은 Tauri가 결정한 운영체제별 app-data 디렉터리의 `bo
     npm run qa
     npm run verify
 
-`qa`는 일상적으로 실행 가능한 비-GUI 검사입니다. `verify`는 `qa` 다음에 release-mode Tauri 앱을 실제로 실행하는 WebdriverIO E2E까지 수행합니다. E2E는 분리된 합성 고객·XLSX·CSV·rollback 임시 SQLite만 사용하며 종료 시 DB와 runtime fixture를 삭제합니다.
+`qa`는 일상적으로 실행 가능한 비-GUI 검사입니다. `verify`는 `qa` 다음에 release-mode Tauri 앱을 실제로 실행하는 WebdriverIO E2E까지 수행합니다. E2E는 분리된 합성 고객·XLSX·CSV·rollback 임시 SQLite만 사용하며 종료 시 DB, 내보낸 파일과 runtime fixture를 삭제합니다.
 
-네이티브 앱의 고객·가족·보험계약·보장·Benchmark 판정·상담·일정, Dashboard 8개 카드, Calendar 5종 event와 XLSX/CSV 계약 가져오기·원자 rollback·프로세스 재시작 지속성을 다시 확인하려면 다음 명령을 사용합니다.
+네이티브 앱의 고객·가족·보험계약·보장·Benchmark 판정·상담·일정, Dashboard 8개 카드, Calendar 5종 event와 XLSX/CSV 계약 가져오기·내보내기·원자 rollback·프로세스 재시작 지속성을 다시 확인하려면 다음 명령을 사용합니다. 내보내기 E2E는 생성 파일의 21열 값을 독립적으로 재해석하고 앱 import preview로 다시 열며, 전후 SQLite 논리 스냅샷이 같은지도 확인합니다.
 
     npm run test:e2e
 

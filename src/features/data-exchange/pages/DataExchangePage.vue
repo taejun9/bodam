@@ -1,11 +1,27 @@
 <script setup lang="ts">
-import { dataExchangeApplication } from "@/app/composition/data-exchange";
+import { nextTick, ref } from "vue";
+
+import {
+  contractExportApplication,
+  dataExchangeApplication,
+} from "@/app/composition/data-exchange";
+import ContractExportPanel from "@/features/data-exchange/components/ContractExportPanel.vue";
 import DataExchangeWorkspace from "@/features/data-exchange/components/DataExchangeWorkspace.vue";
 
+import { createContractExportPagePort } from "./contract-export-page-adapter";
 import { createDataExchangePagePort } from "./data-exchange-page-adapter";
 
 const nativeRuntime = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 const port = createDataExchangePagePort(dataExchangeApplication);
+const exportPort = createContractExportPagePort(contractExportApplication);
+const importBusy = ref(false);
+const exportBusy = ref(false);
+const exportPanel = ref<{ refresh: () => Promise<void> }>();
+
+async function refreshExportSummary() {
+  await nextTick();
+  await exportPanel.value?.refresh();
+}
 </script>
 
 <template>
@@ -14,21 +30,37 @@ const port = createDataExchangePagePort(dataExchangeApplication);
       <div>
         <span>Local data exchange</span>
         <h2 id="data-exchange-page-title">데이터 관리</h2>
-        <p>원본 파일을 바꾸지 않고 계약 행을 검증한 뒤 명시적으로 반영합니다.</p>
+        <p>계약 파일을 안전하게 내보내고, 원본을 바꾸지 않은 채 검증해 가져옵니다.</p>
       </div>
     </header>
 
-    <DataExchangeWorkspace :native-runtime="nativeRuntime" :port="port" />
+    <ContractExportPanel
+      ref="exportPanel"
+      :native-runtime="nativeRuntime"
+      :external-busy="importBusy"
+      :port="exportPort"
+      @busy-change="exportBusy = $event"
+    />
+
+    <DataExchangeWorkspace
+      :native-runtime="nativeRuntime"
+      :external-busy="exportBusy"
+      :port="port"
+      @busy-change="importBusy = $event"
+      @data-change="refreshExportSummary"
+    />
   </section>
 </template>
 
 <style scoped>
 .data-exchange-page {
+  display: grid;
   min-width: 0;
+  gap: 14px;
 }
 
 .data-exchange-page-header {
-  margin-bottom: 18px;
+  margin-bottom: 4px;
 }
 
 .data-exchange-page-header span {

@@ -9,6 +9,8 @@ use crate::error::AppError;
 use super::commit::commit_import;
 use super::commit_model::{ImportCommitRequest, ImportCommitResult};
 use super::context::{load_context, ImportContextQuery, ImportContextSnapshot};
+use super::export_model::ContractExportSnapshot;
+use super::export_query::load_export_snapshot;
 
 pub(crate) struct DataExchangeRepository {
     connection: Mutex<Connection>,
@@ -42,6 +44,11 @@ impl DataExchangeRepository {
     ) -> Result<ImportCommitResult, AppError> {
         let mut connection = self.lock()?;
         commit_import(&mut connection, request)
+    }
+
+    pub(super) fn export_snapshot(&self) -> Result<ContractExportSnapshot, AppError> {
+        let connection = self.lock()?;
+        load_export_snapshot(&connection)
     }
 
     pub(super) fn lock(&self) -> Result<MutexGuard<'_, Connection>, AppError> {

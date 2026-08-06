@@ -9,9 +9,17 @@ if (!databasePath || !isAbsolute(databasePath) || !databasePath.endsWith(".sqlit
   throw new Error("BODAM_E2E_DB_PATH must be an absolute temporary SQLite path");
 }
 
-const releaseDirectory = resolve(projectRoot, "src-tauri", "target", "release");
+const targetDirectory = resolve(projectRoot, "src-tauri", "target", "e2e");
+const configuredTargetDirectory = process.env.CARGO_TARGET_DIR;
+if (configuredTargetDirectory && (
+  !isAbsolute(configuredTargetDirectory) ||
+  resolve(configuredTargetDirectory) !== targetDirectory
+)) {
+  throw new Error("CARGO_TARGET_DIR must be the isolated BODAM E2E target");
+}
+const releaseDirectory = resolve(targetDirectory, "release");
 const appBinaryPath = process.platform === "darwin"
-  ? resolve(releaseDirectory, "bundle", "macos", "BODAM.app", "Contents", "MacOS", "bodam")
+  ? resolve(releaseDirectory, "bundle", "macos", "BODAM E2E.app", "Contents", "MacOS", "bodam")
   : resolve(releaseDirectory, process.platform === "win32" ? "bodam.exe" : "bodam");
 
 export const config = {

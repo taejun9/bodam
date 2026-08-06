@@ -1,6 +1,9 @@
 {
+  "productName": "BODAM E2E",
+  "identifier": "app.bodam.desktop.e2e",
   "build": {
-    "beforeBuildCommand": "npm run build:e2e"
+    "beforeBuildCommand": "npm run build:e2e",
+    "frontendDist": "../dist-e2e"
   },
   "app": {
     "withGlobalTauri": true

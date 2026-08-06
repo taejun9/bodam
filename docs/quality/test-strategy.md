@@ -52,7 +52,7 @@ desktop test 도구와 CI 환경은 project bootstrap 계획에서 선택한다.
 
 날짜 기반 test는 시스템 현재 시간을 직접 읽지 않는다. KST 기준의 고정 clock과 명시적 기준일을 사용하고 경계 표를 fixture로 유지한다.
 
-## Import golden contract
+## Import / Export golden contract
 
 첨부 workbook에서 구조만 추출해 synthetic golden workbook을 만든다. golden에는 가상의 고객과 계약만 넣고 다음을 비교한다.
 
@@ -61,6 +61,8 @@ desktop test 도구와 CI 환경은 project bootstrap 계획에서 선택한다.
 - 날짜·금액 cell type과 number format
 - 병합, 열 너비, 강조 서식 중 승인된 보존 범위
 - row 단위 validation 결과
+
+export fixture는 active source-backed parity 행만 포함하고 source 없는 수동 계약, domain/source 충돌과 soft-deleted parent를 제외한다. XLSX/CSV 생성 파일은 21개 raw text/null과 안정 정렬을 source table에 대사하고, release app에서 다시 import preview해 parser 호환성을 확인한다. export 전후 전체 사용자 table의 결정적 논리 스냅샷도 같아야 한다.
 
 ## 대사
 
