@@ -81,7 +81,7 @@ export async function createPolicy(policy, verifyInvalidMoney = false) {
 }
 
 export async function excludePolicy(row, updatedPremium) {
-  await row.$(".policy-actions button:not(.danger-action)").click();
+  await row.$("[data-testid='edit-policy']").click();
   const dialog = await $("dialog[open]");
   await dialog.waitForDisplayed();
   await dialog.$("input[name='monthlyPremiumWon']").setValue(updatedPremium);
@@ -92,7 +92,7 @@ export async function excludePolicy(row, updatedPremium) {
 }
 
 export async function removePolicy(row) {
-  await row.$(".policy-actions .danger-action").click();
+  await row.$("[data-testid='delete-policy']").click();
   const dialog = await $("dialog[open]");
   await dialog.waitForDisplayed();
   await dialog.$("button.is-danger").click();

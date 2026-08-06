@@ -1,0 +1,137 @@
+.coverage-summary {
+  margin-bottom: 22px;
+  padding: 20px 22px;
+}
+
+.coverage-summary-header {
+  display: flex;
+  margin-bottom: 16px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.coverage-summary-header h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.coverage-summary-header p {
+  margin: 3px 0 0;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.coverage-summary-state {
+  display: flex;
+  min-height: 74px;
+  padding: 16px;
+  color: var(--text-muted);
+  background: var(--bg-subtle);
+  border: 1px dashed var(--border-strong);
+  border-radius: 9px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  text-align: center;
+}
+
+.coverage-summary-state strong {
+  color: var(--text-main);
+  font-size: 12px;
+}
+
+.coverage-summary-state.is-error {
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-color: color-mix(in srgb, var(--danger) 35%, transparent);
+}
+
+.coverage-summary-state button {
+  margin-top: 5px;
+  padding: 5px 9px;
+  color: var(--danger);
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.coverage-summary-grid {
+  display: grid;
+  padding: 0;
+  margin: 0;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 9px;
+  list-style: none;
+}
+
+.coverage-summary-grid li {
+  display: flex;
+  min-width: 0;
+  padding: 13px 14px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.coverage-summary-grid li > span {
+  display: grid;
+  min-width: 0;
+}
+
+.coverage-summary-grid li > span strong {
+  overflow: hidden;
+  color: var(--text-main);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.coverage-summary-grid small {
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: 9px;
+}
+
+.coverage-summary-grid li > strong {
+  color: var(--brand-700);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.coverage-summary .button-spinner,
+.coverage-dialog-state .button-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: coverage-spin 700ms linear infinite;
+}
+
+@keyframes coverage-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 600px) {
+  .coverage-summary {
+    padding: 17px;
+  }
+
+  .coverage-summary-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .coverage-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}

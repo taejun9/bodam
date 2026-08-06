@@ -42,8 +42,37 @@ model InsurancePolicy {
   updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at")
   deletedAt         DateTime? @map("deleted_at")
   customer          Customer  @relation(fields: [customerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  coverages         Coverage[]
 
   @@index([customerId, deletedAt])
   @@index([maturesOn, deletedAt])
   @@map("insurance_policies")
+}
+
+model CoverageCategory {
+  id        String     @id @default(uuid())
+  name      String
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @default(now()) @updatedAt @map("updated_at")
+  deletedAt DateTime?  @map("deleted_at")
+  coverages Coverage[]
+
+  @@index([deletedAt, name])
+  @@map("coverage_categories")
+}
+
+model Coverage {
+  id         String           @id @default(uuid())
+  policyId   String           @map("policy_id")
+  categoryId String           @map("category_id")
+  amountWon  BigInt           @map("amount_won")
+  createdAt  DateTime         @default(now()) @map("created_at")
+  updatedAt  DateTime         @default(now()) @updatedAt @map("updated_at")
+  deletedAt  DateTime?        @map("deleted_at")
+  policy     InsurancePolicy  @relation(fields: [policyId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  category   CoverageCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([policyId, deletedAt])
+  @@index([categoryId, deletedAt])
+  @@map("coverages")
 }

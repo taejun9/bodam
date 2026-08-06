@@ -6,13 +6,13 @@ import { customerApplication } from "@/app/composition/customer";
 import { insuranceApplication } from "@/app/composition/insurance";
 import type { Customer } from "@/features/customer/types/customer";
 import { customerSafeMessage } from "@/features/customer/types/customer-error";
+import CustomerCoverageSection from "@/features/coverage/components/CustomerCoverageSection.vue";
+import PolicyCoverageDialog from "@/features/coverage/components/PolicyCoverageDialog.vue";
 import InsurancePolicyDeleteDialog from "@/features/insurance/components/InsurancePolicyDeleteDialog.vue";
 import InsurancePolicyFormDialog from "@/features/insurance/components/InsurancePolicyFormDialog.vue";
 import InsurancePolicyTable from "@/features/insurance/components/InsurancePolicyTable.vue";
-import type {
-  InsurancePolicy,
-  InsurancePolicyInput,
-} from "@/features/insurance/types/insurance-policy";
+import { useCustomerInsuranceActions } from "@/features/insurance/composables/use-customer-insurance-actions";
+import type { InsurancePolicy } from "@/features/insurance/types/insurance-policy";
 import {
   InsuranceRepositoryError,
   InsuranceValidationError,
@@ -21,8 +21,6 @@ import {
 import AppButton from "@/shared/components/AppButton.vue";
 import AppIcon from "@/shared/components/AppIcon.vue";
 
-type FieldErrors = Partial<Record<keyof InsurancePolicyInput, string>>;
-
 const route = useRoute();
 const customer = ref<Customer>();
 const policies = ref<InsurancePolicy[]>([]);
@@ -30,17 +28,6 @@ const initialLoading = ref(true);
 const refreshing = ref(false);
 const pageError = ref<string>();
 const notice = ref<string>();
-
-const formOpen = ref(false);
-const selectedPolicy = ref<InsurancePolicy>();
-const submitting = ref(false);
-const formErrors = ref<FieldErrors>({});
-const formSubmitError = ref<string>();
-
-const deleteOpen = ref(false);
-const deletingPolicy = ref<InsurancePolicy>();
-const deleting = ref(false);
-const deleteError = ref<string>();
 
 const moneyFormatter = new Intl.NumberFormat("ko-KR");
 const totalPremium = computed(() => insuranceApplication.total(policies.value));
@@ -60,6 +47,31 @@ function showNotice(message: string) {
   }, 3500);
 }
 
+const {
+  formOpen,
+  selectedPolicy,
+  submitting,
+  formErrors,
+  formSubmitError,
+  deleteOpen,
+  deletingPolicy,
+  deleting,
+  deleteError,
+  coverageDialogOpen,
+  coveragePolicy,
+  coverageRefreshKey,
+  resetDialogs,
+  createPolicy,
+  editPolicy,
+  closeForm,
+  savePolicy,
+  requestDelete,
+  closeDelete,
+  confirmDelete,
+  manageCoverage,
+  coverageChanged,
+} = useCustomerInsuranceActions({ customerId, loadPolicies, showNotice });
+
 async function loadPage() {
   const currentLoad = ++loadNumber;
   initialLoading.value = true;
@@ -68,8 +80,7 @@ async function loadPage() {
   policies.value = [];
   pageError.value = undefined;
   notice.value = undefined;
-  formOpen.value = false;
-  deleteOpen.value = false;
+  resetDialogs();
   try {
     const [customers, loadedPolicies] = await Promise.all([
       customerApplication.list(),
@@ -107,87 +118,6 @@ async function loadPolicies(expectedCustomerId = customerId()) {
     pageError.value = insuranceSafeMessage(error);
   } finally {
     if (expectedCustomerId === customerId()) refreshing.value = false;
-  }
-}
-
-function createPolicy() {
-  selectedPolicy.value = undefined;
-  formErrors.value = {};
-  formSubmitError.value = undefined;
-  formOpen.value = true;
-}
-
-function editPolicy(policy: InsurancePolicy) {
-  selectedPolicy.value = policy;
-  formErrors.value = {};
-  formSubmitError.value = undefined;
-  formOpen.value = true;
-}
-
-function closeForm() {
-  if (!submitting.value) formOpen.value = false;
-}
-
-async function savePolicy(input: InsurancePolicyInput) {
-  const expectedCustomerId = customerId();
-  const policy = selectedPolicy.value;
-  submitting.value = true;
-  formErrors.value = {};
-  formSubmitError.value = undefined;
-  try {
-    if (policy) {
-      await insuranceApplication.update(policy.id, input);
-    } else {
-      await insuranceApplication.create(expectedCustomerId, input);
-    }
-    if (expectedCustomerId !== customerId()) return;
-    showNotice(policy ? "보험계약을 저장했습니다." : "새 보험계약을 등록했습니다.");
-    formOpen.value = false;
-    await loadPolicies(expectedCustomerId);
-  } catch (error) {
-    if (expectedCustomerId !== customerId()) return;
-    if (error instanceof InsuranceValidationError) {
-      const errors: FieldErrors = {};
-      for (const issue of error.issues) {
-        if (issue.field in input) errors[issue.field as keyof InsurancePolicyInput] = issue.message;
-      }
-      formErrors.value = errors;
-      if (Object.keys(errors).length === 0) formSubmitError.value = error.message;
-    } else {
-      formSubmitError.value = insuranceSafeMessage(error);
-    }
-  } finally {
-    submitting.value = false;
-  }
-}
-
-function requestDelete(policy: InsurancePolicy) {
-  deletingPolicy.value = policy;
-  deleteError.value = undefined;
-  deleteOpen.value = true;
-}
-
-function closeDelete() {
-  if (!deleting.value) deleteOpen.value = false;
-}
-
-async function confirmDelete() {
-  if (!deletingPolicy.value) return;
-  const expectedCustomerId = customerId();
-  const policyId = deletingPolicy.value.id;
-  deleting.value = true;
-  deleteError.value = undefined;
-  try {
-    await insuranceApplication.remove(policyId);
-    if (expectedCustomerId !== customerId()) return;
-    deleteOpen.value = false;
-    showNotice("보험계약을 기본 목록에서 삭제했습니다.");
-    await loadPolicies(expectedCustomerId);
-  } catch (error) {
-    if (expectedCustomerId !== customerId()) return;
-    deleteError.value = insuranceSafeMessage(error);
-  } finally {
-    deleting.value = false;
   }
 }
 
@@ -244,6 +174,13 @@ onBeforeUnmount(() => {
         <button type="button" @click="loadPolicies()">다시 시도</button>
       </div>
 
+      <CustomerCoverageSection
+        :customer-id="customerId()"
+        :policies="policies"
+        :refresh-key="coverageRefreshKey"
+        @changed="coverageChanged"
+      />
+
       <header class="policy-list-heading">
         <div>
           <h3>보험계약</h3>
@@ -259,7 +196,12 @@ onBeforeUnmount(() => {
         <AppButton variant="primary" @click="createPolicy">첫 보험계약 등록</AppButton>
       </section>
       <section v-else-if="policies.length > 0" class="policy-list surface" :aria-busy="refreshing">
-        <InsurancePolicyTable :policies="policies" @edit="editPolicy" @remove="requestDelete" />
+        <InsurancePolicyTable
+          :policies="policies"
+          @manage-coverage="manageCoverage"
+          @edit="editPolicy"
+          @remove="requestDelete"
+        />
       </section>
     </template>
 
@@ -279,6 +221,13 @@ onBeforeUnmount(() => {
       :error="deleteError"
       @close="closeDelete"
       @confirm="confirmDelete"
+    />
+    <PolicyCoverageDialog
+      :open="coverageDialogOpen"
+      :customer-id="customerId()"
+      :policy="coveragePolicy"
+      @close="coverageDialogOpen = false"
+      @changed="coverageChanged"
     />
   </section>
 </template>

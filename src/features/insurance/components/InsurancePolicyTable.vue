@@ -6,6 +6,7 @@ defineProps<{
 }>();
 
 const emit = defineEmits<{
+  manageCoverage: [policy: InsurancePolicy];
   edit: [policy: InsurancePolicy];
   remove: [policy: InsurancePolicy];
 }>();
@@ -66,8 +67,20 @@ function dateOrDash(value: string | null): string {
           </td>
           <td>
             <div class="policy-actions">
-              <button type="button" @click="emit('edit', policy)">수정</button>
-              <button class="danger-action" type="button" @click="emit('remove', policy)">
+              <button
+                type="button"
+                data-testid="manage-coverage"
+                :data-policy-id="policy.id"
+                :aria-label="`${policy.productName} 보장 관리`"
+                @click="emit('manageCoverage', policy)"
+              >보장 관리</button>
+              <button data-testid="edit-policy" type="button" @click="emit('edit', policy)">수정</button>
+              <button
+                class="danger-action"
+                data-testid="delete-policy"
+                type="button"
+                @click="emit('remove', policy)"
+              >
                 삭제
               </button>
             </div>
@@ -111,8 +124,20 @@ function dateOrDash(value: string | null): string {
           {{ textOrDash(policy.status) }} · {{ policy.renewable ? "갱신형" : "비갱신형" }}
         </p>
         <footer>
-          <button type="button" @click="emit('edit', policy)">수정</button>
-          <button class="danger-action" type="button" @click="emit('remove', policy)">
+          <button
+            type="button"
+            data-testid="manage-coverage"
+            :data-policy-id="policy.id"
+            :aria-label="`${policy.productName} 보장 관리`"
+            @click="emit('manageCoverage', policy)"
+          >보장 관리</button>
+          <button data-testid="edit-policy" type="button" @click="emit('edit', policy)">수정</button>
+          <button
+            class="danger-action"
+            data-testid="delete-policy"
+            type="button"
+            @click="emit('remove', policy)"
+          >
             삭제
           </button>
         </footer>

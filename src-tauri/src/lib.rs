@@ -1,3 +1,4 @@
+mod coverage;
 mod customer;
 mod database;
 mod error;
@@ -8,6 +9,11 @@ use std::io;
 #[cfg(feature = "e2e")]
 use std::path::PathBuf;
 
+use coverage::commands::{
+    create_coverage, delete_coverage, delete_coverage_category, list_coverage_categories,
+    list_coverages, update_coverage, update_coverage_category,
+};
+use coverage::CoverageRepository;
 use customer::commands::{create_customer, delete_customer, list_customers, update_customer};
 use customer::CustomerRepository;
 use insurance::commands::{
@@ -18,6 +24,7 @@ use insurance::InsurancePolicyRepository;
 use tauri::Manager;
 
 pub(crate) struct AppState {
+    coverages: CoverageRepository,
     customers: CustomerRepository,
     insurance_policies: InsurancePolicyRepository,
 }
@@ -46,7 +53,10 @@ pub fn run() {
                 .map_err(|_| io::Error::other("BODAM database initialization failed"))?;
             let insurance_policies = InsurancePolicyRepository::open(&database_path)
                 .map_err(|_| io::Error::other("BODAM database initialization failed"))?;
+            let coverages = CoverageRepository::open(&database_path)
+                .map_err(|_| io::Error::other("BODAM database initialization failed"))?;
             app.manage(AppState {
+                coverages,
                 customers,
                 insurance_policies,
             });
@@ -60,7 +70,14 @@ pub fn run() {
             list_insurance_policies,
             create_insurance_policy,
             update_insurance_policy,
-            delete_insurance_policy
+            delete_insurance_policy,
+            list_coverage_categories,
+            update_coverage_category,
+            delete_coverage_category,
+            list_coverages,
+            create_coverage,
+            update_coverage,
+            delete_coverage
         ])
         .run(tauri::generate_context!())
         .expect("BODAM desktop runtime failed");

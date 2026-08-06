@@ -1,3 +1,4 @@
+mod coverage;
 mod inspection;
 
 use rusqlite::Connection;
@@ -41,6 +42,13 @@ pub(super) fn verify_registered_version(
             objects.sort();
             objects
         }
+        3 => {
+            let mut objects = owned_objects(CUSTOMER_OBJECTS);
+            objects.extend(owned_objects(INSURANCE_OBJECTS));
+            objects.extend(owned_objects(coverage::OBJECTS));
+            objects.sort();
+            objects
+        }
         _ => return Err(AppError::MigrationDrift),
     };
     if runtime_objects(connection)? != expected {
@@ -51,6 +59,9 @@ pub(super) fn verify_registered_version(
     }
     if applied_count >= 2 {
         verify_insurance_policy_schema(connection)?;
+    }
+    if applied_count >= 3 {
+        coverage::verify_schema(connection)?;
     }
     Ok(())
 }
@@ -176,4 +187,9 @@ pub(super) fn verify_customer_schema_for_test(connection: &Connection) -> Result
 #[cfg(test)]
 pub(super) fn verify_insurance_schema_for_test(connection: &Connection) -> Result<(), AppError> {
     verify_insurance_policy_schema(connection)
+}
+
+#[cfg(test)]
+pub(super) fn verify_coverage_schema_for_test(connection: &Connection) -> Result<(), AppError> {
+    coverage::verify_schema(connection)
 }
