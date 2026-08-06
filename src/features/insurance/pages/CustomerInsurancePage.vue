@@ -176,7 +176,7 @@ onBeforeUnmount(() => {
       </div>
 
       <CustomerCoverageSection
-        :customer-id="customerId()"
+        :customer="customer"
         :policies="policies"
         :refresh-key="coverageRefreshKey"
         @changed="coverageChanged"

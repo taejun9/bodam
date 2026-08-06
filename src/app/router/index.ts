@@ -3,6 +3,7 @@ import { createRouter, createWebHashHistory } from "vue-router";
 import CustomerListPage from "@/features/customer/pages/CustomerListPage.vue";
 import FamilyListPage from "@/features/family/pages/FamilyListPage.vue";
 import CustomerInsurancePage from "@/features/insurance/pages/CustomerInsurancePage.vue";
+import SettingsPage from "@/features/settings/pages/SettingsPage.vue";
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -36,6 +37,15 @@ const router = createRouter({
       meta: {
         title: "고객 상세",
         description: "고객별 보험계약, 보장과 상담 기록을 관리합니다.",
+      },
+    },
+    {
+      path: "/settings",
+      name: "settings",
+      component: SettingsPage,
+      meta: {
+        title: "설정",
+        description: "고객 보장을 비교할 사용자 설정 기준을 관리합니다.",
       },
     },
     {

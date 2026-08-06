@@ -5,6 +5,7 @@ mod database;
 mod error;
 mod family;
 mod insurance;
+mod text;
 
 use std::fs;
 use std::io;
@@ -15,6 +16,10 @@ use consultation::commands::{
     create_consultation, delete_consultation, list_consultations, update_consultation,
 };
 use consultation::ConsultationRepository;
+use coverage::benchmark::commands::{
+    create_coverage_benchmark, delete_coverage_benchmark, list_coverage_benchmarks,
+    update_coverage_benchmark,
+};
 use coverage::commands::{
     create_coverage, delete_coverage, delete_coverage_category, list_coverage_categories,
     list_coverages, update_coverage, update_coverage_category,
@@ -101,6 +106,10 @@ pub fn run() {
             create_coverage,
             update_coverage,
             delete_coverage,
+            list_coverage_benchmarks,
+            create_coverage_benchmark,
+            update_coverage_benchmark,
+            delete_coverage_benchmark,
             list_families,
             create_family,
             update_family,

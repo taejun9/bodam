@@ -22,6 +22,22 @@
   font-size: 10px;
 }
 
+.coverage-benchmark-disclaimer {
+  margin: 0 0 14px;
+  padding: 9px 11px;
+  color: var(--warning);
+  background: var(--warning-bg);
+  border: 1px solid color-mix(in srgb, var(--warning) 24%, transparent);
+  border-radius: 8px;
+  font-size: 10px;
+}
+
+.coverage-benchmark-disclaimer a {
+  margin-left: 5px;
+  font-weight: 700;
+  text-underline-offset: 2px;
+}
+
 .coverage-summary-state {
   display: flex;
   min-height: 74px;
@@ -69,28 +85,33 @@
 }
 
 .coverage-summary-grid li {
-  display: flex;
+  display: grid;
   min-width: 0;
   padding: 13px 14px;
   background: var(--bg-subtle);
   border: 1px solid var(--border);
   border-radius: 9px;
+  gap: 9px;
+}
+
+.coverage-assessment-main {
+  display: flex;
+  min-width: 0;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
 
-.coverage-summary-grid li > span {
+.coverage-assessment-main > span {
   display: grid;
   min-width: 0;
 }
 
-.coverage-summary-grid li > span strong {
-  overflow: hidden;
+.coverage-assessment-main > span strong {
   color: var(--text-main);
   font-size: 11px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .coverage-summary-grid small {
@@ -99,12 +120,58 @@
   font-size: 9px;
 }
 
-.coverage-summary-grid li > strong {
+.coverage-assessment-main > strong {
   color: var(--brand-700);
   font-family: var(--font-mono);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+.coverage-assessment-result {
+  display: flex;
+  min-width: 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  align-items: center;
+  gap: 8px;
+}
+
+.coverage-assessment-result > small {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.coverage-status-chip {
+  display: inline-flex;
+  min-height: 22px;
+  padding: 2px 7px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  flex: 0 0 auto;
+  align-items: center;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.coverage-status-chip.is-insufficient {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.coverage-status-chip.is-adequate {
+  color: var(--success);
+  background: var(--success-bg);
+}
+
+.coverage-status-chip.is-excessive {
+  color: var(--warning);
+  background: var(--warning-bg);
+}
+
+.coverage-status-chip.is-unconfigured {
+  color: var(--text-muted);
+  background: var(--bg-muted);
 }
 
 .coverage-summary .button-spinner,

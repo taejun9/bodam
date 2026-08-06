@@ -1,3 +1,4 @@
+pub(crate) mod benchmark;
 pub(crate) mod commands;
 mod model;
 mod repository;

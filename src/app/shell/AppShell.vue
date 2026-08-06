@@ -48,8 +48,8 @@ const navigation = [
 ];
 
 const utilities = [
-  { label: "데이터 관리", icon: "database" as const },
-  { label: "설정", icon: "settings" as const },
+  { label: "데이터 관리", icon: "database" as const, pending: true },
+  { label: "설정", icon: "settings" as const, to: "/settings" },
 ];
 </script>
 
@@ -106,18 +106,29 @@ const utilities = [
         </template>
 
         <p class="nav-heading nav-heading-utility">관리</p>
-        <button
-          v-for="item in utilities"
-          :key="item.label"
-          class="nav-item is-pending"
-          type="button"
-          disabled
-          :title="`${item.label} — 준비 중`"
-        >
-          <AppIcon :name="item.icon" />
-          <span>{{ item.label }}</span>
-          <em>준비 중</em>
-        </button>
+        <template v-for="item in utilities" :key="item.label">
+          <RouterLink
+            v-if="item.to"
+            class="nav-item"
+            :to="item.to"
+            :title="ui.sidebarCollapsed ? item.label : undefined"
+            @click="ui.closeMobileNavigation"
+          >
+            <AppIcon :name="item.icon" />
+            <span>{{ item.label }}</span>
+          </RouterLink>
+          <button
+            v-else
+            class="nav-item is-pending"
+            type="button"
+            disabled
+            :title="`${item.label} — 준비 중`"
+          >
+            <AppIcon :name="item.icon" />
+            <span>{{ item.label }}</span>
+            <em>준비 중</em>
+          </button>
+        </template>
       </nav>
 
       <div class="sidebar-footer">

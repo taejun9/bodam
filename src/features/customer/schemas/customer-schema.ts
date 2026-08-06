@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+import {
+  isUnicodeScalarText,
+  trimEcmascriptWhitespace,
+} from "@/shared/text-normalization";
+
 import type {
   Customer,
   CustomerDeleteResult,
@@ -18,7 +23,7 @@ const nullableTextSchema = z.preprocess((value) => {
   }
 
   if (typeof value === "string") {
-    const trimmed = value.trim();
+    const trimmed = trimEcmascriptWhitespace(value);
     return trimmed.length === 0 ? null : trimmed;
   }
 
@@ -55,11 +60,15 @@ const customerSearchSchema = nullableTextSchema.refine(
   (value) => value === null || Array.from(value).length <= 100,
   "검색어는 100자 이내로 입력해 주세요.",
 );
+const nullableGenderSchema = nullableTextSchema.refine(
+  (value) => value === null || isUnicodeScalarText(value),
+  "성별은 유효한 Unicode 문자여야 합니다.",
+);
 
 const customerInputShape = {
   name: customerNameSchema,
   birthDate: nullableDateOnlySchema,
-  gender: nullableTextSchema,
+  gender: nullableGenderSchema,
   phone: nullableTextSchema,
   address: nullableTextSchema,
   memo: nullableTextSchema,

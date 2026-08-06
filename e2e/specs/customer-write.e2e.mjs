@@ -47,6 +47,7 @@ import {
   waitForPolicyPage,
   waitForPremium,
 } from "../policy.fixture.mjs";
+import { runBenchmarkWriteScenario } from "../scenarios/benchmark-write.mjs";
 import { runConsultationWriteScenario } from "../scenarios/consultation-write.mjs";
 
 describe("BODAM native write flow", () => {
@@ -73,6 +74,8 @@ describe("BODAM native write flow", () => {
     createDialog = await $("dialog[open]");
     await createDialog.waitForDisplayed();
     await createDialog.$("input[name='name']").setValue(syntheticCustomer.seed);
+    await createDialog.$("input[name='birthDate']").setValue(syntheticCustomer.birthDate);
+    await createDialog.$("input[name='gender']").setValue(syntheticCustomer.gender);
     await createDialog.$("input[name='phone']").setValue("010-0000-0001");
     await createDialog.$("input[name='status']").setValue("합성 신규");
     await createDialog.$("button[type='submit']").click();
@@ -186,6 +189,10 @@ describe("BODAM native write flow", () => {
       "50000",
       1,
     )).getText()).toContain("합성 입원 보장");
+  });
+
+  it("persists coverage benchmarks and customer classifications through real Tauri IPC", async () => {
+    await runBenchmarkWriteScenario();
   });
 
   it("persists Family membership and premium totals through real Tauri IPC", async () => {

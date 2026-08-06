@@ -45,6 +45,7 @@ import {
   waitForPolicy,
   waitForPremium,
 } from "../policy.fixture.mjs";
+import { runBenchmarkPersistenceScenario } from "../scenarios/benchmark-persistence.mjs";
 import { runConsultationPersistenceScenario } from "../scenarios/consultation-persistence.mjs";
 
 describe("BODAM native restart flow", () => {
@@ -133,6 +134,8 @@ describe("BODAM native restart flow", () => {
       "50000",
       1,
     )).getText()).toContain("합성 입원 보장");
+
+    await runBenchmarkPersistenceScenario();
 
     const excludedPolicy = await waitForPolicy(syntheticPolicies.excluded.productName);
     let coverageDialog = await openCoverageManager(excludedPolicy);

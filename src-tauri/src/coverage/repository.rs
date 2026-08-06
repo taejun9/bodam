@@ -21,7 +21,7 @@ impl CoverageRepository {
         })
     }
 
-    fn lock(&self) -> Result<MutexGuard<'_, Connection>, AppError> {
+    pub(super) fn lock(&self) -> Result<MutexGuard<'_, Connection>, AppError> {
         self.connection
             .lock()
             .map_err(|_| AppError::StateUnavailable)

@@ -4,6 +4,8 @@ mod schema;
 #[cfg(test)]
 mod consultation_tests;
 #[cfg(test)]
+mod coverage_benchmark_tests;
+#[cfg(test)]
 mod coverage_tests;
 #[cfg(test)]
 mod family_tests;

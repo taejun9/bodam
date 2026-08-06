@@ -2,7 +2,7 @@
 
 ## 상태
 
-이 문서는 개념 모델과 불변 규칙을 정의한다. Customer, InsurancePolicy, CoverageCategory, Coverage, Family, FamilyMembership과 Consultation의 실제 Prisma schema·index·migration은 plan-002부터 plan-006에서 승인·구현했다. 나머지 entity는 후속 계획에서 확정한다.
+이 문서는 개념 모델과 불변 규칙을 정의한다. Customer, InsurancePolicy, CoverageCategory, Coverage, Family, FamilyMembership, Consultation과 CoverageBenchmark의 실제 Prisma schema·index·migration은 plan-002부터 plan-007에서 승인·구현했다. 나머지 entity는 후속 계획에서 확정한다.
 
 ## 개념 관계
 
@@ -45,7 +45,13 @@ Coverage는 InsurancePolicy 하나와 CoverageCategory 하나에 연결된 계�
 
 ### CoverageBenchmark
 
-연령대·성별·카테고리별 기준과 판정 구간을 표현한다. 겹치는 rule 방지와 우선순위가 필요하지만 현재는 미정이다.
+CoverageBenchmark는 `id`, `categoryId`, `gender`, `minAgeYears`, `maxAgeYears`, `adequateMinWon`, `excessiveMinWon`, timestamps와 `deletedAt`을 소유하는 사용자 설정 비교 기준이다. Category FK는 hard delete `RESTRICT`, key update `CASCADE`다. 권고금액 seed는 없으며 판정 결과·고객 나이·합계는 저장하지 않는다.
+
+성별은 trim한 1–100 Unicode scalar 자유문자열이며 Customer의 성별과 case-sensitive exact match한다. 만 나이는 명시적 OS-local date-only 기준일로 계산하고 0–150 양끝 포함 구간을 사용한다. 2월 29일 anniversary는 비윤년 2월 마지막 날로 clamp한다. 미래·누락 생년월일, 누락·불일치 성별과 구간 불일치는 기준 미설정이다.
+
+금액은 `0 ≤ adequateMinWon < excessiveMinWon ≤ SQLite signed 64-bit max`인 KRW 정수다. 합계가 적정하한 미만이면 부족, 적정하한 이상 과다하한 미만이면 적정, 과다하한 이상이면 과다다. 같은 활성 Category·정확히 같은 성별에서 포함 나이 구간이 한 살이라도 겹치면 저장을 거부하고 우선순위를 만들지 않는다.
+
+고객 판정 행은 합계대상 활성 Coverage가 있는 Category와 현재 Customer에게 일치하는 Benchmark Category의 합집합이다. 기준만 있고 Coverage가 없으면 0원·0건을 식대로 판정하고, Coverage는 있으나 기준이 없으면 기준 미설정으로 표시하며 부족으로 세지 않는다. Category soft delete는 Benchmark 원본을 수정하지 않고 기본 Settings 목록과 판정에서 숨긴다.
 
 ### Consultation
 
@@ -81,6 +87,7 @@ Consultation은 `id`, `customerId`, 필수 `consultedAt`, 선택 `content`, `nex
 - unique 값 재사용, cascade 복원, 보관 기간은 별도 규칙이 필요하다.
 - migration metadata처럼 업무 데이터가 아닌 내부 table의 처리까지 무조건 동일하게 만들지 않는다.
 - CoverageCategory를 soft delete하면 연결 Coverage 행은 함께 수정하지 않고 숨긴다. 현재 Category와 연결 Coverage의 복원 UI는 없다.
+- CoverageBenchmark를 soft delete하면 Category·Coverage·Customer 원본을 수정하지 않는다. CoverageCategory를 soft delete하면 연결 Benchmark 원본은 유지하되 기본 조회·판정에서 숨긴다.
 - Family를 soft delete하면 membership 행은 함께 수정하지 않는다. Membership을 제거한 뒤 같은 Customer를 명시적으로 재추가하는 흐름만 기존 행을 재활성화한다.
 - Consultation을 soft delete하면 Customer와 다른 업무 원본을 수정하지 않는다. Customer를 soft delete하면 연결 Consultation 원본은 유지하되 기본 상담 조회에서 숨긴다.
 
@@ -96,10 +103,11 @@ Consultation은 `id`, `customerId`, 필수 `consultedAt`, 선택 `content`, `nex
 
 - 생년월일, 가입일, 만기일처럼 날짜 의미만 있는 값과 상담 시각처럼 시간 의미가 있는 값을 구분한다.
 - Consultation의 상담 일시는 UTC millisecond `Z` timestamp로 저장하고 OS local timezone으로 입력·표시한다. 다음 연락일은 date-only로 저장한다.
+- CoverageBenchmark의 만 나이는 저장하지 않고 OS-local `referenceDate` date-only를 service에 주입해 계산한다.
 - 동일 기준일을 service에 주입해 dashboard, calendar, notification 계산이 재현 가능해야 한다.
 
 ## Index
 
-현재 migration은 Customer의 삭제·이름·상태·담당 여부, InsurancePolicy의 customer FK·만기일, CoverageCategory의 삭제·이름 조회를 위한 index를 갖는다. Coverage는 `(policyId, deletedAt)`과 `(categoryId, deletedAt)` 복합 index로 계약별 관리 목록과 활성 카테고리별 조회를 지원한다. Family는 삭제·이름 조회 index를 가지며 FamilyMembership은 Family·Customer별 active 조회 index와 pair unique로 구성원 조회와 중복 방지를 지원한다. Consultation은 `(customerId, deletedAt, consultedAt)` index로 고객별 최신 활성 이력 조회를 지원한다.
+현재 migration은 Customer의 삭제·이름·상태·담당 여부, InsurancePolicy의 customer FK·만기일, CoverageCategory의 삭제·이름 조회를 위한 index를 갖는다. Coverage는 `(policyId, deletedAt)`과 `(categoryId, deletedAt)` 복합 index로 계약별 관리 목록과 활성 카테고리별 조회를 지원한다. Family는 삭제·이름 조회 index를 가지며 FamilyMembership은 Family·Customer별 active 조회 index와 pair unique로 구성원 조회와 중복 방지를 지원한다. Consultation은 `(customerId, deletedAt, consultedAt)` index로 고객별 최신 활성 이력 조회를 지원한다. CoverageBenchmark는 `(deletedAt, categoryId, gender, minAgeYears, maxAgeYears)` index로 활성 목록과 overlap 조회를 지원한다.
 
-CoverageBenchmark의 index는 entity와 query가 승인될 때 실제 query plan과 데이터 규모를 확인해 결정한다. 다음 연락일의 Dashboard·Calendar 조회 index도 해당 read model 계획에서 실제 query를 근거로 추가한다.
+다음 연락일의 Dashboard·Calendar 조회 index는 해당 read model 계획에서 실제 query를 근거로 추가한다.

@@ -24,6 +24,7 @@ const props = defineProps<{
   open: boolean;
   categories: readonly CoverageCategory[];
   coverages: readonly Coverage[];
+  benchmarkUsageCounts?: Readonly<Record<string, number>>;
 }>();
 const emit = defineEmits<{ close: []; changed: [message: string] }>();
 
@@ -40,8 +41,12 @@ function usageCount(categoryId: string): number {
   return coverageApplication.categoryUsageCount(props.coverages, categoryId);
 }
 
+function benchmarkUsageCount(categoryId: string): number {
+  return props.benchmarkUsageCounts?.[categoryId] ?? 0;
+}
+
 function categoryMeta(category: CoverageCategory): string {
-  const usage = `현재 고객 연결 보장 ${usageCount(category.id)}건`;
+  const usage = `현재 고객 연결 보장 ${usageCount(category.id)}건 · 활성 비교 기준 ${benchmarkUsageCount(category.id)}건`;
   const identity = categoryIdentityHint(props.categories, category.id);
   return identity ? `${identity} · ${usage}` : usage;
 }
@@ -218,8 +223,11 @@ watch(() => props.open, (open) => {
           <span class="delete-symbol" aria-hidden="true">!</span>
           <div>
             <h3>{{ selected ? categoryDisplayLabel(categories, selected.id) : "카테고리" }}를 삭제할까요?</h3>
-            <p>현재 고객의 연결 보장 {{ selected ? usageCount(selected.id) : 0 }}건이 목록과 합계에서 숨겨집니다.</p>
-            <small>다른 고객의 연결 보장도 함께 숨겨질 수 있으며 원본 행은 보존됩니다.</small>
+            <p>
+              현재 고객 연결 보장 {{ selected ? usageCount(selected.id) : 0 }}건과 활성 비교 기준
+              {{ selected ? benchmarkUsageCount(selected.id) : 0 }}건이 목록·합계·판정에서 숨겨집니다.
+            </p>
+            <small>다른 고객의 연결 보장과 비교 판정도 함께 숨겨질 수 있으며 원본 행은 보존됩니다.</small>
           </div>
         </section>
         <p v-if="actionError" class="delete-error" role="alert">{{ actionError }}</p>

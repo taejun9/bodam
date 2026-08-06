@@ -3,6 +3,8 @@ import { $, $$, browser, expect } from "@wdio/globals";
 export const syntheticCustomer = Object.freeze({
   seed: "합성 고객 WDIO 002",
   updatedName: "합성 고객 WDIO 002 수정",
+  birthDate: "2000-01-15",
+  gender: "합성 E2E 007",
   phone: "010-0000-0002",
   status: "합성 상담 중",
 });
@@ -71,6 +73,12 @@ export async function createCustomer(customer) {
   await dialog.$("input[name='name']").setValue(customer.name);
   if (customer.phone) {
     await dialog.$("input[name='phone']").setValue(customer.phone);
+  }
+  if (customer.birthDate) {
+    await dialog.$("input[name='birthDate']").setValue(customer.birthDate);
+  }
+  if (customer.gender) {
+    await dialog.$("input[name='gender']").setValue(customer.gender);
   }
   if (customer.status) {
     await dialog.$("input[name='status']").setValue(customer.status);

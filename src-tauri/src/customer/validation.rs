@@ -4,6 +4,7 @@ use chrono::NaiveDate;
 use uuid::Uuid;
 
 use crate::error::AppError;
+use crate::text::trim_ecmascript_whitespace;
 
 use super::model::{CreateCustomerInput, CustomerWrite, UpdateCustomerInput};
 
@@ -94,7 +95,7 @@ fn validate(
     Ok(CustomerWrite {
         name,
         birth_date,
-        gender: normalize_optional(gender),
+        gender: normalize_gender(gender),
         phone: normalize_optional(phone),
         address: normalize_optional(address),
         memo: normalize_optional(memo),
@@ -106,6 +107,13 @@ fn validate(
 fn normalize_optional(value: Option<String>) -> Option<String> {
     value.and_then(|value| {
         let normalized = value.trim().to_owned();
+        (!normalized.is_empty()).then_some(normalized)
+    })
+}
+
+fn normalize_gender(value: Option<String>) -> Option<String> {
+    value.and_then(|value| {
+        let normalized = trim_ecmascript_whitespace(&value).to_owned();
         (!normalized.is_empty()).then_some(normalized)
     })
 }
@@ -148,6 +156,34 @@ mod tests {
         assert_eq!(result.birth_date.as_deref(), Some("2000-02-29"));
         assert_eq!(result.gender, None);
         assert_eq!(result.status.as_deref(), Some("active"));
+    }
+
+    #[test]
+    fn normalizes_gender_with_ecmascript_whitespace() {
+        let create = |gender: &str| CreateCustomerInput {
+            name: "Synthetic Gender".to_owned(),
+            birth_date: None,
+            gender: Some(gender.to_owned()),
+            phone: None,
+            address: None,
+            memo: None,
+            status: None,
+            is_managed: true,
+        };
+        assert_eq!(
+            validate_create(create("\u{feff}합성 성별\u{feff}"))
+                .expect("ECMAScript byte order mark trim")
+                .gender
+                .as_deref(),
+            Some("합성 성별")
+        );
+        assert_eq!(
+            validate_create(create("\u{0085}합성 성별\u{0085}"))
+                .expect("ECMAScript next-line preservation")
+                .gender
+                .as_deref(),
+            Some("\u{0085}합성 성별\u{0085}")
+        );
     }
 
     #[test]

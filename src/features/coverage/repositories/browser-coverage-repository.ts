@@ -2,6 +2,7 @@ import { BrowserInsurancePolicyRepository } from "@/features/insurance/repositor
 import type { InsurancePolicyRepository } from "@/features/insurance/repositories/insurance-policy-repository";
 import { InsuranceRepositoryError } from "@/features/insurance/types/insurance-error";
 import type { InsurancePolicy } from "@/features/insurance/types/insurance-policy";
+import { withBrowserStorageMutation } from "@/shared/browser-storage-mutation";
 
 import {
   parseCoverageCategoryId,
@@ -61,12 +62,14 @@ const policyNotFound = (): CoverageRepositoryError =>
 
 export class BrowserCoverageRepository implements CoverageRepository {
   private readonly store: BrowserCoverageStorage;
+  private readonly storage: CoverageStoragePort;
   private readonly now: () => string;
   private readonly createId: () => string;
   private readonly policyRepository: Pick<InsurancePolicyRepository, "list">;
 
   constructor(options: BrowserCoverageRepositoryOptions = {}) {
     const storage = options.storage ?? defaultStorage();
+    this.storage = storage;
     this.now = options.now ?? defaultNow;
     this.createId = options.createId ?? defaultCreateId;
     this.store = new BrowserCoverageStorage(storage, this.now);
@@ -84,37 +87,41 @@ export class BrowserCoverageRepository implements CoverageRepository {
   ): Promise<CoverageCategory> {
     const parsedId = parseCoverageCategoryId(id);
     const parsedInput = parseCoverageCategoryInput(input);
-    const categories = this.store.loadCategories();
-    const index = categories.findIndex(
-      (category) => category.id === parsedId && category.deletedAt === null,
-    );
-    const existing = categories[index];
-    if (index < 0 || existing === undefined) throw categoryNotFound();
-    const updated = parseStoredCategory({
-      ...existing,
-      ...parsedInput,
-      updatedAt: this.now(),
+    return withBrowserStorageMutation(this.storage, async () => {
+      const categories = this.store.loadCategories();
+      const index = categories.findIndex(
+        (category) => category.id === parsedId && category.deletedAt === null,
+      );
+      const existing = categories[index];
+      if (index < 0 || existing === undefined) throw categoryNotFound();
+      const updated = parseStoredCategory({
+        ...existing,
+        ...parsedInput,
+        updatedAt: this.now(),
+      });
+      categories[index] = updated;
+      this.store.saveCategories(categories);
+      return categoryFromStored(updated);
     });
-    categories[index] = updated;
-    this.store.saveCategories(categories);
-    return categoryFromStored(updated);
   }
 
   async removeCategory(id: string): Promise<void> {
     const parsedId = parseCoverageCategoryId(id);
-    const categories = this.store.loadCategories();
-    const index = categories.findIndex(
-      (category) => category.id === parsedId && category.deletedAt === null,
-    );
-    const existing = categories[index];
-    if (index < 0 || existing === undefined) throw categoryNotFound();
-    const timestamp = this.now();
-    categories[index] = parseStoredCategory({
-      ...existing,
-      updatedAt: timestamp,
-      deletedAt: timestamp,
+    await withBrowserStorageMutation(this.storage, async () => {
+      const categories = this.store.loadCategories();
+      const index = categories.findIndex(
+        (category) => category.id === parsedId && category.deletedAt === null,
+      );
+      const existing = categories[index];
+      if (index < 0 || existing === undefined) throw categoryNotFound();
+      const timestamp = this.now();
+      categories[index] = parseStoredCategory({
+        ...existing,
+        updatedAt: timestamp,
+        deletedAt: timestamp,
+      });
+      this.store.saveCategories(categories);
     });
-    this.store.saveCategories(categories);
   }
 
   async list(customerId: string): Promise<Coverage[]> {

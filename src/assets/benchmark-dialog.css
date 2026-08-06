@@ -1,0 +1,89 @@
+.benchmark-form {
+  display: grid;
+  gap: 17px;
+}
+
+.benchmark-form-grid select {
+  width: 100%;
+  height: 39px;
+  padding: 8px 34px 8px 11px;
+  color: var(--text-main);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+  outline: 0;
+}
+
+.benchmark-form-grid select:focus {
+  background: var(--bg-surface);
+  border-color: var(--focus);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 14%, transparent);
+}
+
+.benchmark-form-grid select[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+
+.benchmark-field-hint {
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+  font-size: 9px;
+}
+
+.benchmark-form-actions,
+.benchmark-delete-actions {
+  margin: 2px -24px -24px;
+  padding: 16px 24px;
+  background: var(--bg-subtle);
+  border-top: 1px solid var(--border);
+}
+
+.benchmark-delete-content {
+  display: flex;
+  min-width: 0;
+  margin-bottom: 16px;
+  align-items: flex-start;
+  gap: 13px;
+}
+
+.benchmark-delete-symbol {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-radius: 50%;
+  flex: 0 0 auto;
+  font-weight: 800;
+  place-items: center;
+}
+
+.benchmark-delete-content p {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 11px;
+}
+
+.benchmark-delete-content small {
+  display: block;
+  margin-top: 5px;
+  color: var(--text-muted);
+  font-size: 9px;
+}
+
+.benchmark-delete-error {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-radius: 7px;
+  font-size: 10px;
+}
+
+@media (max-width: 640px) {
+  .benchmark-form-actions,
+  .benchmark-delete-actions {
+    margin-inline: -18px;
+    padding-inline: 18px;
+  }
+}
