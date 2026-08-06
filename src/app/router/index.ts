@@ -1,6 +1,7 @@
 import { createRouter, createWebHashHistory } from "vue-router";
 
 import CustomerListPage from "@/features/customer/pages/CustomerListPage.vue";
+import FamilyListPage from "@/features/family/pages/FamilyListPage.vue";
 import CustomerInsurancePage from "@/features/insurance/pages/CustomerInsurancePage.vue";
 
 const router = createRouter({
@@ -17,6 +18,15 @@ const router = createRouter({
       meta: {
         title: "고객 관리",
         description: "고객 정보와 담당 상태를 한곳에서 관리합니다.",
+      },
+    },
+    {
+      path: "/families",
+      name: "families",
+      component: FamilyListPage,
+      meta: {
+        title: "가족 관리",
+        description: "가족 구성원과 합계대상 월보험료를 관리합니다.",
       },
     },
     {

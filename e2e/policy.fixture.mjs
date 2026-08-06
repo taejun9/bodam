@@ -12,6 +12,11 @@ export const syntheticPolicies = Object.freeze({
     premium: "30000",
     updatedPremium: "35000",
   }),
+  familyMember: Object.freeze({
+    insurer: "합성가족보험",
+    productName: "합성 가족보험 005",
+    premium: "80000",
+  }),
 });
 
 export async function openCustomerInsurance(row) {

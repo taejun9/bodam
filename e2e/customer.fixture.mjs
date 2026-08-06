@@ -7,6 +7,12 @@ export const syntheticCustomer = Object.freeze({
   status: "합성 상담 중",
 });
 
+export const syntheticFamilyCustomer = Object.freeze({
+  name: "합성 가족 구성원 WDIO 005",
+  phone: "010-0000-0005",
+  status: "합성 가족 관리",
+});
+
 export async function waitForNativeApp() {
   const body = await $("body");
   await body.waitForExist({ timeout: 15_000 });
@@ -56,6 +62,23 @@ export async function waitForOneCustomer(name) {
     { timeout: 10_000, timeoutMsg: `customer row not found: ${name}` },
   );
   return (await customerRows())[0];
+}
+
+export async function createCustomer(customer) {
+  await $("[data-testid='create-customer']").click();
+  const dialog = await $("dialog[open]");
+  await dialog.waitForDisplayed();
+  await dialog.$("input[name='name']").setValue(customer.name);
+  if (customer.phone) {
+    await dialog.$("input[name='phone']").setValue(customer.phone);
+  }
+  if (customer.status) {
+    await dialog.$("input[name='status']").setValue(customer.status);
+  }
+  await dialog.$("button[type='submit']").click();
+  await dialog.waitForDisplayed({ reverse: true });
+  await searchCustomers(customer.name);
+  return waitForOneCustomer(customer.name);
 }
 
 export async function removeCustomer(row) {

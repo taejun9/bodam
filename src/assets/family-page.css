@@ -1,0 +1,237 @@
+.family-page {
+  position: relative;
+}
+
+.family-toolbar {
+  display: flex;
+  margin-bottom: 18px;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.family-toolbar h2 {
+  margin: 0;
+  font-size: 22px;
+  letter-spacing: -0.035em;
+}
+
+.family-toolbar p {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.family-controls {
+  display: flex;
+  min-height: 62px;
+  margin-bottom: 14px;
+  padding: 11px 13px;
+  align-items: center;
+}
+
+.family-list {
+  overflow: hidden;
+}
+
+.family-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.family-table {
+  width: 100%;
+  border-collapse: collapse;
+  white-space: nowrap;
+}
+
+.family-table th,
+.family-table td {
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+.family-table th {
+  height: 45px;
+  color: var(--text-muted);
+  background: var(--bg-subtle);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.family-table td {
+  height: 66px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.family-table th:first-child,
+.family-table td:first-child {
+  padding-left: 20px;
+}
+
+.family-table th:last-child,
+.family-table td:last-child {
+  padding-right: 20px;
+}
+
+.family-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.family-table tbody tr:hover td {
+  background: var(--bg-subtle);
+}
+
+.family-identity,
+.family-card-identity {
+  display: grid;
+  min-width: 0;
+}
+
+.family-identity strong,
+.family-card-identity strong {
+  color: var(--text-main);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.identity-hint {
+  max-width: 100%;
+  margin-top: 2px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.family-count {
+  font-variant-numeric: tabular-nums;
+}
+
+.family-money {
+  color: var(--brand-700) !important;
+  font-family: var(--font-mono);
+  font-size: 13px !important;
+  font-variant-numeric: tabular-nums;
+  font-weight: 750;
+}
+
+.family-actions,
+.family-card footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 3px;
+}
+
+.family-actions button,
+.family-card footer button {
+  padding: 6px 8px;
+  color: var(--text-secondary);
+  background: transparent;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.family-actions button:hover,
+.family-card footer button:hover {
+  color: var(--text-main);
+  background: var(--bg-muted);
+}
+
+.family-actions .danger-action:hover,
+.family-card footer .danger-action:hover {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.family-cards {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .family-table {
+    display: none;
+  }
+
+  .family-cards {
+    display: grid;
+    padding: 10px;
+    gap: 9px;
+  }
+
+  .family-card {
+    min-width: 0;
+    padding: 15px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+
+  .family-card header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .family-card-count {
+    color: var(--text-muted);
+    font-size: 10px;
+    white-space: nowrap;
+  }
+
+  .family-card-money {
+    margin: 16px 0;
+    color: var(--brand-700);
+    font-family: var(--font-mono);
+    font-size: 20px;
+    font-variant-numeric: tabular-nums;
+    font-weight: 750;
+  }
+
+  .family-card-money small {
+    color: var(--text-muted);
+    font-family: var(--font-sans);
+    font-size: 9px;
+    font-weight: 500;
+  }
+
+  .family-card footer {
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+
+  .family-card footer button {
+    min-height: 36px;
+  }
+}
+
+@media (max-width: 520px) {
+  .family-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .family-toolbar .app-button {
+    width: 100%;
+  }
+
+  .family-controls {
+    padding: 9px;
+  }
+
+  .family-card footer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .family-card footer button:first-child {
+    grid-column: 1 / -1;
+  }
+}

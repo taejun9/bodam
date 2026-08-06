@@ -2,6 +2,7 @@ mod coverage;
 mod customer;
 mod database;
 mod error;
+mod family;
 mod insurance;
 
 use std::fs;
@@ -16,6 +17,11 @@ use coverage::commands::{
 use coverage::CoverageRepository;
 use customer::commands::{create_customer, delete_customer, list_customers, update_customer};
 use customer::CustomerRepository;
+use family::commands::{
+    add_family_membership, create_family, delete_family, delete_family_membership, list_families,
+    list_family_memberships, update_family, update_family_membership,
+};
+use family::FamilyRepository;
 use insurance::commands::{
     create_insurance_policy, delete_insurance_policy, list_insurance_policies,
     update_insurance_policy,
@@ -26,6 +32,7 @@ use tauri::Manager;
 pub(crate) struct AppState {
     coverages: CoverageRepository,
     customers: CustomerRepository,
+    families: FamilyRepository,
     insurance_policies: InsurancePolicyRepository,
 }
 
@@ -55,9 +62,12 @@ pub fn run() {
                 .map_err(|_| io::Error::other("BODAM database initialization failed"))?;
             let coverages = CoverageRepository::open(&database_path)
                 .map_err(|_| io::Error::other("BODAM database initialization failed"))?;
+            let families = FamilyRepository::open(&database_path)
+                .map_err(|_| io::Error::other("BODAM database initialization failed"))?;
             app.manage(AppState {
                 coverages,
                 customers,
+                families,
                 insurance_policies,
             });
             Ok(())
@@ -77,7 +87,15 @@ pub fn run() {
             list_coverages,
             create_coverage,
             update_coverage,
-            delete_coverage
+            delete_coverage,
+            list_families,
+            create_family,
+            update_family,
+            delete_family,
+            list_family_memberships,
+            add_family_membership,
+            update_family_membership,
+            delete_family_membership
         ])
         .run(tauri::generate_context!())
         .expect("BODAM desktop runtime failed");

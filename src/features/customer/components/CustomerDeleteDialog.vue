@@ -36,7 +36,9 @@ const emit = defineEmits<{
         <p>
           <strong>{{ customer?.name }}</strong> 고객이 기본 목록에서 보이지 않게 됩니다.
         </p>
-        <small>연결된 정보는 삭제하지 않으며, 데이터는 이 PC에 보관됩니다.</small>
+        <small>
+          보험계약과 가족 구성원 연결은 보존되지만, 가족 구성원 목록과 보험료 합계에서는 숨겨집니다.
+        </small>
       </div>
     </div>
     <p v-if="error" class="delete-error" role="alert">{{ error }}</p>

@@ -21,9 +21,9 @@ const SEEDS: &[(&str, &str)] = &[
 ];
 
 #[test]
-fn clean_database_applies_v3_and_seeds_categories_once() {
+fn clean_database_applies_current_schema_and_seeds_categories_once() {
     let mut connection = Connection::open_in_memory().expect("clean database");
-    run(&mut connection).expect("apply v3 migrations");
+    run(&mut connection).expect("apply current migrations");
 
     assert_eq!(category_rows(&connection), owned_seeds());
     let history_count: i64 = connection
@@ -31,7 +31,7 @@ fn clean_database_applies_v3_and_seeds_categories_once() {
             row.get(0)
         })
         .expect("migration history count");
-    assert_eq!(history_count, 3);
+    assert_eq!(history_count, MIGRATIONS.len() as i64);
     verify_coverage_schema_for_test(&connection).expect("coverage schema contract");
 
     run(&mut connection).expect("idempotent migration run");
@@ -44,14 +44,14 @@ fn upgrades_v2_without_losing_customer_or_policy_rows() {
     apply_for_test(&mut connection, &MIGRATIONS[..2]).expect("apply v2 migrations");
     insert_customer_and_policy(&connection);
 
-    run(&mut connection).expect("upgrade to v3");
+    run(&mut connection).expect("upgrade to current schema");
     for table in ["customers", "insurance_policies"] {
         let count: i64 = connection
             .query_row(&format!("SELECT COUNT(*) FROM {table}"), [], |row| {
                 row.get(0)
             })
             .expect("preserved row count");
-        assert_eq!(count, 1, "{table} row must survive v3 upgrade");
+        assert_eq!(count, 1, "{table} row must survive upgrade");
     }
     assert_eq!(category_rows(&connection), owned_seeds());
 }
@@ -59,7 +59,7 @@ fn upgrades_v2_without_losing_customer_or_policy_rows() {
 #[test]
 fn migration_does_not_restore_renamed_or_deleted_seed_rows() {
     let mut connection = Connection::open_in_memory().expect("seed lifecycle database");
-    run(&mut connection).expect("apply v3 migrations");
+    run(&mut connection).expect("apply current migrations");
     connection
         .execute(
             "UPDATE coverage_categories SET name = ?2 WHERE id = ?1",

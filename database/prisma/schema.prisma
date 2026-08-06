@@ -16,6 +16,7 @@ model Customer {
   updatedAt         DateTime          @default(now()) @updatedAt @map("updated_at")
   deletedAt         DateTime?         @map("deleted_at")
   insurancePolicies InsurancePolicy[]
+  familyMemberships FamilyMembership[]
 
   @@index([deletedAt])
   @@index([name, deletedAt])
@@ -75,4 +76,33 @@ model Coverage {
   @@index([policyId, deletedAt])
   @@index([categoryId, deletedAt])
   @@map("coverages")
+}
+
+model Family {
+  id          String             @id @default(uuid())
+  name        String
+  createdAt   DateTime           @default(now()) @map("created_at")
+  updatedAt   DateTime           @default(now()) @updatedAt @map("updated_at")
+  deletedAt   DateTime?          @map("deleted_at")
+  memberships FamilyMembership[]
+
+  @@index([deletedAt, name])
+  @@map("families")
+}
+
+model FamilyMembership {
+  id               String    @id @default(uuid())
+  familyId         String    @map("family_id")
+  customerId       String    @map("customer_id")
+  relationshipName String?   @map("relationship_name")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at")
+  deletedAt        DateTime? @map("deleted_at")
+  family           Family    @relation(fields: [familyId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  customer         Customer  @relation(fields: [customerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([familyId, customerId])
+  @@index([familyId, deletedAt])
+  @@index([customerId, deletedAt])
+  @@map("family_memberships")
 }

@@ -2,20 +2,20 @@
 
 ## 상태
 
-이 문서는 개념 모델과 불변 규칙을 정의한다. Customer, InsurancePolicy, CoverageCategory와 Coverage의 실제 Prisma schema·index·migration은 plan-002부터 plan-004에서 승인·구현했다. 나머지 entity는 후속 계획에서 확정한다.
+이 문서는 개념 모델과 불변 규칙을 정의한다. Customer, InsurancePolicy, CoverageCategory, Coverage, Family와 FamilyMembership의 실제 Prisma schema·index·migration은 plan-002부터 plan-005에서 승인·구현했다. 나머지 entity는 후속 계획에서 확정한다.
 
 ## 개념 관계
 
     Family
-      ↔ FamilyMember ↔ Customer
-                         ├─ InsurancePolicy ─ Coverage
-                         ├─ Consultation
-                         └─ ScheduleLink 후보
+      ↔ FamilyMembership ↔ Customer
+                             ├─ InsurancePolicy ─ Coverage
+                             ├─ Consultation
+                             └─ ScheduleLink 후보
 
     CoverageCategory ─ Coverage
     CoverageBenchmark ─ CoverageCategory
 
-FamilyMember와 ScheduleLink는 관계를 설명하기 위한 후보 이름이다. 실제 model 이름과 필드는 구현 계획에서 결정한다.
+ScheduleLink는 관계를 설명하기 위한 후보 이름이다. 실제 model 이름과 필드는 구현 계획에서 결정한다.
 
 ## Entity 책임
 
@@ -25,7 +25,11 @@ FamilyMember와 ScheduleLink는 관계를 설명하기 위한 후보 이름이�
 
 ### Family
 
-가족 단위 grouping을 소유한다. 가족 보험료는 저장된 숫자가 아니라 활성 구성원의 활성 계약에서 계산하는 read model을 기본 후보로 한다. cache 여부는 성능 증거가 있을 때 결정한다.
+Family는 `id`, `name`, `createdAt`, `updatedAt`, `deletedAt`을 가진 가족 단위 grouping이다. 이름은 trim 후 1–100자이며 중복 이름을 금지하거나 이름만으로 병합하지 않는다.
+
+FamilyMembership은 `id`, `familyId`, `customerId`, 선택 `relationshipName`, timestamps와 `deletedAt`을 가진 다대다 관계다. 관계명은 trim 후 빈 값을 null로 저장하고 값이 있으면 1–100자 단순 표시 label이며 법적 관계·방향성·대표자 의미를 추론하지 않는다. 같은 Family·Customer 쌍은 삭제 이력을 포함해 하나만 두고, 제거된 쌍을 사용자가 다시 추가하면 기존 행을 명시적으로 재활성화한다.
+
+가족 보험료는 저장된 숫자나 cache가 아니라 활성 Family·membership·Customer와 활성 `isIncluded=true` Policy의 월보험료를 요청 시 `bigint`로 계산하는 read model이다. `Customer.isManaged`와 자유 입력 status는 제외 조건이 아니다. 같은 Customer가 여러 Family에 속하면 각 Family에서 한 번씩 계산하지만 Family 전체를 다시 합친 합계는 만들지 않는다.
 
 ### InsurancePolicy
 
@@ -61,6 +65,8 @@ Coverage는 InsurancePolicy 하나와 CoverageCategory 하나에 연결된 계�
 - Customer와 InsurancePolicy FK는 hard delete `RESTRICT`이며 부모 soft delete 시 자식 원본을 유지하고 기본 조회·집계에서 숨긴다.
 - Coverage의 Policy·Category FK도 hard delete `RESTRICT`, key update `CASCADE`다. 부모 Customer·Policy·Category가 soft delete되면 Coverage 원본은 유지하되 기본 관리 목록과 합계에서 숨긴다.
 - Coverage에는 Policy·Category 조합 unique 제약이 없으므로 동일 조합의 여러 행을 모두 보존한다.
+- FamilyMembership의 Family·Customer FK는 hard delete `RESTRICT`, key update `CASCADE`이며 `(familyId, customerId)`는 unique다.
+- Family 또는 Customer를 soft delete하면 membership 원본은 유지하고 구성원 목록·가족 보험료에서 숨긴다.
 
 ## Soft Delete
 
@@ -70,6 +76,7 @@ Coverage는 InsurancePolicy 하나와 CoverageCategory 하나에 연결된 계�
 - unique 값 재사용, cascade 복원, 보관 기간은 별도 규칙이 필요하다.
 - migration metadata처럼 업무 데이터가 아닌 내부 table의 처리까지 무조건 동일하게 만들지 않는다.
 - CoverageCategory를 soft delete하면 연결 Coverage 행은 함께 수정하지 않고 숨긴다. 현재 Category와 연결 Coverage의 복원 UI는 없다.
+- Family를 soft delete하면 membership 행은 함께 수정하지 않는다. Membership을 제거한 뒤 같은 Customer를 명시적으로 재추가하는 흐름만 기존 행을 재활성화한다.
 
 ## 이식성
 
@@ -87,6 +94,6 @@ Coverage는 InsurancePolicy 하나와 CoverageCategory 하나에 연결된 계�
 
 ## Index
 
-현재 migration은 Customer의 삭제·이름·상태·담당 여부, InsurancePolicy의 customer FK·만기일, CoverageCategory의 삭제·이름 조회를 위한 index를 갖는다. Coverage는 `(policyId, deletedAt)`과 `(categoryId, deletedAt)` 복합 index로 계약별 관리 목록과 활성 카테고리별 조회를 지원한다.
+현재 migration은 Customer의 삭제·이름·상태·담당 여부, InsurancePolicy의 customer FK·만기일, CoverageCategory의 삭제·이름 조회를 위한 index를 갖는다. Coverage는 `(policyId, deletedAt)`과 `(categoryId, deletedAt)` 복합 index로 계약별 관리 목록과 활성 카테고리별 조회를 지원한다. Family는 삭제·이름 조회 index를 가지며 FamilyMembership은 Family·Customer별 active 조회 index와 pair unique로 구성원 조회와 중복 방지를 지원한다.
 
-Consultation, FamilyMember, CoverageBenchmark의 index는 entity와 query가 승인될 때 실제 query plan과 데이터 규모를 확인해 결정한다.
+Consultation과 CoverageBenchmark의 index는 entity와 query가 승인될 때 실제 query plan과 데이터 규모를 확인해 결정한다.

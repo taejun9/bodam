@@ -7,9 +7,25 @@ import {
   removeCustomer,
   searchCustomers,
   syntheticCustomer,
+  syntheticFamilyCustomer,
   waitForNativeApp,
   waitForOneCustomer,
 } from "../customer.fixture.mjs";
+import {
+  addFamilyMember,
+  closeFamilyMembers,
+  deleteFamily,
+  familyRows,
+  findFamilyBySummary,
+  navigateToFamilies,
+  openFamilyMembers,
+  removeFamilyMember,
+  searchFamilies,
+  syntheticFamilies,
+  waitForFamilyMember,
+  waitForFamilyMemberTotal,
+  waitForFamilySummary,
+} from "../family.fixture.mjs";
 import {
   closeCoverageManager,
   coverageCategoryIds,
@@ -30,7 +46,74 @@ import {
   waitForPremium,
 } from "../policy.fixture.mjs";
 
-describe("BODAM native customer and policy restart flow", () => {
+describe("BODAM native restart flow", () => {
+  it("persists Family relations and applies active parent visibility after restart", async () => {
+    await waitForNativeApp();
+    await navigateToFamilies();
+    let primaryRow = await findFamilyBySummary(syntheticFamilies.sharedName, 2, "200000");
+    let duplicateRow = await findFamilyBySummary(syntheticFamilies.sharedName, 1, "120000");
+    const primaryFamilyId = await primaryRow.getAttribute("data-family-id");
+    const duplicateFamilyId = await duplicateRow.getAttribute("data-family-id");
+    expect(primaryFamilyId).toBeTruthy();
+    expect(duplicateFamilyId).toBeTruthy();
+    expect(await primaryRow.getText()).toContain(`가족 ID ${primaryFamilyId}`);
+    expect(await duplicateRow.getText()).toContain(`가족 ID ${duplicateFamilyId}`);
+
+    let dialog = await openFamilyMembers(primaryFamilyId);
+    expect(await (await waitForFamilyMember(dialog, syntheticCustomer.updatedName)).getText())
+      .toContain(syntheticFamilies.primaryRelationship);
+    let secondaryMember = await waitForFamilyMember(dialog, syntheticFamilyCustomer.name);
+    expect(await secondaryMember.getText()).toContain(syntheticFamilies.secondaryRelationship);
+    const originalMembershipId = await secondaryMember.getAttribute("data-membership-id");
+    await waitForFamilyMemberTotal(dialog, 2, "200000");
+    await closeFamilyMembers(dialog);
+
+    await $("a[href='#/customers']").click();
+    await waitForNativeApp();
+    await searchCustomers(syntheticFamilyCustomer.name);
+    const familyCustomerRow = await waitForOneCustomer(syntheticFamilyCustomer.name);
+    await openCustomerInsurance(familyCustomerRow);
+    const familyPolicy = await waitForPolicy(syntheticPolicies.familyMember.productName);
+    await removePolicy(familyPolicy);
+    await waitForPremium("0원");
+    await $(".detail-breadcrumb a").click();
+    await waitForNativeApp();
+
+    await navigateToFamilies();
+    await searchFamilies(syntheticFamilies.sharedName);
+    await waitForFamilySummary(primaryFamilyId, 2, "120000");
+    dialog = await openFamilyMembers(primaryFamilyId);
+    secondaryMember = await waitForFamilyMember(dialog, syntheticFamilyCustomer.name);
+    expect(await removeFamilyMember(dialog, secondaryMember)).toBe(originalMembershipId);
+    await waitForFamilyMemberTotal(dialog, 1, "120000");
+    const reactivated = await addFamilyMember(
+      dialog,
+      syntheticFamilyCustomer.name,
+      syntheticFamilies.reactivatedRelationship,
+    );
+    expect(await reactivated.getAttribute("data-membership-id")).toBe(originalMembershipId);
+    expect(await reactivated.getText()).toContain(syntheticFamilies.reactivatedRelationship);
+    await waitForFamilyMemberTotal(dialog, 2, "120000");
+    await closeFamilyMembers(dialog);
+
+    await $("a[href='#/customers']").click();
+    await waitForNativeApp();
+    await searchCustomers(syntheticFamilyCustomer.name);
+    await removeCustomer(await waitForOneCustomer(syntheticFamilyCustomer.name));
+
+    await navigateToFamilies();
+    await searchFamilies(syntheticFamilies.sharedName);
+    await waitForFamilySummary(primaryFamilyId, 1, "120000");
+    await waitForFamilySummary(duplicateFamilyId, 1, "120000");
+    await deleteFamily(primaryFamilyId);
+    await deleteFamily(duplicateFamilyId);
+    await searchFamilies(syntheticFamilies.sharedName);
+    expect((await familyRows()).length).toBe(0);
+
+    await $("a[href='#/customers']").click();
+    await waitForNativeApp();
+  });
+
   it("persists policy state and soft-deletes from active reads after restart", async () => {
     await waitForNativeApp();
     await searchCustomers(syntheticCustomer.updatedName);

@@ -71,6 +71,23 @@ pub(super) fn verify_indexes(
     table: &str,
     required: &[ExpectedIndex],
 ) -> Result<(), AppError> {
+    verify_indexes_with_uniqueness(connection, table, required, false)
+}
+
+pub(super) fn verify_unique_indexes(
+    connection: &Connection,
+    table: &str,
+    required: &[ExpectedIndex],
+) -> Result<(), AppError> {
+    verify_indexes_with_uniqueness(connection, table, required, true)
+}
+
+fn verify_indexes_with_uniqueness(
+    connection: &Connection,
+    table: &str,
+    required: &[ExpectedIndex],
+    expected_unique: bool,
+) -> Result<(), AppError> {
     let mut statement = connection
         .prepare("SELECT name, \"unique\", partial FROM pragma_index_list(?1)")
         .map_err(|_| AppError::Migration)?;
@@ -90,7 +107,7 @@ pub(super) fn verify_indexes(
             .iter()
             .find(|(name, _, _)| name == required_name)
             .map(|(_, unique, partial)| (*unique, *partial));
-        if attributes != Some((false, false))
+        if attributes != Some((expected_unique, false))
             || index_columns(connection, required_name)? != *required_columns
         {
             return Err(AppError::MigrationDrift);
