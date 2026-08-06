@@ -75,7 +75,7 @@ const router = createRouter({
       component: SettingsPage,
       meta: {
         title: "설정",
-        description: "고객 보장을 비교할 사용자 설정 기준을 관리합니다.",
+        description: "화면, 대시보드, 백업 위치와 고객 보장 비교 기준을 관리합니다.",
       },
     },
     {

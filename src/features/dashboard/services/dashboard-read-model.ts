@@ -21,8 +21,8 @@ import { validateDashboardSources } from "./dashboard-validation";
 
 export { validateDashboardQuery } from "./dashboard-date";
 
-function card<T>(sortedItems: readonly T[], limit: number): DashboardCard<T> {
-  const items = sortedItems.slice(0, limit);
+function card<T>(sortedItems: readonly T[], itemLimit: number): DashboardCard<T> {
+  const items = sortedItems.slice(0, itemLimit);
   return {
     totalCount: sortedItems.length,
     isTruncated: sortedItems.length > items.length,
@@ -37,12 +37,22 @@ export function buildDashboardReadModel(
   const validatedQuery = validateDashboardQuery(query);
   validateDashboardSources(sources, validatedQuery.timeZone);
   const managedCustomers = sources.customers.filter((customer) => customer.isManaged);
-  const { referenceDate, referenceInstant, timeZone, limit } = validatedQuery;
+  const {
+    referenceDate,
+    referenceInstant,
+    timeZone,
+    recentConsultationDays,
+    unconsultedDays,
+    dashboardItemLimit,
+  } = validatedQuery;
 
   return {
     referenceDate,
     referenceInstant,
     timeZone,
+    recentConsultationDays,
+    unconsultedDays,
+    dashboardItemLimit,
     todayContact: card(
       buildTodayContactItems(
         managedCustomers,
@@ -50,18 +60,24 @@ export function buildDashboardReadModel(
         referenceInstant,
         timeZone,
       ),
-      limit,
+      dashboardItemLimit,
     ),
     insuranceAge: card(
       buildInsuranceAgeItems(managedCustomers, referenceDate),
-      limit,
+      dashboardItemLimit,
     ),
-    maturity: card(buildMaturityItems(managedCustomers, referenceDate), limit),
-    premiumTop: card(buildPremiumTopItems(managedCustomers), limit),
-    familyPremium: card(buildFamilyPremiumItems(sources.families), limit),
+    maturity: card(
+      buildMaturityItems(managedCustomers, referenceDate),
+      dashboardItemLimit,
+    ),
+    premiumTop: card(buildPremiumTopItems(managedCustomers), dashboardItemLimit),
+    familyPremium: card(
+      buildFamilyPremiumItems(sources.families),
+      dashboardItemLimit,
+    ),
     coverageInsufficient: card(
       buildCoverageInsufficientItems(managedCustomers),
-      limit,
+      dashboardItemLimit,
     ),
     recentConsultation: card(
       buildRecentConsultationItems(
@@ -69,8 +85,9 @@ export function buildDashboardReadModel(
         referenceDate,
         referenceInstant,
         timeZone,
+        recentConsultationDays,
       ),
-      limit,
+      dashboardItemLimit,
     ),
     unconsulted: card(
       buildUnconsultedItems(
@@ -78,8 +95,9 @@ export function buildDashboardReadModel(
         referenceDate,
         referenceInstant,
         timeZone,
+        unconsultedDays,
       ),
-      limit,
+      dashboardItemLimit,
     ),
   };
 }

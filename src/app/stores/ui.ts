@@ -1,17 +1,26 @@
 import { defineStore } from "pinia";
 
-export type ThemeMode = "light" | "dark";
+import type { ThemeMode } from "@/features/settings/types/app-settings";
 
-const THEME_KEY = "bodam.ui.theme";
+export const THEME_CACHE_KEY = "bodam.ui.theme";
 const SIDEBAR_KEY = "bodam.ui.sidebar-collapsed";
 
-function preferredTheme(): ThemeMode {
-  const stored = localStorage.getItem(THEME_KEY);
-  if (stored === "light" || stored === "dark") return stored;
+function cachedTheme(): ThemeMode {
+  try {
+    const stored = localStorage.getItem(THEME_CACHE_KEY);
+    if (stored === "light" || stored === "dark") return stored;
+  } catch {
+    // The canonical Settings repository remains available without this cache.
+  }
+  return "light";
+}
 
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
+function cacheTheme(theme: ThemeMode): void {
+  try {
+    localStorage.setItem(THEME_CACHE_KEY, theme);
+  } catch {
+    // Theme cache failure must not prevent applying canonical Settings.
+  }
 }
 
 export const useUiStore = defineStore("ui", {
@@ -22,7 +31,7 @@ export const useUiStore = defineStore("ui", {
   }),
   actions: {
     initialize() {
-      this.theme = preferredTheme();
+      this.theme = cachedTheme();
       this.sidebarCollapsed = localStorage.getItem(SIDEBAR_KEY) === "true";
       this.applyTheme();
     },
@@ -30,10 +39,15 @@ export const useUiStore = defineStore("ui", {
       document.documentElement.dataset.theme = this.theme;
       document.documentElement.style.colorScheme = this.theme;
     },
-    toggleTheme() {
-      this.theme = this.theme === "light" ? "dark" : "light";
-      localStorage.setItem(THEME_KEY, this.theme);
+    setTheme(theme: ThemeMode) {
+      this.theme = theme;
+      cacheTheme(theme);
       this.applyTheme();
+    },
+    toggleTheme(): ThemeMode {
+      const theme = this.theme === "light" ? "dark" : "light";
+      this.setTheme(theme);
+      return theme;
     },
     toggleNavigation() {
       if (window.matchMedia("(max-width: 860px)").matches) {

@@ -2,6 +2,19 @@ datasource db {
   provider = "sqlite"
 }
 
+model AppSettings {
+  id                     Int      @id @default(1)
+  theme                  String   @default("light")
+  recentConsultationDays Int      @default(30) @map("recent_consultation_days")
+  unconsultedDays        Int      @default(90) @map("unconsulted_days")
+  dashboardItemLimit     Int      @default(10) @map("dashboard_item_limit")
+  customBackupDirectory  String?  @map("custom_backup_directory")
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("app_settings")
+}
+
 model Customer {
   id                String             @id @default(uuid())
   name              String

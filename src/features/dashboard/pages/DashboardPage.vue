@@ -11,10 +11,7 @@ import {
   resolvedLocalTimeZone,
 } from "@/features/dashboard/components/dashboard-runtime";
 import DashboardCards from "@/features/dashboard/components/DashboardCards.vue";
-import {
-  DASHBOARD_MAX_ITEMS,
-  type DashboardReadModel,
-} from "@/features/dashboard/types/dashboard";
+import type { DashboardReadModel } from "@/features/dashboard/types/dashboard";
 import { dashboardSafeMessage } from "@/features/dashboard/types/dashboard-error";
 
 const model = ref<DashboardReadModel>();
@@ -41,7 +38,6 @@ function query() {
     referenceDate: resolvedReferenceDate,
     referenceInstant: resolvedReferenceInstant,
     timeZone: resolvedTimeZone,
-    limit: DASHBOARD_MAX_ITEMS,
   };
 }
 

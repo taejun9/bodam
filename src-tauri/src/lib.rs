@@ -1,14 +1,18 @@
+mod backup;
 mod consultation;
 mod coverage;
 mod customer;
 mod data_exchange;
 mod database;
 #[cfg(feature = "e2e")]
+mod e2e_backup_paths;
+#[cfg(feature = "e2e")]
 mod e2e_paths;
 mod error;
 mod family;
 mod insurance;
 mod schedule;
+mod settings;
 mod text;
 
 use std::fs;
@@ -17,6 +21,12 @@ use std::io;
 use std::path::PathBuf;
 use std::sync::Arc;
 
+use backup::{
+    acknowledge_restore_startup, check_daily_backup, choose_backup_directory,
+    choose_restore_backup, create_manual_backup, discard_restore_preview, exit_without_backup,
+    load_backup_status, prepare_backup_restore, restart_for_backup_restore, retry_exit_backup,
+    use_default_backup_directory, BackupRuntime,
+};
 use consultation::commands::{
     create_consultation, delete_consultation, list_consultations, update_consultation,
 };
@@ -50,6 +60,8 @@ use schedule::commands::{
     create_schedule, delete_schedule, list_schedules, set_schedule_completed, update_schedule,
 };
 use schedule::ScheduleRepository;
+use settings::commands::{load_app_settings, update_app_settings};
+use settings::SettingsRepository;
 use tauri::Manager;
 
 pub(crate) struct AppState {
@@ -60,11 +72,21 @@ pub(crate) struct AppState {
     families: FamilyRepository,
     insurance_policies: InsurancePolicyRepository,
     schedules: ScheduleRepository,
+    settings: SettingsRepository,
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let builder = tauri::Builder::default().plugin(tauri_plugin_dialog::init());
+    let builder = tauri::Builder::default();
+    #[cfg(desktop)]
+    let builder = builder.plugin(tauri_plugin_single_instance::init(
+        |app, _second_instance_args, _second_instance_cwd| {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.set_focus();
+            }
+        },
+    ));
+    let builder = builder.plugin(tauri_plugin_dialog::init());
     #[cfg(feature = "e2e")]
     let builder = builder
         .plugin(tauri_plugin_wdio::init())
@@ -74,14 +96,22 @@ pub fn run() {
         .setup(|app| {
             #[cfg(feature = "e2e")]
             let database_path = e2e_database_path()?;
+            #[cfg(feature = "e2e")]
+            let app_data_dir = e2e_backup_paths::validate_app_data_directory(std::env::var_os(
+                "BODAM_E2E_DB_PATH",
+            ))?;
             #[cfg(not(feature = "e2e"))]
-            let database_path = app.path().app_data_dir()?.join("bodam.sqlite3");
+            let app_data_dir = app.path().app_data_dir()?;
+            #[cfg(not(feature = "e2e"))]
+            let database_path = app_data_dir.join("bodam.sqlite3");
 
-            let parent = database_path
-                .parent()
-                .ok_or_else(|| io::Error::other("BODAM database path is unavailable"))?;
-            fs::create_dir_all(parent)
+            fs::create_dir_all(&app_data_dir)
                 .map_err(|_| io::Error::other("BODAM app data directory is unavailable"))?;
+            let _ =
+                backup::apply_pending_restore(&database_path, &app_data_dir, chrono::Utc::now())
+                    .map_err(|_| io::Error::other("BODAM pending restore failed"))?;
+            let startup = backup::read_startup_status(&app_data_dir)
+                .map_err(|_| io::Error::other("BODAM restore status is unavailable"))?;
             let customers = CustomerRepository::open(&database_path)
                 .map_err(|_| io::Error::other("BODAM database initialization failed"))?;
             let data_exchange = Arc::new(
@@ -98,6 +128,15 @@ pub fn run() {
                 .map_err(|_| io::Error::other("BODAM database initialization failed"))?;
             let schedules = ScheduleRepository::open(&database_path)
                 .map_err(|_| io::Error::other("BODAM database initialization failed"))?;
+            let settings = SettingsRepository::open(&database_path)
+                .map_err(|_| io::Error::other("BODAM database initialization failed"))?;
+            let backup = BackupRuntime::open(
+                database_path,
+                app_data_dir,
+                env!("CARGO_PKG_VERSION").to_owned(),
+                startup,
+            )
+            .map_err(|_| io::Error::other("BODAM backup initialization failed"))?;
             app.manage(AppState {
                 coverages,
                 consultations,
@@ -106,7 +145,9 @@ pub fn run() {
                 families,
                 insurance_policies,
                 schedules,
+                settings,
             });
+            app.manage(backup);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -151,9 +192,24 @@ pub fn run() {
             update_schedule,
             set_schedule_completed,
             delete_schedule,
+            load_app_settings,
+            update_app_settings,
+            load_backup_status,
+            acknowledge_restore_startup,
+            choose_backup_directory,
+            use_default_backup_directory,
+            create_manual_backup,
+            choose_restore_backup,
+            discard_restore_preview,
+            prepare_backup_restore,
+            restart_for_backup_restore,
+            check_daily_backup,
+            retry_exit_backup,
+            exit_without_backup,
         ])
-        .run(tauri::generate_context!())
-        .expect("BODAM desktop runtime failed");
+        .build(tauri::generate_context!())
+        .expect("BODAM desktop runtime failed")
+        .run(backup::handle_run_event);
 }
 
 #[cfg(feature = "e2e")]

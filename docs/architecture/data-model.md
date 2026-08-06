@@ -2,7 +2,7 @@
 
 ## 상태
 
-이 문서는 개념 모델과 불변 규칙을 정의한다. Customer, InsurancePolicy, CoverageCategory, Coverage, Family, FamilyMembership, Consultation, CoverageBenchmark와 Schedule의 실제 Prisma schema·index·migration은 plan-002부터 plan-009에서 승인·구현했다. 나머지 entity는 후속 계획에서 확정한다.
+이 문서는 개념 모델과 불변 규칙을 정의한다. Customer, InsurancePolicy, CoverageCategory, Coverage, Family, FamilyMembership, Consultation, CoverageBenchmark, Schedule과 AppSettings의 실제 Prisma schema·index·migration은 승인된 작은 계획에서 구현한다. 나머지 entity는 후속 계획에서 확정한다.
 
 ## 개념 관계
 
@@ -67,6 +67,12 @@ Schedule은 `id`, 선택 `customerId`, 필수 `title`·`scheduledOn`, 선택 `sc
 
 Calendar는 Schedule 원본과 Customer·Policy·Consultation 공개 application 결과를 5종 event로 조합할 뿐 계산 event를 저장하지 않는다. 모든 활성 Customer를 포함하고 Customer 관리대상 여부로 제한하지 않는다.
 
+### AppSettings
+
+AppSettings는 고정 singleton ID, `light|dark` theme, 최근 상담 일수, 미상담 기준 일수, Dashboard 카드 표시 건수, nullable custom backup directory와 updated timestamp를 가진 local 환경 설정이다. 기본값은 light·30·90·10·default backup 위치이며, 미상담 기준은 최근 상담 일수 이상이고 카드 건수는 1–10이다.
+
+custom directory의 전체 path는 SQLite adapter와 backup manager만 사용하고 UI DTO에는 기본/custom 여부와 basename만 전달한다. Settings는 업무 soft delete 대상이 아니며 전체 SQLite snapshot에 포함되어 restore 시 함께 돌아간다. sidebar collapse 같은 일시적 UI state는 AppSettings와 backup 대상에 포함하지 않는다.
+
 ## 관계와 Foreign Key
 
 - 업무 관계는 가능한 한 DB Foreign Key로 보호한다.
@@ -89,6 +95,7 @@ Calendar는 Schedule 원본과 Customer·Policy·Consultation 공개 application
 - 복원은 연결 관계와 unique 제약 충돌을 검증한다.
 - unique 값 재사용, cascade 복원, 보관 기간은 별도 규칙이 필요하다.
 - migration metadata처럼 업무 데이터가 아닌 내부 table의 처리까지 무조건 동일하게 만들지 않는다.
+- AppSettings는 고정 singleton 설정이므로 soft delete하지 않는다.
 - CoverageCategory를 soft delete하면 연결 Coverage 행은 함께 수정하지 않고 숨긴다. 현재 Category와 연결 Coverage의 복원 UI는 없다.
 - CoverageBenchmark를 soft delete하면 Category·Coverage·Customer 원본을 수정하지 않는다. CoverageCategory를 soft delete하면 연결 Benchmark 원본은 유지하되 기본 조회·판정에서 숨긴다.
 - Family를 soft delete하면 membership 행은 함께 수정하지 않는다. Membership을 제거한 뒤 같은 Customer를 명시적으로 재추가하는 흐름만 기존 행을 재활성화한다.

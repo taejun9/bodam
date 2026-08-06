@@ -106,6 +106,8 @@
 - backup: SQLite와 필요한 설정 파일의 백업·복원
 - settings: 사용자 수정 가능한 기준과 로컬 환경 설정
 
+`app_settings` singleton은 theme, Dashboard 기간·건수와 nullable custom backup 위치를 소유한다. Backup adapter는 이 값을 읽되 UI에 전체 path를 반환하지 않는다. live DB backup은 SQLite online backup API로 만들고 restore는 pending artifact를 staging한 뒤 다음 process 시작에서 어떤 feature repository connection도 열기 전에 적용한다.
+
 feature 간 DB 테이블 직접 접근을 허용하지 않는다. 공유 규칙이 필요하면 소유 feature의 공개 application 계약 또는 명시적 shared domain 계약을 사용한다.
 
 ## Read model

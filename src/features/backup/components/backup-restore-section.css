@@ -1,0 +1,82 @@
+.backup-section { min-width: 0; padding: 22px; }
+.backup-section-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.backup-section-header span {
+  color: var(--brand-700);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.backup-section-header h3 { margin: 2px 0 0; font-size: 18px; }
+.backup-section-header p { margin: 4px 0 0; color: var(--text-secondary); font-size: 11px; }
+.backup-privacy-note,
+.backup-native-note {
+  margin: 16px 0 0;
+  padding: 11px 13px;
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+  font-size: 10px;
+}
+.backup-privacy-note {
+  color: var(--warning);
+  background: var(--warning-bg);
+  border: 1px solid color-mix(in srgb, var(--warning) 25%, transparent);
+}
+.backup-native-note { color: var(--text-secondary); background: var(--bg-subtle); }
+.backup-state {
+  display: grid;
+  min-height: 100px;
+  margin-top: 14px;
+  padding: 20px;
+  color: var(--text-secondary);
+  background: var(--bg-subtle);
+  border: 1px dashed var(--border-strong);
+  border-radius: 9px;
+  place-items: center;
+  gap: 6px;
+  text-align: center;
+}
+.backup-state.is-error { color: var(--danger); background: var(--danger-bg); }
+.backup-state button { padding: 5px 9px; color: inherit; background: transparent; border: 1px solid; border-radius: 6px; }
+.backup-summary {
+  display: grid;
+  margin: 16px 0 0;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.backup-summary div { min-width: 0; padding: 12px; background: var(--bg-subtle); border-radius: 8px; }
+.backup-summary dt { color: var(--text-secondary); font-size: 9px; }
+.backup-summary dd { margin: 3px 0 0; overflow-wrap: anywhere; font-size: 11px; font-weight: 700; }
+.backup-actions { display: flex; margin-top: 14px; flex-wrap: wrap; gap: 8px; }
+.backup-inline-warning,
+.backup-restore-status,
+.backup-cancelled { margin: 11px 0 0; color: var(--text-secondary); font-size: 10px; }
+.backup-inline-warning,
+.backup-restore-status.is-warning { color: var(--warning); }
+.backup-result {
+  display: grid;
+  min-width: 0;
+  margin-top: 14px;
+  padding: 13px;
+  color: var(--success);
+  background: var(--success-bg);
+  border: 1px solid color-mix(in srgb, var(--success) 25%, transparent);
+  border-radius: 8px;
+  gap: 3px;
+}
+.backup-result span,
+.backup-result small,
+.backup-result em { overflow-wrap: anywhere; }
+.backup-result small { color: var(--text-secondary); }
+.backup-result em { color: var(--warning); font-size: 10px; font-style: normal; }
+.backup-state:focus,
+.backup-summary:focus,
+.backup-result:focus { outline: 3px solid color-mix(in srgb, var(--focus) 32%, transparent); }
+@media (max-width: 820px) {
+  .backup-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 420px) {
+  .backup-section { padding: 17px; }
+  .backup-summary,
+  .backup-actions { display: grid; grid-template-columns: 1fr; }
+}

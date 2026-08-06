@@ -146,12 +146,25 @@ source 없는 수동 Policy의 21열 합성과 domain/source 충돌 해결 UI, �
 
 ## Backup
 
-- 프로그램 종료 시 백업
-- 하루 1회 자동 백업
-- 최근 30개 보관
-- 복원 기능
+- SQLite online backup API로 열린 WAL DB의 일관된 snapshot 생성
+- 기본 위치는 Tauri app-data의 `backups`, Settings에서 native dialog로 다른 로컬 폴더 선택 가능
+- 앱 시작·resume·local date 변경 때 해당 local date의 성공 automatic backup이 없으면 daily backup 생성
+- 정상 종료 시 마지막 성공 backup 이후 DB가 변경됐을 때만 exit backup 생성
+- 검증된 daily·exit 자동 backup 최근 30개 보관, 수동·복원 전 안전 사본은 자동 retention에서 제외
+- schema migration 수/마지막 이름, app version, UTC timestamp, DB byte size와 SHA-256 manifest 포함
+- restore 전에 checksum·SQLite integrity·Foreign Key·등록 migration prefix 검증과 현재 DB 안전 사본 생성
+- restore는 앱 재시작 전에 staging하고 repository 연결 전 교체·검증하며 실패 시 현재 DB로 rollback
+- 종료 backup 실패는 종료를 멈추고 재시도 또는 경고 확인 후 backup 없이 종료 선택
+- backup은 암호화하지 않으며 원본 DB와 같은 민감도의 평문 파일이고 같은 디스크 보관 한계가 있음
 
-백업 중복 실행, 실패 복구, 암호화 여부와 저장 경로는 별도 계획에서 확정한다.
+## Settings
+
+- light/dark theme
+- 최근 상담 기간 1–365일, 미상담 기준 1–3,650일이며 미상담 기준은 최근 상담 기간 이상
+- Dashboard 카드별 공통 표시 건수 1–10; 상령·만기 0–30/31–60/61–90 bucket은 변경하지 않음
+- 기존 사용자 정의 Coverage Benchmark
+- 기본/custom local backup 위치와 지금 backup·restore 동작
+- restore 시 장치별 custom backup path는 승계하지 않고 기본 app-data 위치로 초기화하며, 재선택은 native folder dialog로만 수행
 
 ## UI
 

@@ -3,5 +3,10 @@
   "identifier": "e2e",
   "description": "Test-only embedded WebDriver capability for the BODAM main window",
   "windows": ["main"],
-  "permissions": ["core:default", "wdio:default", "wdio-webdriver:default"]
+  "permissions": [
+    "core:default",
+    "core:window:allow-close",
+    "wdio:default",
+    "wdio-webdriver:default"
+  ]
 }

@@ -63,6 +63,16 @@
 - Calendar event는 source 종류·stable id·날짜·시간·제목·id 정렬과 soft-deleted parent visibility를 테스트한다.
 - UI에서 날짜 차이를 다시 계산하지 않는다.
 
+## Backup / Restore Gate
+
+- 열린 WAL DB를 raw byte copy하지 않고 SQLite online backup snapshot을 사용한다.
+- artifact를 성공으로 표시하기 전에 exact manifest/entry, SHA-256·size, SQLite integrity·Foreign Key와 등록 migration prefix를 검사한다.
+- automatic retention은 검증된 새 backup 뒤에만 수행하고 manual·pre-restore artifact를 제외한다.
+- custom path 오류를 default 위치로 조용히 fallback하지 않으며 UI IPC와 log에 전체 path를 노출하지 않는다.
+- restore는 현재 DB의 검증된 안전 사본과 startup-before-connections 교체를 사용하고 모든 실패 단계에서 현재 DB를 복구한다.
+- start/resume/date-change daily once, changed-only exit, 29/30/31 retention, 손상/future/drift, 재시작과 rollback을 합성 DB로 검사한다.
+- E2E path와 failure seam은 canonical OS temp의 합성 runtime에만 허용하고 production bundle에서 marker 0을 확인한다.
+
 ## Privacy Gate
 
 - 주민등록번호, 보험사 로그인 정보, 민감 병력, 상세 병력을 저장하지 않는다.

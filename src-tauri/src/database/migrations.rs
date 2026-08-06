@@ -71,6 +71,13 @@ pub(crate) const MIGRATIONS: &[Migration] = &[
             "../../../database/prisma/migrations/20260806070000_add_policy_import_source/migration.sql"
         ),
     },
+    Migration {
+        name: "20260806080000_add_app_settings",
+        checksum_sha256: "22afed654f4299df8a53db1d30ff0b8e0f2b52e03ccdb23e069c65e0b698aa39",
+        sql: include_str!(
+            "../../../database/prisma/migrations/20260806080000_add_app_settings/migration.sql"
+        ),
+    },
 ];
 
 const HISTORY_TABLE_SQL: &str = r#"
@@ -87,6 +94,32 @@ pub(crate) fn run(connection: &mut Connection) -> Result<(), AppError> {
     apply_missing(connection, MIGRATIONS, applied_count)?;
     verify_history_exact(connection, MIGRATIONS)?;
     schema::verify_registered_version(connection, MIGRATIONS.len())
+}
+
+pub(crate) fn verify_registered_prefix(connection: &Connection) -> Result<usize, AppError> {
+    schema::verify_history_table(connection)?;
+    verify_registry(MIGRATIONS)?;
+    let history = migration_history(connection)?;
+    verify_history_prefix(&history, MIGRATIONS)?;
+    schema::verify_registered_version(connection, history.len())?;
+    Ok(history.len())
+}
+
+pub(crate) fn verify_current(connection: &Connection) -> Result<(), AppError> {
+    let applied_count = verify_registered_prefix(connection)?;
+    if applied_count != MIGRATIONS.len() {
+        return Err(AppError::MigrationDrift);
+    }
+    Ok(())
+}
+
+pub(crate) fn registered_name(index: usize) -> Option<&'static str> {
+    MIGRATIONS.get(index).map(|migration| migration.name)
+}
+
+#[cfg(test)]
+pub(crate) const fn registered_count() -> usize {
+    MIGRATIONS.len()
 }
 
 #[cfg(test)]

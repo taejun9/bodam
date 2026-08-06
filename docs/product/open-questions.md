@@ -29,8 +29,9 @@
 
 - Prisma Client를 Node sidecar에서 실행할지, Prisma를 schema/migration에만 사용할지
 - Windows installer가 인터넷 없이 설치되어야 하는지, 실행만 오프라인이면 되는지
-- SQLite 파일과 백업의 기본 경로
-- 백업 암호화와 앱 잠금 필요 여부
+- removable·network filesystem을 custom backup 위치로 쓸 때 platform별 atomicity와 운영 지원 범위
+- 자동 backup 파일을 앱 안에서 열람·개별 삭제·복사할 관리 UI 필요 여부
+- 향후 backup 암호화, recovery key와 앱 잠금 필요 여부
 
 ## 승인 프로필로 해결된 항목
 
@@ -52,5 +53,10 @@
 - export는 계약일자 blank-last, Customer 이름, Policy id 순으로 정렬하며 XLSX의 열 너비·행 높이·border까지 재현하고 인쇄·페이지 설정은 제외한다.
 - native save cancel은 무변경이고 덮어쓰기는 사용자가 저장 dialog에서 승인한다. 결과에는 basename과 건수만 표시한다.
 - CSV formula trigger는 원문을 변형하지 않고 전체 CSV 저장을 거부하며 XLSX 사용을 안내한다.
+- SQLite는 Tauri app-data, 자동 backup은 기본 `backups` 하위 폴더에 저장하고 native dialog로 custom local 폴더를 선택할 수 있다.
+- backup은 SQLite online snapshot과 schema/app/timestamp/SHA-256 manifest를 사용한다. 시작·resume·local date 변경의 daily와 변경된 정상 종료 backup을 만들고 검증된 자동 최근 30개만 보관한다.
+- 수동·복원 전 안전 사본은 자동 retention에서 제외한다. restore는 대상과 현재 DB 안전 사본을 검증하고 실패 시 현재 DB를 보존하며 성공 후 재시작한다.
+- 종료 backup 실패는 재시도 또는 경고 후 종료를 선택한다. MVP backup은 암호화하지 않고 OS 계정·디스크 보호에 의존한다.
+- Settings의 Dashboard 기간은 최근 상담·미상담 기준만 조절하고 예정 bucket은 고정한다. 카드 표시 건수는 전체 카드 공통 1–10이다.
 
 위 결정은 `docs/product/proposed-operating-profile.md`의 승인 상태와 공통 데이터·Customer/Consultation·Dashboard·Calendar 규칙을 근거로 한다.

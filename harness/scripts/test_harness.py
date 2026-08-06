@@ -24,10 +24,14 @@ def test_sensitive_artifacts(failures: list[str]) -> None:
             repository_checks.ROOT = root
             (root / "customer.db-wal").write_bytes(b"synthetic")
             (root / "customer.csv").write_text("synthetic\n", encoding="utf-8")
+            recovery = root / "custom-recovery/BODAM-manual-synthetic.bodam-backup"
+            recovery.parent.mkdir(parents=True)
+            recovery.write_bytes(b"synthetic full database archive")
             errors: list[str] = []
             repository_checks.check_sensitive_artifacts(errors)
             expect_error(errors, "customer.db-wal", failures)
             expect_error(errors, "customer.csv", failures)
+            expect_error(errors, "custom-recovery/BODAM-manual-synthetic.bodam-backup", failures)
 
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -39,6 +43,20 @@ def test_sensitive_artifacts(failures: list[str]) -> None:
             repository_checks.check_sensitive_artifacts(errors)
             if errors:
                 failures.append(f"synthetic fixture was incorrectly rejected: {errors}")
+    finally:
+        repository_checks.ROOT = original_root
+
+
+def test_sensitive_ignore_rule(failures: list[str]) -> None:
+    original_root = repository_checks.ROOT
+    try:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            repository_checks.ROOT = root
+            (root / ".gitignore").write_text("backups/\n", encoding="utf-8")
+            errors: list[str] = []
+            repository_checks.check_sensitive_ignore_rules(errors)
+            expect_error(errors, "must ignore *.bodam-backup", failures)
     finally:
         repository_checks.ROOT = original_root
 
@@ -194,6 +212,7 @@ def test_main_worktree_rejection(failures: list[str]) -> None:
 def run_negative_controls() -> list[str]:
     failures: list[str] = []
     test_sensitive_artifacts(failures)
+    test_sensitive_ignore_rule(failures)
     test_line_limit_extensions(failures)
     test_generated_cache_and_vue_sql_detection(failures)
     test_plan_approval_and_qa(failures)

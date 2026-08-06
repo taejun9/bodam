@@ -7,6 +7,7 @@ import type { Coverage, CoverageCategory } from "@/features/coverage/types/cover
 import type { Customer } from "@/features/customer/types/customer";
 import type { FamilySummary } from "@/features/family/types/family";
 import type { InsurancePolicy } from "@/features/insurance/types/insurance-policy";
+import type { AppSettings } from "@/features/settings/types/app-settings";
 
 import {
   buildDashboardReadModel,
@@ -54,9 +55,17 @@ export interface DashboardConsultationReader {
   list(customerId: string): Promise<readonly Consultation[]>;
 }
 
-export type DashboardLoadQuery = Omit<DashboardQuery, "limit"> & {
-  readonly limit?: number;
-};
+export interface DashboardSettingsReader {
+  load(): Promise<Pick<
+    AppSettings,
+    "recentConsultationDays" | "unconsultedDays" | "dashboardItemLimit"
+  >>;
+}
+
+export type DashboardLoadQuery = Omit<
+  DashboardQuery,
+  "recentConsultationDays" | "unconsultedDays" | "dashboardItemLimit"
+>;
 
 export class DashboardApplication {
   constructor(
@@ -66,13 +75,17 @@ export class DashboardApplication {
     private readonly coverage: DashboardCoverageReader,
     private readonly benchmarks: DashboardBenchmarkReader,
     private readonly consultations: DashboardConsultationReader,
+    private readonly settings: DashboardSettingsReader,
   ) {}
 
   async load(query: DashboardLoadQuery): Promise<DashboardReadModel> {
     try {
+      const settings = await this.settings.load();
       const parsedQuery = validateDashboardQuery({
         ...query,
-        limit: query.limit ?? 10,
+        recentConsultationDays: settings.recentConsultationDays,
+        unconsultedDays: settings.unconsultedDays,
+        dashboardItemLimit: settings.dashboardItemLimit,
       });
       const [customers, families, categories, benchmarks] = await Promise.all([
         this.customers.list(),

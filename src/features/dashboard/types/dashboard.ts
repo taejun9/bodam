@@ -4,7 +4,9 @@ export interface DashboardQuery {
   readonly referenceDate: string;
   readonly referenceInstant: string;
   readonly timeZone: string;
-  readonly limit: number;
+  readonly recentConsultationDays: number;
+  readonly unconsultedDays: number;
+  readonly dashboardItemLimit: number;
 }
 
 export interface DashboardPolicyFact {
@@ -154,6 +156,9 @@ export interface DashboardReadModel {
   readonly referenceDate: string;
   readonly referenceInstant: string;
   readonly timeZone: string;
+  readonly recentConsultationDays: number;
+  readonly unconsultedDays: number;
+  readonly dashboardItemLimit: number;
   readonly todayContact: DashboardCard<TodayContactItem>;
   readonly insuranceAge: DashboardCard<InsuranceAgeItem>;
   readonly maturity: DashboardCard<MaturityItem>;

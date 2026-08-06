@@ -2,7 +2,7 @@
 
 보험설계사 한 명이 고객, 가족, 보험계약, 보장, 상담과 일정을 인터넷 없이 관리하는 Windows 우선 개인용 데스크톱 CRM입니다.
 
-현재 고객·가족·보험계약·계약별 보장·고객별 상담·사용자 일정과 보장 기준 관리가 동작합니다. Tauri 데스크톱 앱에서 각 원본을 생성·수정·soft delete하고, 고객·가족 월보험료와 고객 카테고리별 보장 판정, 오늘의 Dashboard와 월간 Calendar를 확인할 수 있습니다. 승인된 21열 계약조회 `.xlsx`/`.csv`를 검증·미리보기 뒤 로컬 SQLite에 가져오고, 보존 source와 현재 계약 값이 일치하는 활성 계약을 같은 21열 파일로 내보낼 수 있습니다. Dashboard·Calendar read model은 저장 없이 요청 시 다시 계산됩니다.
+현재 고객·가족·보험계약·계약별 보장·고객별 상담·사용자 일정, 보장 기준과 앱 설정 관리가 동작합니다. Tauri 데스크톱 앱에서 각 원본을 생성·수정·soft delete하고, 고객·가족 월보험료와 고객 카테고리별 보장 판정, 오늘의 Dashboard와 월간 Calendar를 확인할 수 있습니다. 승인된 21열 계약조회 `.xlsx`/`.csv`를 검증·미리보기 뒤 로컬 SQLite에 가져오고 같은 계약을 다시 내보낼 수 있으며, SQLite online snapshot 기반 로컬 백업과 검증·재시작 복원을 제공합니다. Dashboard·Calendar read model은 저장 없이 요청 시 다시 계산됩니다.
 
 ## 핵심 원칙
 
@@ -62,6 +62,10 @@ Windows 배포 대상은 WebView2 offline installer를 포함하도록 구성되
 - KRW 원 단위 정수, 가입일·만기일·다음 연락일 date-only와 상담 timestamp 검증
 - SQLite migration checksum/history/runtime schema drift 검사
 - light/dark 테마, 키보드 접근성, 모바일 반응형 브라우저 화면
+- SQLite에 유지되는 테마, 최근·미상담 기간과 Dashboard 카드별 1–10건 설정
+- 시작·다시 활성화·날짜 변경의 일일 백업, 변경된 정상 종료 백업과 최근 자동 30개 보존
+- 설정된 로컬 폴더의 수동 전체 백업과 checksum·schema·SQLite 무결성 검증
+- pathless native 파일 선택, 복원 전 안전 사본과 재시작 전 staging을 거친 전체 DB 복원·rollback
 - loading, empty, success, validation, adapter error 상태
 - native 파일 선택을 통한 21열 계약조회 `.xlsx`/UTF-8 BOM CSV 검증·미리보기
 - 행별 기존/새 Customer 명시 연결과 duplicate 기본 skip·exact update·별도 생성
@@ -125,8 +129,18 @@ Windows 배포 대상은 WebView2 offline installer를 포함하도록 구성되
 
 1. 앱 시작 화면이나 왼쪽 `대시보드`에서 관리대상 고객의 오늘 연락, 상령·만기 예정과 최근·미상담 대상을 확인합니다.
 2. 고객·가족 보험료와 보장 부족 카드는 기존 합계대상 계약·가족 summary·사용자 Benchmark 판정을 요청 시 조합합니다. 공식 보험 권고가 아닙니다.
-3. 각 카드의 전체 건수와 우선순위 순 최대 10건을 보고 고객 이름을 눌러 상세로 이동합니다. 가족 항목은 가족 관리로 이동합니다.
+3. 각 카드의 전체 건수와 설정된 우선순위 detail을 보고 고객 이름을 눌러 상세로 이동합니다. 가족 항목은 가족 관리로 이동합니다.
 4. 앱 진입, 다시 활성화, local 날짜 변경 시 현재 원본으로 다시 계산합니다. Dashboard 결과 자체는 SQLite나 Browser 저장소에 보관하지 않습니다.
+
+### 설정·백업·복원 사용 흐름
+
+1. 왼쪽 `설정`에서 light/dark 테마, 오늘 포함 최근 상담 기간, 미상담 기준과 카드별 표시 건수를 저장합니다. 미상담 기준은 최근 상담 기간 이상이어야 하며 상령·만기 30/60/90일 구간은 바뀌지 않습니다.
+2. 데스크톱 앱은 기본 app-data `backups`에 local date당 자동 성공본이 없을 때 daily backup을 만들고, 정상 종료에는 마지막 성공본 이후 DB가 바뀐 경우만 exit backup을 추가합니다. `daily|exit` 최근 30개만 자동 정리합니다.
+3. `백업 폴더 변경`은 native folder dialog로 로컬 폴더를 정하며 앱에는 기본/custom 여부와 폴더명만 표시합니다. 사용할 수 없어진 custom 위치를 기본 폴더로 조용히 바꾸지 않습니다.
+4. `지금 백업`은 설정된 폴더에 retention에서 제외되는 manual `.bodam-backup`을 만듭니다. 파일은 strict manifest와 `database.sqlite3`만 가진 검증된 ZIP이지만 암호화되지 않은 평문입니다.
+5. `백업에서 복원`은 native 파일 선택 뒤 시각·앱/schema 버전만 미리 보여 줍니다. 확인하면 현재 DB의 `pre_restore` 안전 사본과 pending marker를 만든 뒤 앱을 재시작하고, repository를 열기 전에 migration·무결성 검사를 거쳐 교체합니다. 실패하면 안전 사본으로 rollback합니다.
+
+백업에는 고객·계약·상담·일정과 soft delete 원본이 모두 포함됩니다. 같은 디스크의 백업은 기기 손상·분실에 대한 별도 복구 수단이 아니므로 접근 통제된 별도 로컬 매체로 폴더를 정하고, 공유·동기화·네트워크 폴더는 현재 지원 범위로 가정하지 마세요.
 
 ### Calendar와 일정 사용 흐름
 
@@ -137,7 +151,7 @@ Windows 배포 대상은 WebView2 offline installer를 포함하도록 구성되
 
 일정 제목과 메모에는 주민등록번호, 보험사 로그인 정보, 민감 병력·상세 병력이나 진단·치료 상세를 입력하지 마세요. Calendar는 원본 계약·상담을 복제하지 않고 요청 시 5종 event read model로 다시 계산합니다.
 
-SQLite 파일은 Tauri가 결정한 운영체제별 app-data 디렉터리의 `bodam.sqlite3`에 저장됩니다. 앱을 제거하거나 사용자 프로필을 정리하기 전에 이 파일을 별도로 보관해야 하며, 자동 backup·restore UI는 아직 제공하지 않습니다.
+SQLite 파일은 Tauri가 결정한 운영체제별 app-data 디렉터리의 `bodam.sqlite3`에 저장됩니다. 앱을 제거하거나 사용자 프로필을 정리하기 전에는 Settings에서 검증된 수동 백업을 만들고, 그 파일을 앱 데이터와 별도로 보관하세요.
 
 ## 현재 제한
 
@@ -147,7 +161,7 @@ SQLite 파일은 Tauri가 결정한 운영체제별 app-data 디렉터리의 `bo
 - 보장에는 카테고리와 가입금액만 저장하며 특약명, 피보험자, 보장기간, 메모, 병력·청구 정보는 저장하지 않습니다.
 - 가족 대표, 관계 enum·방향성 그래프, 모든 가족을 합친 보험료와 가족 보장 합계는 제공하지 않습니다.
 - Dashboard의 오늘 연락은 고객별 최신 상담의 다음 연락일을 현재 상태로 사용합니다. 완료 task, 오래된 연락 일정의 별도 이력 보기와 전역 상담 검색은 제공하지 않습니다.
-- Dashboard 기간·표시 건수 사용자 설정, chart와 OS notification은 아직 제공하지 않습니다.
+- Dashboard chart와 OS notification은 아직 제공하지 않습니다.
 - Calendar의 주·일 보기, 반복·우선순위·drag and drop, 완료 일정 자동 숨김과 일정 복원은 제공하지 않습니다.
 - 상담 복원·purge, 상담 유형·채널·태그·첨부와 외부 전화·메시지 연동은 제공하지 않습니다.
 - source 없는 수동 계약의 21열 합성, 현재 계약 값과 source가 충돌할 때의 자동 우선순위, 선택 고객·기간 export는 제공하지 않습니다. source 수정·purge, 여러 파일 동시 처리와 background import/export도 제공하지 않습니다.

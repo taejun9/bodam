@@ -110,11 +110,11 @@ const props = defineProps<{ model: DashboardReadModel }>();
     <DashboardCard
       metric="recent-consultation"
       title="최근 상담"
-      description="오늘 포함 최근 30일에 상담한 고객"
+      :description="`오늘 포함 최근 ${props.model.recentConsultationDays}일에 상담한 고객`"
       :total-count="props.model.recentConsultation.totalCount"
       :visible-count="props.model.recentConsultation.items.length"
       :is-truncated="props.model.recentConsultation.isTruncated"
-      empty-text="최근 30일에 상담한 고객이 없습니다."
+      :empty-text="`최근 ${props.model.recentConsultationDays}일에 상담한 고객이 없습니다.`"
     >
       <DashboardContactItem
         v-for="item in props.model.recentConsultation.items"
@@ -126,7 +126,7 @@ const props = defineProps<{ model: DashboardReadModel }>();
     <DashboardCard
       metric="unconsulted"
       title="최근 미상담"
-      description="90일 이상 상담하지 않았거나 상담 기록이 없는 고객"
+      :description="`${props.model.unconsultedDays}일 이상 상담하지 않았거나 상담 기록이 없는 고객`"
       :total-count="props.model.unconsulted.totalCount"
       :visible-count="props.model.unconsulted.items.length"
       :is-truncated="props.model.unconsulted.isTruncated"

@@ -1,0 +1,205 @@
+.app-settings-section {
+  display: grid;
+  min-width: 0;
+  padding: 22px;
+  gap: 18px;
+}
+
+.app-settings-header span {
+  color: var(--brand-700);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.app-settings-header h3,
+.dashboard-preferences-heading h4 {
+  margin: 2px 0 0;
+}
+
+.app-settings-header h3 {
+  font-size: 18px;
+}
+
+.app-settings-header p,
+.dashboard-preferences-heading p,
+.theme-fieldset > p,
+.period-note,
+.app-settings-alert p {
+  margin: 4px 0 0;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.app-settings-state {
+  display: flex;
+  min-height: 120px;
+  color: var(--text-secondary);
+  background: var(--bg-subtle);
+  border: 1px dashed var(--border-strong);
+  border-radius: 10px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.app-settings-form {
+  display: grid;
+  min-width: 0;
+  gap: 18px;
+}
+
+.theme-fieldset {
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+
+.theme-fieldset legend,
+.preference-field > span:first-child {
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.theme-options {
+  display: grid;
+  margin-top: 9px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.theme-options label {
+  min-width: 0;
+  cursor: pointer;
+}
+
+.theme-options input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.theme-options span {
+  display: grid;
+  min-height: 42px;
+  padding: 8px 12px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  place-items: center;
+  font-weight: 700;
+}
+
+.theme-options input:checked + span {
+  color: var(--brand-700);
+  background: var(--brand-50);
+  border-color: var(--brand-600);
+}
+
+.theme-options input:focus-visible + span {
+  outline: 3px solid color-mix(in srgb, var(--focus) 30%, transparent);
+  outline-offset: 2px;
+}
+
+.dashboard-preferences {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.dashboard-preferences-heading {
+  grid-column: 1 / -1;
+}
+
+.preference-field {
+  display: grid;
+  min-width: 0;
+  gap: 7px;
+}
+
+.number-control {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.number-control input {
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 7px 9px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+  font-variant-numeric: tabular-nums;
+}
+
+.number-control small {
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.field-error {
+  color: var(--danger);
+  overflow-wrap: anywhere;
+}
+
+.period-note {
+  padding: 10px 12px;
+  background: var(--bg-subtle);
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+}
+
+.app-settings-alert,
+.app-settings-result {
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.app-settings-alert {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.app-settings-alert p {
+  margin-bottom: 10px;
+}
+
+.app-settings-result {
+  margin: 0;
+  color: var(--success);
+  background: var(--success-bg);
+  font-weight: 700;
+}
+
+.app-settings-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 640px) {
+  .app-settings-section {
+    padding: 17px;
+  }
+
+  .dashboard-preferences {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 420px) {
+  .theme-options {
+    grid-template-columns: 1fr;
+  }
+
+  .app-settings-actions .app-button {
+    width: 100%;
+  }
+}

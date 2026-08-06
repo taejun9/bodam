@@ -129,8 +129,9 @@ describe("DashboardPage", () => {
       referenceDate: "2026-08-06",
       referenceInstant: "2026-08-06T03:00:00.000Z",
       timeZone: "Asia/Seoul",
-      limit: 10,
     });
+    expect(wrapper.text()).toContain("오늘 포함 최근 30일");
+    expect(wrapper.text()).toContain("90일 이상 상담하지 않았거나");
   });
 
   it("keeps all eight cards visible when every card is empty", async () => {

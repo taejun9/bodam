@@ -7,6 +7,7 @@ mod family;
 mod inspection;
 mod insurance;
 mod schedule;
+mod settings;
 
 use rusqlite::Connection;
 
@@ -27,6 +28,7 @@ pub(super) fn verify_registered_version(
         coverage_benchmark::OBJECTS,
         schedule::OBJECTS,
         data_exchange::OBJECTS,
+        settings::OBJECTS,
     ];
     if applied_count > groups.len() {
         return Err(AppError::MigrationDrift);
@@ -62,6 +64,9 @@ pub(super) fn verify_registered_version(
     }
     if applied_count >= 8 {
         data_exchange::verify_schema(connection)?;
+    }
+    if applied_count >= 9 {
+        settings::verify_schema(connection)?;
     }
     Ok(())
 }
@@ -124,4 +129,9 @@ pub(super) fn verify_data_exchange_schema_for_test(
     connection: &Connection,
 ) -> Result<(), AppError> {
     data_exchange::verify_schema(connection)
+}
+
+#[cfg(test)]
+pub(super) fn verify_settings_schema_for_test(connection: &Connection) -> Result<(), AppError> {
+    settings::verify_schema(connection)
 }

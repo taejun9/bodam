@@ -6,6 +6,8 @@ import { spawnSync } from "node:child_process";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
+import { runBackupSettingsScenario } from "./backup-settings-runner.mjs";
+
 const projectRoot = fileURLToPath(new globalThis.URL("..", import.meta.url));
 const e2eTargetDirectory = resolve(projectRoot, "src-tauri", "target", "e2e");
 const baseEnvironment = {
@@ -17,6 +19,8 @@ const customerDatabasePath = resolve(runtimeDirectory, "bodam-e2e.sqlite3");
 const dataExchangeDatabasePath = resolve(runtimeDirectory, "data-exchange-e2e.sqlite3");
 const csvDatabasePath = resolve(runtimeDirectory, "data-exchange-csv-e2e.sqlite3");
 const rollbackDatabasePath = resolve(runtimeDirectory, "data-exchange-rollback-e2e.sqlite3");
+const backupSettingsDatabasePath = resolve(runtimeDirectory, "backup-settings-e2e.sqlite3");
+const backupDirectory = resolve(runtimeDirectory, "synthetic-backups");
 const xlsxExportPath = resolve(runtimeDirectory, "synthetic-contracts-export.xlsx");
 const csvExportPath = resolve(runtimeDirectory, "synthetic-contracts-export.csv");
 const xlsxExportSnapshotPath = resolve(runtimeDirectory, "synthetic-export-xlsx.json");
@@ -42,6 +46,7 @@ const databasePaths = [
   dataExchangeDatabasePath,
   csvDatabasePath,
   rollbackDatabasePath,
+  backupSettingsDatabasePath,
 ];
 const generatedPaths = [
   xlsxExportPath,
@@ -87,16 +92,17 @@ function assertFileUnchanged(path, expectedDigest) {
   }
 }
 
-function runScript(name, environment = process.env) {
+function runScript(name, environment = process.env, allowFailure = false) {
   const result = spawnSync(npmCommand, ["run", name], {
     cwd: projectRoot,
     env: environment,
     stdio: "inherit",
   });
   if (result.error) throw result.error;
-  if (result.status !== 0) {
+  if (result.status !== 0 && !allowFailure) {
     throw new Error(`${name} failed with status ${result.status ?? result.signal}`);
   }
+  return result.status ?? result.signal;
 }
 
 function runContractExport(format, environment, exportPath, snapshotPath) {
@@ -191,6 +197,14 @@ try {
     BODAM_E2E_ASSERT_MODE: "empty",
   });
   assertFileUnchanged(runtimeXlsxFixture, xlsxDigest);
+
+  await runBackupSettingsScenario({
+    baseEnvironment,
+    backupDatabasePath: backupSettingsDatabasePath,
+    backupDirectory,
+    runScript,
+    runtimeDirectory,
+  });
 } finally {
   removeRuntimeDirectory();
 }

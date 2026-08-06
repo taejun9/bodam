@@ -1,6 +1,6 @@
 # 공식 자료
 
-확인일: 2026-08-06 KST
+확인일: 2026-08-07 KST
 
 현재 변경 가능성이 있는 기술 사실은 아래 공식/1차 문서를 기준으로 한다. 링크를 재확인하지 않고 버전·요구사항을 단정하지 않는다.
 
@@ -11,12 +11,14 @@
 | Tauri Prerequisites | https://v2.tauri.app/start/prerequisites/ | Windows 개발 요구사항 | Build Tools와 WebView2 준비 |
 | Tauri Windows Installer | https://v2.tauri.app/distribute/windows-installer/ | MSI/NSIS와 WebView2 방식 | offline installer 결정 |
 | Tauri Dialog Plugin | https://v2.tauri.app/plugin/dialog/ | native open/save dialog | import/export/backup 경로 선택 |
+| Tauri Single Instance Plugin | https://v2.tauri.app/plugin/single-instance/ | desktop 단일 instance와 기존 window focus | restore 전 process 배타 경계 |
 | Tauri File System Plugin | https://v2.tauri.app/plugin/file-system/ | local file 접근 | 파일 adapter |
 | Tauri Capabilities | https://v2.tauri.app/security/capabilities/ | command와 scope 권한 | 최소 권한 설계 |
 | Tauri SQL Plugin | https://v2.tauri.app/plugin/sql/ | SQLite driver와 migration 선택지 | Prisma와 이중 migration 방지 검토 |
 | Tauri Node Sidecar | https://v2.tauri.app/learn/sidecar-nodejs/ | Node sidecar packaging | Prisma runtime option A |
 | Tauri Rust Commands | https://v2.tauri.app/develop/calling-rust/ | typed custom command | feature IPC adapter |
 | Tauri Permissions | https://v2.tauri.app/security/permissions/ | app command permission | main window command 제한 |
+| Tauri App lifecycle API | https://docs.rs/tauri/2/tauri/enum.RunEvent.html | exit/restart event와 prevent API | 종료 backup과 restore restart 경계 |
 | Tauri WebDriver | https://v2.tauri.app/develop/tests/webdriver/ | 실제 desktop UI 자동화 | macOS·Windows E2E |
 | Tauri WebDriver CI | https://v2.tauri.app/develop/tests/webdriver/ci/ | Windows runner 예제 | Windows release app QA |
 | WebdriverIO Tauri Service | https://webdriver.io/docs/desktop-testing/tauri/ | embedded WebDriver service | 단일 cross-platform E2E 구성 |
@@ -42,6 +44,9 @@
 | Zod Basics | https://zod.dev/basics | parse와 safeParse | 오류 수집 계약 |
 | dayjs Parse | https://day.js.org/docs/en/parse/parse | 날짜 parsing | 날짜 service |
 | dayjs String Format | https://day.js.org/docs/en/parse/string-format | strict custom format | Excel/CSV 날짜 validation |
+| SQLite Online Backup API | https://sqlite.org/backup.html | live database snapshot | WAL DB 자동·수동 backup |
+| SQLite PRAGMA | https://sqlite.org/pragma.html#pragma_integrity_check | integrity/foreign key 검사 | backup·restore candidate 검증 |
+| SQLite Security | https://sqlite.org/security.html | untrusted database 방어 | restore 파일 first-statement integrity 검사 |
 
 ## 확인된 설계 영향
 
@@ -53,6 +58,9 @@
 - Prisma schema와 migration SQL만 schema source로 사용하고 Rust는 동일 file을 실행한다. executor history가 Prisma와 같다고 주장하지 않는다.
 - renderer-only browser test와 실제 Tauri WebDriver E2E 증거를 구분한다.
 - WebdriverIO Tauri service의 embedded provider는 macOS·Windows·Linux를 지원한다. WebDriver plugin은 test build에만 등록하고 production release에서는 활성화하지 않는다.
+- SQLite online backup API는 live source를 일관된 destination snapshot으로 만들며 WAL 파일을 raw copy할 필요가 없다.
+- restore candidate는 업무 query나 migration 전에 integrity와 schema 계약을 먼저 검사한다.
+- single-instance plugin은 다른 plugin보다 먼저 등록하고 두 번째 실행의 args·cwd는 사용·기록하지 않으며 기존 main window focus만 수행한다.
 
 ## Source Rules
 

@@ -87,6 +87,7 @@ SOURCE_SUFFIXES = {
     ".ps1",
 }
 TABULAR_SUFFIXES = {".xlsx", ".xls", ".xlsm", ".xlsb", ".ods", ".csv", ".tsv"}
+BACKUP_ARTIFACT_SUFFIX = ".bodam-backup"
 
 
 def source_files() -> list[Path]:
@@ -151,11 +152,26 @@ def check_sensitive_artifacts(errors: list[str]) -> None:
             continue
         is_tabular = path.suffix.lower() in TABULAR_SUFFIXES
         is_sqlite = bool(SQLITE_ARTIFACT.search(path.name))
-        if not is_tabular and not is_sqlite:
+        is_backup = path.suffix.lower() == BACKUP_ARTIFACT_SUFFIX
+        if not is_tabular and not is_sqlite and not is_backup:
             continue
         if is_tabular and is_synthetic_fixture(relative):
             continue
         errors.append(f"sensitive/runtime artifact must not be committed: {relative}")
+
+
+def check_sensitive_ignore_rules(errors: list[str]) -> None:
+    ignore = ROOT / ".gitignore"
+    if not ignore.is_file():
+        errors.append("missing required file: .gitignore")
+        return
+    rules = {
+        line.strip()
+        for line in ignore.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    }
+    if f"*{BACKUP_ARTIFACT_SUFFIX}" not in rules:
+        errors.append(".gitignore must ignore *.bodam-backup at every repository path")
 
 
 def check_readme_commands(errors: list[str]) -> None:
@@ -174,5 +190,6 @@ def run_repository_checks() -> list[str]:
     check_root_markdown(errors)
     check_line_limits(errors)
     check_sensitive_artifacts(errors)
+    check_sensitive_ignore_rules(errors)
     check_readme_commands(errors)
     return errors

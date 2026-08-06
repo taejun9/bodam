@@ -13,6 +13,7 @@
 - soft delete filter
 - import row normalization과 validation
 - backup retention 30개 선택
+- Dashboard 설정 1/30/90/10 경계와 recent/unconsulted 비중복
 
 framework, DB, 실제 시간 없이 빠르게 실행되어야 한다.
 
@@ -25,6 +26,7 @@ framework, DB, 실제 시간 없이 빠르게 실행되어야 한다.
 - 승인된 import validation UX에서 commit까지
 - export mapping
 - backup 생성·복원 후 row count와 핵심 checksum 대사
+- online snapshot과 원본 WAL logical snapshot 불변, restore 단계별 rollback
 
 실제 고객 데이터 대신 synthetic fixture를 사용한다.
 
@@ -71,5 +73,16 @@ export fixture는 active source-backed parity 행만 포함하고 source 없는 
 - dashboard count = 동일 조건의 detail query count
 - export row count = 선택된 활성 record count
 - restore 후 핵심 table count와 schema version = backup 전 값
+
+## Backup / Restore synthetic contract
+
+- `.bodam-backup` exact entry와 strict v1 manifest, DB SHA-256·byte size를 독립 parser로 확인한다.
+- 29·30·31 automatic file에서 최근 30개만 남고 manual·pre-restore가 유지되는지 검사한다.
+- same-day daily 중복, changed/unchanged exit, concurrent trigger와 retention 삭제 warning을 고정 clock·filesystem port로 검사한다.
+- unreadable backup directory·entry는 0개로 축소하지 않고 path failure로 반환하며, daily+status 한 operation은 기존 archive를 한 번씩만 완전 검증한다.
+- corrupt/truncated/oversized archive, checksum·size mismatch, reordered/hash drift와 future migration을 staging 전에 거부한다.
+- restore 성공은 별도 process restart 뒤 전체 사용자 table의 결정적 logical snapshot을 대사하고 실패 injection은 이전 snapshot과 temp 0을 확인한다.
+- process-abort cleanup은 exact canonical-v4 state temp와 현재·기존 write-probe suffix만 제거하고 near-miss·symlink·nonregular를 보존하며, 삭제·directory sync fault를 실패로 보고한 뒤 다음 시도에서 회수한다.
+- 같은 release binary를 동시에 두 번 실행해 두 번째 process가 database setup 전에 종료되고 기존 main window만 focus되는지 검사한다.
 
 정확한 활성 계약 조건과 중복 규칙은 승인 후 식을 고정한다.

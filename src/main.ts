@@ -3,6 +3,7 @@ import { createApp } from "vue";
 
 import App from "@/App.vue";
 import router from "@/app/router";
+import { appSettingsApplication } from "@/app/composition/settings";
 import { useUiStore } from "@/app/stores/ui";
 import "@/assets/main.css";
 
@@ -17,7 +18,13 @@ async function bootstrap() {
   app.use(pinia);
   app.use(router);
 
-  useUiStore(pinia).initialize();
+  const ui = useUiStore(pinia);
+  ui.initialize();
+  try {
+    ui.setTheme((await appSettingsApplication.load()).theme);
+  } catch {
+    // The first-paint cache remains usable until Settings can be retried in-app.
+  }
 
   app.mount("#app");
 }

@@ -135,6 +135,11 @@ function readers() {
     }]),
   };
   const consultations = { list: vi.fn().mockResolvedValue([consultation]) };
+  const settings = { load: vi.fn().mockResolvedValue({
+    recentConsultationDays: 30,
+    unconsultedDays: 90,
+    dashboardItemLimit: 10,
+  }) };
   return {
     customers,
     insurance,
@@ -142,6 +147,7 @@ function readers() {
     coverage: coverageReader,
     benchmarks,
     consultations,
+    settings,
   };
 }
 
@@ -155,6 +161,7 @@ describe("DashboardApplication", () => {
       source.coverage,
       source.benchmarks,
       source.consultations,
+      source.settings,
     );
 
     const result = await application.load({
@@ -184,7 +191,7 @@ describe("DashboardApplication", () => {
     );
   });
 
-  it("uses ten as the display limit when none is provided", async () => {
+  it("uses the configured display limit without changing total counts", async () => {
     const source = readers();
     source.families.list.mockResolvedValue(Array.from({ length: 11 }, (_, index) => ({
       family: {
@@ -196,6 +203,11 @@ describe("DashboardApplication", () => {
       memberCount: 1,
       totalMonthlyPremiumWon: BigInt(11 - index),
     })));
+    source.settings.load.mockResolvedValue({
+      recentConsultationDays: 30,
+      unconsultedDays: 90,
+      dashboardItemLimit: 3,
+    });
     const application = new DashboardApplication(
       source.customers,
       source.insurance,
@@ -203,6 +215,7 @@ describe("DashboardApplication", () => {
       source.coverage,
       source.benchmarks,
       source.consultations,
+      source.settings,
     );
 
     const result = await application.load({
@@ -212,7 +225,7 @@ describe("DashboardApplication", () => {
     });
 
     expect(result.familyPremium.totalCount).toBe(11);
-    expect(result.familyPremium.items).toHaveLength(10);
+    expect(result.familyPremium.items).toHaveLength(3);
     expect(result.familyPremium.isTruncated).toBe(true);
   });
 
@@ -228,6 +241,7 @@ describe("DashboardApplication", () => {
       source.coverage,
       source.benchmarks,
       source.consultations,
+      source.settings,
     );
 
     let caught: unknown;
@@ -255,6 +269,7 @@ describe("DashboardApplication", () => {
       source.coverage,
       source.benchmarks,
       source.consultations,
+      source.settings,
     );
 
     await expect(application.load({

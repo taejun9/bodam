@@ -2,7 +2,9 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import { RouterLink, RouterView, useRoute } from "vue-router";
 
+import { appSettingsApplication } from "@/app/composition/settings";
 import { useUiStore } from "@/app/stores/ui";
+import { appSettingsSafeMessage } from "@/features/settings/types/app-settings-error";
 import AppIcon from "@/shared/components/AppIcon.vue";
 
 const ui = useUiStore();
@@ -14,6 +16,8 @@ const mobileViewport = ref(false);
 const navigationToggle = ref<HTMLButtonElement>();
 const sidebar = ref<HTMLElement>();
 const mainContent = ref<HTMLElement>();
+const themeSaving = ref(false);
+const themeError = ref<string>();
 let mobileQuery: MediaQueryList | undefined;
 
 const navigationToggleLabel = computed(() => {
@@ -57,6 +61,22 @@ function handleWindowKeydown(event: KeyboardEvent) {
   if (event.key !== "Escape" || !mobileViewport.value || !ui.mobileNavigationOpen) return;
   event.preventDefault();
   closeMobileNavigation("toggle");
+}
+
+async function toggleTheme() {
+  if (themeSaving.value) return;
+  const previous = ui.theme;
+  const requested = ui.toggleTheme();
+  themeSaving.value = true;
+  themeError.value = undefined;
+  try {
+    ui.setTheme((await appSettingsApplication.updateTheme(requested)).theme);
+  } catch (error: unknown) {
+    ui.setTheme(previous);
+    themeError.value = appSettingsSafeMessage(error);
+  } finally {
+    themeSaving.value = false;
+  }
 }
 
 onMounted(() => {
@@ -202,12 +222,15 @@ const utilities = [
           <button
             class="icon-button"
             type="button"
+            :disabled="themeSaving"
+            :aria-busy="themeSaving"
             :aria-label="ui.theme === 'light' ? '다크 모드 사용' : '라이트 모드 사용'"
             :aria-pressed="ui.theme === 'dark'"
-            @click="ui.toggleTheme"
+            @click="toggleTheme"
           >
             <AppIcon :name="ui.theme === 'light' ? 'moon' : 'sun'" />
           </button>
+          <p v-if="themeError" class="sr-only" role="alert">{{ themeError }}</p>
         </div>
       </header>
 

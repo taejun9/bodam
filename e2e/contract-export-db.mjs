@@ -114,19 +114,19 @@ function compareText(left, right) {
   return left < right ? -1 : 1;
 }
 
-export function writeLogicalSnapshot(databasePath, snapshotPath) {
-  writeFileSync(snapshotPath, `${JSON.stringify(logicalSnapshot(databasePath))}\n`, {
+export function writeLogicalSnapshot(databasePath, snapshotPath, options = {}) {
+  writeFileSync(snapshotPath, `${JSON.stringify(logicalSnapshot(databasePath, options))}\n`, {
     encoding: "utf8",
     mode: 0o600,
   });
 }
 
-export function assertLogicalSnapshot(databasePath, snapshotPath) {
+export function assertLogicalSnapshot(databasePath, snapshotPath, options = {}) {
   const expected = JSON.parse(readFileSync(snapshotPath, "utf8"));
-  assert.deepEqual(logicalSnapshot(databasePath), expected);
+  assert.deepEqual(logicalSnapshot(databasePath, options), expected);
 }
 
-function logicalSnapshot(databasePath) {
+export function logicalSnapshot(databasePath, { clearHostLocalBackupDirectory = false } = {}) {
   const database = new DatabaseSync(databasePath, { readOnly: true });
   try {
     const tables = database.prepare(
@@ -143,7 +143,10 @@ function logicalSnapshot(databasePath) {
       ).all(table).map(({ name }) => name);
       const rows = database.prepare(
         `SELECT ${columns.map(quote).join(", ")} FROM ${quote(table)}`,
-      ).all().map((row) => JSON.stringify(columns.map((column) => encode(row[column]))));
+      ).all().map((row) => JSON.stringify(columns.map((column) => encode(
+        clearHostLocalBackupDirectory && table === "app_settings" &&
+          column === "custom_backup_directory" ? null : row[column],
+      ))));
       rows.sort();
       counts[table] = rows.length;
       hash.update(JSON.stringify([table, columns, rows]));

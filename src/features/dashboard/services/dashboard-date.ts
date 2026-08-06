@@ -4,6 +4,12 @@ import {
   type UpcomingBucket,
 } from "../types/dashboard";
 import {
+  MAX_RECENT_CONSULTATION_DAYS,
+  MAX_UNCONSULTED_DAYS,
+  MIN_RECENT_CONSULTATION_DAYS,
+  MIN_UNCONSULTED_DAYS,
+} from "@/features/settings/types/app-settings";
+import {
   addCalendarMonthsClamped,
   assertValidTimeZone,
   calendarDaysBetween,
@@ -101,10 +107,33 @@ export function validateDashboardQuery(query: DashboardQuery): DashboardQuery {
     throw invalid("referenceInstant", "referenceDate의 local 날짜 안에 있어야 합니다.");
   }
   if (
-    !Number.isInteger(query.limit) || query.limit < 1 ||
-    query.limit > DASHBOARD_MAX_ITEMS
+    !Number.isInteger(query.dashboardItemLimit) || query.dashboardItemLimit < 1 ||
+    query.dashboardItemLimit > DASHBOARD_MAX_ITEMS
   ) {
-    throw invalid("limit", `1 이상 ${DASHBOARD_MAX_ITEMS} 이하의 정수여야 합니다.`);
+    throw invalid(
+      "dashboardItemLimit",
+      `1 이상 ${DASHBOARD_MAX_ITEMS} 이하의 정수여야 합니다.`,
+    );
+  }
+  if (
+    !Number.isInteger(query.recentConsultationDays) ||
+    query.recentConsultationDays < MIN_RECENT_CONSULTATION_DAYS ||
+    query.recentConsultationDays > MAX_RECENT_CONSULTATION_DAYS
+  ) {
+    throw invalid("recentConsultationDays", "1 이상 365 이하의 정수여야 합니다.");
+  }
+  if (
+    !Number.isInteger(query.unconsultedDays) ||
+    query.unconsultedDays < MIN_UNCONSULTED_DAYS ||
+    query.unconsultedDays > MAX_UNCONSULTED_DAYS
+  ) {
+    throw invalid("unconsultedDays", "1 이상 3,650 이하의 정수여야 합니다.");
+  }
+  if (query.unconsultedDays < query.recentConsultationDays) {
+    throw invalid(
+      "unconsultedDays",
+      "recentConsultationDays 이상이어야 합니다.",
+    );
   }
   return { ...query };
 }

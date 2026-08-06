@@ -126,11 +126,27 @@ describe("dashboard calendar dates", () => {
       referenceDate: "2026-08-06",
       referenceInstant: "2026-08-06T03:00:00.000Z",
       timeZone: "Asia/Seoul",
-      limit: 10,
+      recentConsultationDays: 30,
+      unconsultedDays: 90,
+      dashboardItemLimit: 10,
     } as const;
     expect(validateDashboardQuery(query)).toEqual(query);
-    expect(() => validateDashboardQuery({ ...query, limit: 0 })).toThrow("limit");
-    expect(() => validateDashboardQuery({ ...query, limit: 11 })).toThrow("limit");
+    expect(() => validateDashboardQuery({
+      ...query,
+      dashboardItemLimit: 0,
+    })).toThrow("dashboardItemLimit");
+    expect(() => validateDashboardQuery({
+      ...query,
+      dashboardItemLimit: 11,
+    })).toThrow("dashboardItemLimit");
+    expect(() => validateDashboardQuery({
+      ...query,
+      recentConsultationDays: 366,
+    })).toThrow("recentConsultationDays");
+    expect(() => validateDashboardQuery({
+      ...query,
+      recentConsultationDays: 91,
+    })).toThrow("unconsultedDays");
     expect(() => validateDashboardQuery({
       ...query,
       referenceDate: "2026-02-30",

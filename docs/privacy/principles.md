@@ -81,8 +81,17 @@ form, import schema, memo 도움말, test fixture, log에도 위 항목을 위�
 
 - 최근 30개 보관은 파일 개수 정책이며 안전성 보장을 의미하지 않는다.
 - backup 파일도 원본 DB와 동일한 보호 수준으로 안내한다.
-- restore 전에 현재 DB 안전 사본과 schema version 검증을 고려한다.
-- backup 암호화와 recovery key는 요구사항 확인 없이 구현하지 않는다.
+- 자동 backup 기본 위치는 app-data의 `backups`이고 custom local 위치는 native folder dialog로만 선택한다. 전체 path는 IPC result와 log에 반환하지 않는다.
+- backup에는 soft-deleted 원본, 상담·일정 memo, 21열 import source와 Settings를 포함한 전체 SQLite snapshot이 들어간다.
+- custom backup directory는 다른 장치로 전달하면 안 되는 host-local capability다. restore working DB에서 이 값만 제거하고 기본 위치로 돌아가며, 사용자가 현재 장치에서 다시 선택한다.
+- macOS/Linux custom 위치는 component별 nofollow-open으로 고정한 directory FD에 상대해 create/open/rename/unlink/fsync하고, 작업 시작·최종 sync 뒤 현재 path의 device/inode identity를 대사한다. rename·symlink retarget 또는 위치 소실은 오류로 보고하며 replacement path로 따라가지 않는다.
+- macOS/Linux restore 선택 파일은 final-component `O_NOFOLLOW|O_CLOEXEC`, descriptor `fstat`와 bounded copy를 사용한다. app-owned restore staging root/file은 각각 `0700`/`0600`으로 제한한다.
+- Windows는 현재 canonical/path validation fallback이다. junction/reparse point·UNC/network·removable volume을 directory HANDLE로 고정하는 보장과 실제 local NTFS acceptance는 plan-013 전까지 완료로 주장하지 않는다.
+- `.bodam-backup`은 암호화하지 않은 평문이다. 같은 디스크 backup은 기기 손상·분실에 대한 별도 복구 수단이 아니며 OS 계정·전체 디스크 보호에 의존한다.
+- restore 전에 checksum·schema·SQLite integrity와 현재 DB 안전 사본을 검증한다. 실패하면 현재 DB를 보존하고 staging/temp 삭제 실패도 숨기지 않고 다음 startup 정리 대상으로 남긴다.
+- process 중단으로 남을 수 있는 state atomic-write와 backup directory write-probe는 exact app-owned canonical v4 이름과 regular-file 조건일 때만 다음 startup/작업에서 삭제한다. 유사 이름, symlink와 directory는 지우지 않으며 삭제·parent sync 실패는 재시도 가능한 오류로 남긴다.
+- manual·pre-restore artifact는 자동 retention에서 제외되므로 사용자가 보호 위치와 외부 삭제를 관리한다.
+- backup 암호화, recovery key와 app lock은 별도 threat model·승인 전에는 구현하지 않는다.
 
 ## 외부 통신
 

@@ -27,6 +27,9 @@ export function dashboardModel(label = "A"): DashboardReadModel {
     referenceDate: "2026-08-06",
     referenceInstant: "2026-08-06T03:00:00.000Z",
     timeZone: "Asia/Seoul",
+    recentConsultationDays: 30,
+    unconsultedDays: 90,
+    dashboardItemLimit: 10,
     todayContact: card([{
       customerId: customerIds[0],
       customerName: `합성 연락 고객 ${label}`,

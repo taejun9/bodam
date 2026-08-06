@@ -148,6 +148,7 @@ export function buildRecentConsultationItems(
   referenceDate: string,
   referenceInstant: string,
   timeZone: string,
+  recentConsultationDays: number,
 ): RecentConsultationItem[] {
   return customers.flatMap((customer) => {
     const latest = latestConsultation(
@@ -158,7 +159,7 @@ export function buildRecentConsultationItems(
     );
     if (latest === null) return [];
     const daysAgo = calendarDaysBetween(latest.consultedOn, referenceDate);
-    if (daysAgo > 29) return [];
+    if (daysAgo >= recentConsultationDays) return [];
     return [{
       customerId: customer.customerId,
       customerName: customer.customerName,
@@ -180,6 +181,7 @@ export function buildUnconsultedItems(
   referenceDate: string,
   referenceInstant: string,
   timeZone: string,
+  unconsultedDays: number,
 ): UnconsultedItem[] {
   return customers.flatMap<UnconsultedItem>((customer) => {
     const latest = latestConsultation(
@@ -200,7 +202,7 @@ export function buildUnconsultedItems(
       }];
     }
     const daysSince = calendarDaysBetween(latest.consultedOn, referenceDate);
-    if (daysSince < 90) return [];
+    if (daysSince < unconsultedDays) return [];
     return [{
       customerId: customer.customerId,
       customerName: customer.customerName,

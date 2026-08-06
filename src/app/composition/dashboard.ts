@@ -4,6 +4,7 @@ import { coverageApplication } from "@/app/composition/coverage";
 import { customerApplication } from "@/app/composition/customer";
 import { familyApplication } from "@/app/composition/family";
 import { insuranceApplication } from "@/app/composition/insurance";
+import { appSettingsApplication } from "@/app/composition/settings";
 import { DashboardApplication } from "@/features/dashboard/application/dashboard-application";
 
 export const dashboardApplication = new DashboardApplication(
@@ -13,4 +14,5 @@ export const dashboardApplication = new DashboardApplication(
   coverageApplication,
   coverageBenchmarkApplication,
   consultationApplication,
+  appSettingsApplication,
 );

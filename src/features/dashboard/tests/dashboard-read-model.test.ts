@@ -15,7 +15,9 @@ const query = {
   referenceDate: "2026-08-06",
   referenceInstant: "2026-08-06T03:00:00.000Z",
   timeZone: "Asia/Seoul",
-  limit: 10,
+  recentConsultationDays: 30,
+  unconsultedDays: 90,
+  dashboardItemLimit: 10,
 } as const;
 
 function customer(
