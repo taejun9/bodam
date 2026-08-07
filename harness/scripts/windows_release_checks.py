@@ -8,6 +8,8 @@ import re
 from pathlib import Path
 
 from windows_release_document_checks import check_windows_release_documents
+from windows_release_launch_checks import check_windows_release_launch
+from windows_release_launch_syntax import INVALID_SOURCE, active_code
 from windows_workflow_checks import (
     PRODUCTION_INSTALLER,
     UPLOAD_ALLOWLIST,
@@ -21,9 +23,11 @@ PRODUCTION_CONFIG = "src-tauri/tauri.conf.json"
 E2E_CONFIG = "src-tauri/tauri.e2e.conf.json"
 REQUIRED_RELEASE_FILES = (
     "e2e/windows-installer-contract.psm1",
+    "e2e/windows-launch-readiness.psm1",
     "e2e/windows-host-safety.psm1",
     "e2e/test-windows-host-safety.ps1",
     "e2e/test-windows-installer-identity.ps1",
+    "e2e/test-windows-launch-readiness.ps1",
     "e2e/assert-windows-production.ps1",
     "e2e/run-windows-installed-e2e.ps1",
     "e2e/cleanup-windows-installs.ps1",
@@ -111,9 +115,6 @@ EVIDENCE_SEMANTICS = (
     ),
 )
 POWERSHELL_NUMERIC_SEPARATOR = re.compile(r"(?<![\w.])\d[\d]*_\d")
-POWERSHELL_BLOCK_COMMENT = re.compile(r"<#.*?#>", re.DOTALL)
-
-
 def read_json(relative: str, errors: list[str]) -> dict:
     path = ROOT / relative
     try:
@@ -216,7 +217,10 @@ def check_powershell_portability(errors: list[str]) -> None:
     for path in sorted((ROOT / "e2e").rglob("*.ps*")):
         if path.suffix.lower() not in {".ps1", ".psm1"}:
             continue
-        text = path.read_text(encoding="utf-8")
+        text = active_code(path)
+        if text == INVALID_SOURCE:
+            errors.append(f"{path.relative_to(ROOT)} has an invalid PowerShell comment or string")
+            continue
         if POWERSHELL_NUMERIC_SEPARATOR.search(text):
             errors.append(
                 f"{path.relative_to(ROOT)} contains an unsupported PowerShell numeric separator"
@@ -228,7 +232,7 @@ def check_host_safety_contract(errors: list[str]) -> None:
         path = ROOT / relative
         if not path.is_file():
             continue
-        text = path.read_text(encoding="utf-8")
+        text = active_code(path)
         missing = [marker for marker in markers if marker not in text]
         if missing:
             errors.append(f"{relative} missing hosted safety contract: {missing}")
@@ -240,16 +244,12 @@ def check_evidence_contract(errors: list[str]) -> None:
     if not path.is_file():
         errors.append(f"missing Windows production assertion: {relative}")
         return
-    text = path.read_text(encoding="utf-8")
+    text = active_code(path)
     for key in REQUIRED_EVIDENCE_KEYS:
         if key not in text:
             errors.append(f"{relative} missing sanitized evidence key: {key}")
-    code = POWERSHELL_BLOCK_COMMENT.sub("", text)
-    code = "\n".join(
-        line for line in code.splitlines() if not line.lstrip().startswith("#")
-    )
     for label, pattern in EVIDENCE_SEMANTICS:
-        if len(re.findall(pattern, code, re.IGNORECASE | re.MULTILINE)) != 1:
+        if len(re.findall(pattern, text, re.IGNORECASE | re.MULTILINE)) != 1:
             errors.append(
                 f"{relative} missing evidence semantic: {label}; "
                 "expected exactly one active statement"
@@ -276,5 +276,6 @@ def run_windows_release_checks() -> list[str]:
     check_host_safety_contract(errors)
     check_windows_workflow(ROOT, errors)
     check_evidence_contract(errors)
+    check_windows_release_launch(ROOT, errors)
     check_windows_release_documents(ROOT, errors)
     return errors

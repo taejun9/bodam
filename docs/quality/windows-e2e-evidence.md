@@ -22,6 +22,25 @@ A passing hosted run proves only the following in that runner image:
   `sharedWebViewPreserved: true`;
 - production capability and E2E-marker isolation.
 
+The production launch smoke rejects a window handle alone and `LocalAppData` alone as readiness.
+Tauri 2.11.5 builds the configured window before BODAM's
+setup hook. Its version-pinned PathResolver maps `app_data_dir()` through `data_dir()` plus
+the identifier, and version-pinned dirs 6.0.0 maps Windows `data_dir()` to
+`FOLDERID_RoamingAppData`. The gate therefore waits for the exact roaming `bodam.sqlite3`,
+one completed daily backup and an empty `backup-work`; every item must be regular,
+reparse-free and nonempty where it is
+a file. The exact database length, backup basename and backup length must remain stable
+with a responsive window and exact installed process before one `CloseMainWindow()`
+request. A bounded normal exit with code 0 is required; the force-stop fallback is
+cleanup after failure only. This is a production renderer-to-IPC, SQLite/daily-backup
+and OS-close smoke, while the private installed suite remains the full feature proof.
+The database and observed daily-backup hashes must also survive normal NSIS uninstall
+before evidence may record `appDataPreserved: true`.
+
+That source order strongly supports the early force-stop race as the baseline failure
+explanation, but does not by itself confirm a false negative. The modified PowerShell and
+installed lifecycle remain `NOT RUN` until their exact commit passes a hosted Windows run.
+
 Tauri CLI 2.11.4 temporarily changes the main executable's first bundle-type marker
 from `__TAURI_BUNDLE_TYPE_VAR_UNK` to `..._NSS` while NSIS captures it, then restores
 the build output. The hosted identity gate therefore hashes a memory projection with

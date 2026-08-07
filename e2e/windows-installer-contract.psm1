@@ -1,11 +1,9 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
-
 $script:ProjectRoot = Split-Path $PSScriptRoot -Parent
-
+Import-Module (Join-Path $PSScriptRoot "windows-launch-readiness.psm1") -Force
 function Get-BodamInstallerContract {
   param([Parameter(Mandatory)][ValidateSet("Production", "E2E")][string]$Flavor)
-
   $production = $Flavor -eq "Production"
   $productName = if ($production) { "BODAM" } else { "BODAM E2E" }
   $identifier = if ($production) { "app.bodam.desktop" } else { "app.bodam.desktop.e2e" }
@@ -15,6 +13,7 @@ function Get-BodamInstallerContract {
     Join-Path $script:ProjectRoot "src-tauri/target/e2e/release"
   }
   $installerName = "${productName}_0.1.0_x64-setup.exe"
+  $roamingAppData = Join-Path $env:APPDATA $identifier
   [pscustomobject]@{
     Flavor = $Flavor
     ProductName = $productName
@@ -32,7 +31,10 @@ function Get-BodamInstallerContract {
     UninstallKey = "Software\Microsoft\Windows\CurrentVersion\Uninstall\$productName"
     ManufacturerKey = "Software\bodam\$productName"
     LocalAppData = Join-Path $env:LOCALAPPDATA $identifier
-    RoamingAppData = Join-Path $env:APPDATA $identifier
+    RoamingAppData = $roamingAppData
+    DatabasePath = Join-Path $roamingAppData "bodam.sqlite3"
+    BackupDirectory = Join-Path $roamingAppData "backups"
+    WorkspaceDirectory = Join-Path $roamingAppData "backup-work"
     ShortcutName = "$productName.lnk"
   }
 }
@@ -48,7 +50,8 @@ function Test-BodamSamePath {
 
 function Assert-BodamRegularPath {
   param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][bool]$Directory)
-  $item = Get-Item -LiteralPath $Path -Force
+  $item = Get-Item -LiteralPath $Path -Force -ErrorAction SilentlyContinue
+  if ($null -eq $item) { throw "installer contract path is missing" }
   if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
     throw "installer contract path must not be a reparse point"
   }
@@ -60,7 +63,6 @@ function Get-BodamSha256 {
   param([Parameter(Mandatory)][string]$Path)
   (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
 }
-
 function Get-BodamByteSha256 {
   param([Parameter(Mandatory)][byte[]]$Bytes)
   $sha = [Security.Cryptography.SHA256]::Create()
@@ -173,7 +175,6 @@ function Get-BodamExactProcesses {
     if ($path -and (Test-BodamSamePath $path $Contract.InstalledBinary)) { $process }
   }
 }
-
 function Invoke-BodamNsisInstall {
   param([Parameter(Mandatory)][pscustomobject]$Contract)
   Assert-BodamRegularPath -Path $Contract.InstallerPath -Directory $false
@@ -212,25 +213,56 @@ function Assert-BodamInstalled {
 
 function Invoke-BodamLaunchSmoke {
   param([Parameter(Mandatory)][pscustomobject]$Contract)
-  $process = Start-Process -FilePath $Contract.InstalledBinary -WorkingDirectory $Contract.InstallDirectory -PassThru
+  try { $process = Start-Process -FilePath $Contract.InstalledBinary -WorkingDirectory $Contract.InstallDirectory -PassThru } catch { throw "installed production executable could not be started" }
   try {
-    $deadline = [DateTime]::UtcNow.AddSeconds(30)
+    $deadline = [DateTime]::UtcNow.AddSeconds(60)
+    $readySamples = 0
+    $lastReadinessToken = $null
     do {
       Start-Sleep -Milliseconds 250
       $process.Refresh()
-      if ($process.HasExited) { throw "installed production executable exited before opening a window" }
-    } while ($process.MainWindowHandle -eq 0 -and [DateTime]::UtcNow -lt $deadline)
-    if ($process.MainWindowHandle -eq 0 -or -not (Test-BodamSamePath $process.Path $Contract.InstalledBinary)) {
-      throw "installed production window smoke check failed"
+      if ($process.HasExited) { throw "installed production executable exited before startup readiness" }
+      if (-not (Test-BodamSamePath $process.Path $Contract.InstalledBinary)) {
+        throw "installed production executable path changed during launch"
+      }
+      $readinessToken = Get-BodamProductionReadinessToken -Contract $Contract
+      $ready = $process.MainWindowHandle -ne 0 -and $process.Responding -and
+        $null -ne $readinessToken
+      if ($ready -and $readinessToken -ceq $lastReadinessToken) {
+        $readySamples += 1
+      } elseif ($ready) {
+        $readySamples = 1
+      } else {
+        $readySamples = 0
+      }
+      $lastReadinessToken = $readinessToken
+    } while ($readySamples -lt 4 -and [DateTime]::UtcNow -lt $deadline)
+    if ($readySamples -lt 4) {
+      throw "installed production startup readiness check failed"
+    }
+    Assert-BodamRegularPath -Path $Contract.RoamingAppData -Directory $true
+    Assert-BodamRegularPath -Path $Contract.DatabasePath -Directory $false
+    $closeRequested = $process.CloseMainWindow()
+    if (-not $closeRequested) {
+      throw "installed production window refused a normal close request"
+    }
+    $normalExit = $process.WaitForExit(60000)
+    if (-not $normalExit) {
+      throw "installed production executable did not exit after its normal close request"
+    }
+    if ($process.ExitCode -ne 0) {
+      throw "installed production executable returned a nonzero normal-exit code"
+    }
+    if (@(Get-BodamExactProcesses $Contract).Count -ne 0) {
+      throw "installed production executable remained after its normal exit"
     }
   } finally {
-    if (-not $process.HasExited -and (Test-BodamSamePath $process.Path $Contract.InstalledBinary)) {
-      Stop-Process -Id $process.Id -Force
-      $process.WaitForExit(15000) | Out-Null
-    }
-  }
-  if (-not (Test-Path -LiteralPath $Contract.RoamingAppData -PathType Container)) {
-    throw "production launch did not create its required roaming app-data"
+    try {
+      if (-not $process.HasExited -and (Test-BodamSamePath $process.Path $Contract.InstalledBinary)) {
+        Stop-Process -Id $process.Id -Force
+        $process.WaitForExit(15000) | Out-Null
+      }
+    } catch { throw "installed production cleanup failed" }
   }
   @($Contract.RoamingAppData, $Contract.LocalAppData) |
     Where-Object { Test-Path -LiteralPath $_ -PathType Container }
@@ -258,7 +290,7 @@ function Assert-BodamUninstalled {
 }
 
 Export-ModuleMember -Function @(
-  "Get-BodamInstallerContract", "Get-BodamSha256",
+  "Get-BodamInstallerContract", "Get-BodamSha256", "Assert-BodamRegularPath",
   "Assert-BodamNsisPayloadIdentity", "Assert-BodamX64Pe",
   "Invoke-BodamNsisInstall", "Assert-BodamInstalled",
   "Invoke-BodamLaunchSmoke", "Invoke-BodamNsisUninstall", "Assert-BodamUninstalled",

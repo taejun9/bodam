@@ -3,7 +3,11 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
+
+
+HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 
 
 REQUIREMENTS = {
@@ -22,6 +26,10 @@ REQUIREMENTS = {
         "first bundle-type marker",
         "every other byte",
         "actual installed hash",
+        "exact roaming `bodam.sqlite3`",
+        "`LocalAppData` alone as readiness",
+        "one `CloseMainWindow()`",
+        "force-stop fallback",
     ),
     "docs/quality/windows-release-acceptance.md": (
         "offlineVmAccepted: false",
@@ -31,6 +39,9 @@ REQUIREMENTS = {
         "nested reparse point",
         "first exact `UNK` to `NSS`",
         "actual installed SHA-256",
+        "exact roaming `bodam.sqlite3`",
+        "one `CloseMainWindow()`",
+        "appDataPreserved: true",
     ),
     "docs/privacy/principles.md": (
         "Hosted artifact",
@@ -47,6 +58,11 @@ REQUIREMENTS = {
         "parent-directory metadata durability",
         "https://github.com/tauri-apps/tauri/blob/8909f221d1515955fc843808032bdc5d62209c96/crates/tauri-bundler/src/bundle.rs",
         "https://github.com/tauri-apps/tauri/blob/8909f221d1515955fc843808032bdc5d62209c96/crates/tauri-bundler/src/bundle/windows/nsis/installer.nsi",
+        "https://github.com/tauri-apps/tauri/blob/7cd71369c00978a3783b6ae3e9972358abbe4ae6/crates/tauri/src/app.rs",
+        "https://github.com/tauri-apps/tauri/blob/7cd71369c00978a3783b6ae3e9972358abbe4ae6/crates/tauri/src/path/desktop.rs",
+        "https://docs.rs/tauri/2.11.5/tauri/path/struct.PathResolver.html#method.app_data_dir",
+        "https://docs.rs/dirs/6.0.0/dirs/fn.data_dir.html",
+        "https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.process.closemainwindow",
     ),
 }
 
@@ -57,7 +73,7 @@ def check_windows_release_documents(root: Path, errors: list[str]) -> None:
         if not path.is_file():
             errors.append(f"missing Windows release evidence document: {relative}")
             continue
-        text = path.read_text(encoding="utf-8")
+        text = HTML_COMMENT.sub("", path.read_text(encoding="utf-8"))
         for phrase in phrases:
             if phrase not in text:
                 errors.append(f"{relative} missing Windows evidence boundary: {phrase}")

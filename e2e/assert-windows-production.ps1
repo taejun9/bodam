@@ -190,6 +190,9 @@ $uninstalled = $false
 $installExitCode = -1
 $uninstallExitCode = -1
 $installedBinarySha256 = $null
+$databaseSha256 = $null
+$dailyBackupName = $null
+$dailyBackupSha256 = $null
 $observedAppData = @()
 $webViewSnapshot = $null
 $webViewAfterUninstall = $false
@@ -203,10 +206,38 @@ try {
   $webViewSnapshot = @(Get-BodamSharedWebViewSnapshot)
   Assert-NoProductionMarkers @($contract.InstalledBinary)
   $observedAppData = @(Invoke-BodamLaunchSmoke -Contract $contract)
+  Assert-BodamRegularPath -Path $contract.DatabasePath -Directory $false
+  try { $databaseSha256 = Get-BodamSha256 $contract.DatabasePath } catch {
+    throw "production database hash inspection failed"
+  }
+  try {
+    $dailyBackups = @(Get-ChildItem -LiteralPath $contract.BackupDirectory -Force -File `
+      -Filter "BODAM-daily-*.bodam-backup")
+  } catch { throw "production daily backup enumeration failed" }
+  if ($dailyBackups.Count -ne 1) { throw "production daily backup readiness is invalid" }
+  Assert-BodamRegularPath -Path $dailyBackups[0].FullName -Directory $false
+  $dailyBackupName = $dailyBackups[0].Name
+  try { $dailyBackupSha256 = Get-BodamSha256 $dailyBackups[0].FullName } catch {
+    throw "production daily backup hash inspection failed"
+  }
   $uninstallExitCode = Invoke-BodamNsisUninstall -Contract $contract
   $installed = $false
   Assert-BodamUninstalled -Contract $contract
   Assert-BodamSharedWebViewPreserved -Snapshot $webViewSnapshot
+  Assert-BodamRegularPath -Path $contract.RoamingAppData -Directory $true
+  Assert-BodamRegularPath -Path $contract.DatabasePath -Directory $false
+  $preservedDailyBackup = Join-Path $contract.BackupDirectory $dailyBackupName
+  Assert-BodamRegularPath -Path $preservedDailyBackup -Directory $false
+  try {
+    $preservedDatabaseLength = (Get-Item -LiteralPath $contract.DatabasePath).Length
+    $preservedDatabaseSha256 = Get-BodamSha256 $contract.DatabasePath
+    $preservedDailyBackupSha256 = Get-BodamSha256 $preservedDailyBackup
+  } catch { throw "production app-data preservation inspection failed" }
+  if ($preservedDatabaseLength -le 0 -or
+      $preservedDatabaseSha256 -cne $databaseSha256 -or
+      $preservedDailyBackupSha256 -cne $dailyBackupSha256) {
+    throw "NSIS uninstall did not preserve production app-data"
+  }
   $webViewAfterUninstall = $true
   foreach ($path in $observedAppData) {
     if (-not (Test-Path -LiteralPath $path -PathType Container)) {

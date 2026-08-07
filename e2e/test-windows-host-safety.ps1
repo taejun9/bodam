@@ -62,4 +62,5 @@ try {
 }
 
 & (Join-Path $PSScriptRoot "test-windows-installer-identity.ps1")
+& (Join-Path $PSScriptRoot "test-windows-launch-readiness.ps1")
 Write-Output "BODAM hosted cleanup safety controls: PASS"

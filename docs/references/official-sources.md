@@ -23,6 +23,13 @@
 | Tauri WebDriver CI | https://v2.tauri.app/develop/tests/webdriver/ci/ | Windows runner 예제 | Windows release app QA |
 | Tauri CLI 2.11.4 bundle source | https://github.com/tauri-apps/tauri/blob/8909f221d1515955fc843808032bdc5d62209c96/crates/tauri-bundler/src/bundle.rs | bundle-type marker patch와 source restore | NSIS installed executable identity projection |
 | Tauri CLI 2.11.4 NSIS template | https://github.com/tauri-apps/tauri/blob/8909f221d1515955fc843808032bdc5d62209c96/crates/tauri-bundler/src/bundle/windows/nsis/installer.nsi | patched main executable의 NSIS capture | installed payload provenance |
+| Tauri core 2.11.5 app setup source | https://github.com/tauri-apps/tauri/blob/7cd71369c00978a3783b6ae3e9972358abbe4ae6/crates/tauri/src/app.rs | configured window build와 user setup 순서 | production launch readiness 경계 |
+| Tauri core 2.11.5 desktop path source | https://github.com/tauri-apps/tauri/blob/7cd71369c00978a3783b6ae3e9972358abbe4ae6/crates/tauri/src/path/desktop.rs | Windows app data resolver | exact roaming app-data 계약 |
+| Tauri 2.11.5 PathResolver docs | https://docs.rs/tauri/2.11.5/tauri/path/struct.PathResolver.html#method.app_data_dir | `app_data_dir = data_dir / identifier` | BODAM identifier 경로 결속 |
+| dirs 6.0.0 data_dir docs | https://docs.rs/dirs/6.0.0/dirs/fn.data_dir.html | Windows `FOLDERID_RoamingAppData` mapping | Tauri Windows roaming root 결속 |
+| Microsoft Process.CloseMainWindow | https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.process.closemainwindow | GUI main-window close 요청 | production OS-close smoke |
+| Microsoft Process.WaitForExit | https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.process.waitforexit | bounded process exit wait | normal exit와 cleanup timeout 분리 |
+| Microsoft WM_CLOSE | https://learn.microsoft.com/en-us/windows/win32/winmsg/wm-close | window close message semantics | Tauri CloseRequested/exit-backup 진입 |
 | Microsoft NtCreateFile | https://learn.microsoft.com/en-us/windows/win32/api/winternl/nf-winternl-ntcreatefile | directory HANDLE 상대 open과 reparse 동작 | Windows backup 경로 결속 |
 | Microsoft file handle information | https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getfileinformationbyhandleex | 열린 file/directory identity와 entry 정보 | Windows identity 대사 |
 | Microsoft SetFileInformationByHandle | https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-setfileinformationbyhandle | HANDLE 기반 rename/delete | Windows archive publish와 cleanup |
@@ -69,6 +76,8 @@
 - Vite의 transpile과 TypeScript typecheck는 별도 단계로 둔다.
 - Windows installer는 WebView2 offlineInstaller를 포함한다. hosted runner는 WebView2 미설치 환경을 증명하지 못하므로 clean VM 수동 검증을 분리한다.
 - Tauri CLI 2.11.4는 NSIS 생성 중 main binary의 첫 `UNK` bundle marker를 `NSS`로 patch한 payload를 담고 이후 build output을 복원한다. installed identity는 이 exact 동길이 치환 외 모든 byte의 equality로 검증하고 실제 installed hash를 별도로 기록한다.
+- Tauri core 2.11.5는 configured window를 user setup hook보다 먼저 build한다. 또한 잠긴 PathResolver의 `app_data_dir()`는 `data_dir()/identifier`이고, 잠긴 dirs 6.0.0의 Windows `data_dir()`는 `FOLDERID_RoamingAppData`이므로 BODAM 생산 DB는 exact roaming identifier 경로에 결속된다. window handle만으로 database·IPC readiness를 주장하지 않고, exact roaming DB·renderer daily backup·빈 workspace가 안정된 뒤에만 정상 close를 요청한다.
+- Production close smoke는 `CloseMainWindow` 1회와 bounded `WaitForExit`·exit code 0을 요구한다. force stop은 실패 cleanup일 뿐 정상 종료나 exit-backup 성공 증거가 아니다.
 - Windows backup은 fixed drive로 분류된 NTFS에서 directory HANDLE 상대 open과 reparse-point 비추적을 사용하고, 열린 volume/file identity를 대사한다. native dialog 선택 순간부터 HANDLE이 이어진다고 주장하지 않는다.
 - Windows archive rename·delete는 DELETE 권한으로 연 HANDLE을 대상으로 수행하고, hosted artifact는 production installer·checksum·sanitized evidence의 exact allowlist만 허용한다.
 - `FlushFileBuffers` 증거는 지정한 열린 file의 buffered data flush에 한정한다. parent-directory metadata durability, 전원 손실 뒤 rename 영속성 또는 Unix directory `fsync`와 같은 보장을 Windows local NTFS pass에서 주장하지 않는다.

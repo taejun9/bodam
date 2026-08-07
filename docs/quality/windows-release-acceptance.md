@@ -18,12 +18,23 @@ installer SHA-256. Synthetic data is mandatory throughout.
 - [ ] Match the installed executable to the built production executable after applying
       only Tauri's first exact `UNK` to `NSS` NSIS bundle marker substitution; record
       both the restored source SHA-256 and actual installed SHA-256.
-- [ ] Verify allowlisted HKCU install/uninstall metadata and application launch.
+- [ ] Verify allowlisted HKCU install/uninstall metadata and the exact installed process.
+- [ ] Require the exact roaming `bodam.sqlite3` resolved by Tauri 2.11.5 PathResolver and
+      the dirs 6.0.0 Windows roaming mapping; a window or `LocalAppData` alone is not readiness.
+- [ ] Require one completed daily backup and empty `backup-work`, all regular and
+      reparse-free, with nonempty files and a stable responsive window.
+- [ ] Send one `CloseMainWindow()` request, require bounded exit code 0 and treat the
+      force-stop fallback as failed-run cleanup only.
 - [ ] Silent-uninstall and verify app-owned process, install directory, key and shortcut
       residue is 0 without deleting user data or shared WebView2 state.
+- [ ] Hash the exact roaming database and daily backup after normal exit and require
+      both hashes unchanged after uninstall before `appDataPreserved: true`.
 - [ ] Snapshot documented x64 HKLM/HKCU WebView2 logical records immediately after
       production install; require every record and nonzero `pv` to compare exact-equal
       after uninstall and cleanup before recording `sharedWebViewPreserved: true`.
+
+Source-order analysis alone does not check these items. The modified production lifecycle
+remains `NOT RUN` until the exact commit executes successfully on `windows-2025`.
 
 ## Installed E2E hosted gate
 

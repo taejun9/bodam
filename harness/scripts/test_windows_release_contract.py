@@ -8,8 +8,11 @@ import tempfile
 from pathlib import Path
 
 import windows_release_checks
+from test_windows_launch_contract import run_windows_launch_negative_controls
+from test_windows_launch_lexer_contract import run_windows_launch_lexer_negative_controls
 from test_windows_workflow_contract import run_windows_workflow_negative_controls
 from windows_release_document_checks import REQUIREMENTS as DOCUMENT_REQUIREMENTS
+from windows_release_launch_syntax import strip_comments
 
 
 SOURCE_ROOT = Path(__file__).resolve().parents[2]
@@ -134,13 +137,30 @@ def test_offline_claim(failures: list[str]) -> None:
         expect_error(errors, "must record offlineVmAccepted as false", failures)
 
 
+def test_comment_parser(failures: list[str]) -> None:
+    quoted = '$left = "<#"\n$active = $true\n$right = "#>"\n'
+    if strip_comments(quoted) != quoted:
+        failures.append("PowerShell comment parser consumed quoted block-comment delimiters")
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        create_valid_fixture(root)
+        path = root / "e2e/test-windows-host-safety.ps1"
+        write(path, path.read_text(encoding="utf-8") + "\n<#")
+        expect_error(
+            run_check(root), "invalid PowerShell comment or string", failures
+        )
+
+
 def run_windows_release_negative_controls() -> list[str]:
     failures: list[str] = []
     test_valid_contract(failures)
     test_installer_modes(failures)
     test_artifact_allowlist(failures)
     test_offline_claim(failures)
+    test_comment_parser(failures)
     failures.extend(run_windows_workflow_negative_controls(create_valid_fixture, run_check))
+    failures.extend(run_windows_launch_negative_controls(create_valid_fixture, run_check))
+    failures.extend(run_windows_launch_lexer_negative_controls(create_valid_fixture, run_check))
     return failures
 
 
