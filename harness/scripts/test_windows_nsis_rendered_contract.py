@@ -46,6 +46,16 @@ def run_windows_nsis_rendered_negative_controls(
         ("weakened unique parser", parser, parser_source.replace(
             "$values.Count -ne 4 -or", "$values.Count -lt 1 -and", 1
         )),
+        ("reintroduced nested dependency reload", parser, parser_source.replace(
+            '$ErrorActionPreference = "Stop"\n',
+            '$ErrorActionPreference = "Stop"\nImport-Module '
+            '(Join-Path $PSScriptRoot "windows-nsis-dependency-contract.psm1") -Force\n',
+            1,
+        )),
+        ("unqualified dependency call", parser, parser_source.replace(
+            "windows-nsis-dependency-contract\\Assert-BodamNsisDependencyContract",
+            "Assert-BodamNsisDependencyContract", 1
+        )),
         ("removed block-comment control", control, control_source.replace(
             "  (New-RenderedContract -Body @($mode, '/*', $webView, '*/')),\n",
             "", 1

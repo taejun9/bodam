@@ -39,10 +39,13 @@ installer SHA-256. Synthetic data is mandatory throughout.
 - [ ] Treat only `ItemNotFoundException` as an absent cleanup target and propagate every
       access or provider probe error before removal and its postcondition.
 
-The authoritative Plan-024 run records this production lifecycle as a scoped pass while
-the overall job failed later. Its Node launcher and private NSIS build passed, but the
-installed preflight rejected Tauri's correct empty rendered WebView skip value before
-installation. Installed UI/native E2E and upload remain `NOT RUN` for the corrected commit.
+The authoritative Plan-025 run `31181536529` executed exact corrected commit
+`1bd13f23520d75fe3e14d82cf7b4e9ea834626a6` on `windows-2025`. Its checkout, bounded cleanup
+retry, installer identity and production launch-readiness controls passed. The rendered
+PowerShell fixture failed before its assertions when a nested forced module reload removed
+the caller-visible normalized hash helper. Npm trust, setup, QA, Rust, build, production
+lifecycle, installed E2E and upload were skipped; artifacts: 0. The replacement
+module-qualified wiring remains `NOT RUN` until the next exact-commit hosted run.
 
 ## Installed E2E hosted gate
 

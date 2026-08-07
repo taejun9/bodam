@@ -111,17 +111,19 @@ nesting. `ADDITIONALPLUGINSPATH` must resolve through regular, non-reparse
 `NSIS/Plugins/x86-unicode/additional` directories containing only the pinned
 `nsis_tauri_utils.dll` SHA-1, so the approved symbolic plugin line cannot redirect compilation.
 
-The corrected PowerShell control is designed to exercise LF/CRLF/CR positives and those
-negative forms on Windows. It is `NOT RUN` in the current tree because this macOS host has
-no PowerShell and no `windows-2025` run yet contains the corrected parser. Python source
-digests, exact wiring and mutation controls do run locally; the earlier hosted PowerShell
-PASS belongs only to commit `79b23f98eb3604247bf64188b5cd62f2025b9ecb` before this fix.
+The authoritative Plan-025 run `31181536529` executed exact corrected commit
+`1bd13f23520d75fe3e14d82cf7b4e9ea834626a6` on `windows-2025`. Checkout, bounded cleanup
+retry, installer identity and production launch-readiness controls passed. The rendered
+PowerShell fixture then failed before its assertions because a nested forced dependency-module
+reload removed the caller-visible normalized hash helper. Isolated npm trust, setup, QA,
+Rust, build, install, installed E2E and upload were skipped; artifacts: 0. Those downstream
+steps are `NOT RUN`, not failures or passes.
 
-The authoritative Plan-024 run records cross-layer QA, PowerShell controls, all-feature
-Rust, production build/lifecycle/staging and private E2E build as scoped passes even though
-the job failed later. Its installed step rejected the correct empty rendered value before
-installation because the preflight expected literal `skip`. Installed UI/native E2E and
-artifact upload/download therefore remain `NOT RUN` until the corrected exact commit passes.
+The current remediation removes the rendered module's nested reload and invokes the
+caller-loaded dependency command by its module-qualified name. Python source digests, exact
+wiring and negative mutations pass locally, but this new module-qualified wiring and its
+LF/CRLF/CR PowerShell positives and negatives remain `NOT RUN` until the next exact-commit
+`windows-2025` run. This macOS host has no PowerShell.
 
 Tauri CLI 2.11.4 temporarily changes the main executable's first bundle-type marker
 from `__TAURI_BUNDLE_TYPE_VAR_UNK` to `..._NSS` while NSIS captures it, then restores

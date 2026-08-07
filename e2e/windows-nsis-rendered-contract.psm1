@@ -1,6 +1,5 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
-Import-Module (Join-Path $PSScriptRoot "windows-nsis-dependency-contract.psm1") -Force
 
 $script:NsisContractError = "rendered NSIS contract is not the exact approved form"
 $script:NsisRegexOptions = [Text.RegularExpressions.RegexOptions]::CultureInvariant -bor
@@ -242,7 +241,7 @@ function Assert-BodamRenderedNsisContract {
     Throw-BodamNsisContractError
   }
   try {
-    Assert-BodamNsisDependencyContract $scriptDirectory `
+    windows-nsis-dependency-contract\Assert-BodamNsisDependencyContract $scriptDirectory `
       $languageInclude.Groups["path"].Value $ExpectedIncludeSha256 `
       $values["ADDITIONALPLUGINSPATH"] $ExpectedPluginSha1
   } catch { Throw-BodamNsisContractError }

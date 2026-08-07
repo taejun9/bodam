@@ -48,6 +48,8 @@
 | npm shrinkwrap | https://docs.npmjs.com/cli/v11/commands/npm-shrinkwrap/ | shrinkwrap의 package-lock 우선순위 | alternate lockfile 부재 guard |
 | Python isolated mode | https://docs.python.org/3/using/cmdline.html#cmdoption-I | script directory·user site·`PYTHON*` 주입을 제외하는 `-I` | pre-npm stdlib import shadow 차단 |
 | setup-node npm cache source | https://github.com/actions/setup-node/blob/49933ea5288caeca8642d1e84afbd3f7d6820020/src/cache-utils.ts#L19-L25 | cache directory 확인이 `npm config get cache`를 실행 | Python gate를 setup-node 전으로 이동 |
+| PowerShell Import-Module | https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/import-module?view=powershell-7.6 | `-Force`가 loaded module을 제거 후 재import하고 module 내부 import는 caller module scope를 사용 | dependency module 이중 reload 금지 |
+| PowerShell command precedence | https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_command_precedence?view=powershell-7.6 | `ModuleName\CommandName` qualification 권장 | rendered NSIS dependency command provenance 결속 |
 | Tauri CLI releases | https://v2.tauri.app/release/%40tauri-apps/cli/ | Tauri CLI 버전별 release | 잠긴 CLI 2.11.4 경계 재확인 |
 | Microsoft Process.CloseMainWindow | https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.process.closemainwindow | GUI main-window close 요청 | production OS-close smoke |
 | Microsoft Process.WaitForExit | https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.process.waitforexit | bounded process exit wait | normal exit와 cleanup timeout 분리 |
@@ -114,6 +116,7 @@
 - Pinned NSIS preprocessor surface는 directive 이름과 include 순서뿐 아니라 같은 output directory의 `utils.nsh`, `FileAssociation.nsh`, raw `English.nsh` hash에 결속한다. Include 검색 directory 변경, built-in shadow, later include와 임의 plugin/finalizer는 거부한다.
 - `UNINSTALLERSIGNCOMMAND`는 empty로, `ADDITIONALPLUGINSPATH`는 regular/non-reparse Tauri NSIS parent shape와 sole `nsis_tauri_utils.dll` official SHA-1로 결속한다. Symbolic directive가 동일해도 참조 define 값으로 finalizer/plugin을 바꾸는 우회를 허용하지 않는다.
 - Windows installed suite는 complete `package.json`/`package-lock.json`, entire scripts map, 54개 E2E JavaScript module 및 `wdio.conf.mjs` trust tree를 함께 고정한다. Checkout 직후 `python3 -I` direct gate가 exact reviewed checker를 실행 전 hash로 확인하고 `.npmrc`와 higher-precedence `npm-shrinkwrap.json`을 거부한다. 이 gate는 setup-node의 npm cache 조회보다 먼저 실행되며 이후에만 `npm ci --ignore-scripts`를 실행한다.
+- PowerShell `Import-Module -Force`는 기존 module을 제거 후 다시 불러오므로 caller와 nested module이 같은 dependency를 연속 강제 reload하지 않는다. Caller가 dependency를 먼저 로드하고 rendered parser는 module-qualified command로 exact dependency implementation을 호출한다.
 - Release workflow의 remote action은 검증한 full-length commit SHA와 사람이 읽는 tag comment를 함께 고정한다. tag comment는 provenance 설명이며 실행 ref가 아니다.
 - upload-artifact는 점으로 시작하는 directory 내부 파일도 기본 제외하므로 release staging은 ignored non-hidden `runtime-data/windows-release`를 사용하고 `include-hidden-files: false`를 유지한다.
 - Prisma Client는 Rust runtime을 제공하지 않는다. ADR-001은 Prisma schema/migration artifact와 Rust executor의 경계를 명시한다.

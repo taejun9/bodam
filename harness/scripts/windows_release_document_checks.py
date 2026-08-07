@@ -58,6 +58,9 @@ REQUIREMENTS = {
         "empty `UNINSTALLERSIGNCOMMAND`",
         "`nsis_tauri_utils.dll` SHA-1",
         "no PowerShell",
+        "Plan-025 run `31181536529`",
+        "artifacts: 0",
+        "module-qualified wiring",
         "NOT RUN",
     ),
     "docs/quality/windows-release-acceptance.md": (
@@ -94,6 +97,9 @@ REQUIREMENTS = {
         "`!addincludedir`",
         "empty `UNINSTALLERSIGNCOMMAND`",
         "`nsis_tauri_utils.dll` SHA-1",
+        "Plan-025 run `31181536529`",
+        "artifacts: 0",
+        "module-qualified wiring remains `NOT RUN`",
     ),
     "docs/privacy/principles.md": (
         "Hosted artifact",
@@ -127,6 +133,8 @@ REQUIREMENTS = {
         "https://docs.npmjs.com/cli/v11/commands/npm-shrinkwrap/",
         "https://docs.python.org/3/using/cmdline.html#cmdoption-I",
         "https://github.com/actions/setup-node/blob/49933ea5288caeca8642d1e84afbd3f7d6820020/src/cache-utils.ts#L19-L25",
+        "https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/import-module?view=powershell-7.6",
+        "https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_command_precedence?view=powershell-7.6",
         "https://github.com/tauri-apps/tauri/blob/7cd71369c00978a3783b6ae3e9972358abbe4ae6/crates/tauri/src/app.rs",
         "https://github.com/tauri-apps/tauri/blob/7cd71369c00978a3783b6ae3e9972358abbe4ae6/crates/tauri/src/path/desktop.rs",
         "https://docs.rs/tauri/2.11.5/tauri/path/struct.PathResolver.html#method.app_data_dir",
