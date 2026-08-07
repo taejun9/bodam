@@ -209,16 +209,16 @@ def test_offline_claim(failures: list[str]) -> None:
 def test_document_outcome_claims(failures: list[str]) -> None:
     evidence = "docs/quality/windows-e2e-evidence.md"
     release = "docs/quality/windows-release-acceptance.md"
-    sha = "exact commit `e42ad20d75acb9f33c5529f2397b25e3796089ee`"
+    sha = "exact commit `37a5031ce2e107cd36628e54b18c63f6ea417022`"
     cases = (
         (evidence, sha, "exact commit `0000000000000000000000000000000000000000`"),
         (release, sha, "exact commit `0000000000000000000000000000000000000000`"),
-        (evidence, "controls passed on actual Windows", "controls failed on actual Windows"),
-        (release, "fixture controls passed on actual Windows", "fixture controls failed on actual Windows"),
-        (evidence, "actual production Windows lifecycle is\n`PASS`", "actual production Windows lifecycle is\n`FAIL`"),
-        (release, "actual production Windows lifecycle is\n`PASS`", "actual production Windows lifecycle is\n`FAIL`"),
-        (evidence, "remaining installed E2E scenarios are `NOT RUN`", "remaining installed E2E scenarios are `PASS`"),
-        (release, "remaining installed E2E scenarios\nare `NOT RUN`", "remaining installed E2E scenarios\nare `PASS`"),
+        (evidence, "hosted run result is `PASS`", "hosted run result is `FAIL`"),
+        (release, "hosted run result is `PASS`", "hosted run result is `FAIL`"),
+        (evidence, "installed full E2E result is `PASS`", "installed full E2E result is `FAIL`"),
+        (release, "installed full E2E result is `PASS`", "installed full E2E result is `FAIL`"),
+        (evidence, "Artifact upload and downloaded-artifact acceptance are `PASS`", "Artifact upload and downloaded-artifact acceptance are `NOT RUN`"),
+        (release, "Artifact upload and downloaded-artifact acceptance are `PASS`", "Artifact upload and downloaded-artifact acceptance are `NOT RUN`"),
     )
     with tempfile.TemporaryDirectory() as temporary:
         root = Path(temporary)

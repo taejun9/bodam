@@ -111,31 +111,37 @@ nesting. `ADDITIONALPLUGINSPATH` must resolve through regular, non-reparse
 `NSIS/Plugins/x86-unicode/additional` directories containing only the pinned
 `nsis_tauri_utils.dll` SHA-1, so the approved symbolic plugin line cannot redirect compilation.
 
-The authoritative Plan-027 run `31185908075`, attempt 1 and job `92890241298`, executed
-exact commit `e42ad20d75acb9f33c5529f2397b25e3796089ee` from a main push on
-`windows-2025`. The corrected CLR ancestor, exactly-three-newline and parent-reparse
-controls passed on actual Windows. Isolated npm trust, cross-layer QA, Windows all-feature Rust tests,
-production and private NSIS builds also passed. The actual production Windows lifecycle is
-`PASS`: the current-user NSIS installed and launched the exact production executable,
-observed the responsive main window plus roaming database and daily backup, closed it normally,
-uninstalled it, and preserved app data and the observed shared WebView2 state.
+The authoritative Plan-028 run `31190817318`, attempt 1 and job `92906854501`, executed
+exact commit `37a5031ce2e107cd36628e54b18c63f6ea417022` from a main push on
+`windows-2025`. The hosted run result is `PASS` for 2026-08-07T15:04:46Z–15:40:30Z.
+All hosted controls passed on actual Windows: isolated npm trust, cross-layer QA,
+Windows all-feature Rust, both NSIS builds, installed execution, cleanup, evidence and upload.
+The actual production Windows lifecycle is `PASS`: the current-user NSIS installed and
+launched the exact production executable, observed the responsive main window plus roaming
+database and daily backup, closed normally, uninstalled, and preserved app data and the
+observed shared WebView2 state.
 
-The installed full E2E result is `FAIL`. The installed E2E first spec is `2 PASS / 4 FAIL`:
-customer and policy totals plus consultation persistence passed. Benchmark overlap rejection
-and the unchanged one-row count were already confirmed before the first failure: one global
-Escape then did not close the open dialog within ten seconds. The later Family, Dashboard and
-Calendar failures are consistent with an inferred downstream cascade; this run does not
-establish them as independent feature defects. The remaining installed E2E scenarios are `NOT RUN`:
-`restart/persistence`, import/export, rollback and backup/restore did not start on this Windows
-run. Failure cleanup and the hosted evidence-boundary step passed. Artifact upload was skipped;
-artifacts: 0, and downloaded-artifact acceptance is `NOT RUN`.
+The installed full E2E result is `PASS`. Customer write is `6/6 PASS`, including benchmark
+overlap rejection, one-row preservation, settled scoped close and invoker-focus restoration.
+Restart persistence is `4/4 PASS`; XLSX and CSV import/persistence/export/round-trip are each
+`4/4 PASS`; rollback is `1/1 PASS`; database assertions are `3/3 PASS`; export assertions are
+`6/6 PASS`. Backup write, mutate, post-restore verification and reauthorization are each
+`1/1 PASS`. The 23 ordinary tests passed. Four controlled app-exit specs intentionally end
+their WDIO sessions and therefore show reporter-level `FAILED`; the orchestrator verified
+their restore request, failed/changed exit and idempotency contracts, and the installed E2E
+step completed successfully. Exact app-owned cleanup and the hosted evidence boundary passed.
 
-The remediation exposes the submit-pending state through the real dialog, prevents dismissal
-while pending, waits for the rejection to settle, and clicks the scoped close control instead
-of sending an unscoped key. A deferred-conflict component regression and the complete local
-actual-app bundle E2E orchestration pass. The explicit close-after-settle dismissal remediation's
-actual Windows result is `NOT RUN` until the next exact-commit hosted run; local evidence cannot
-promote the failed Plan-027 installed suite or its absent artifact.
+Artifact upload and downloaded-artifact acceptance are `PASS`. The sole artifact is
+`bodam-windows-x64-unsigned`, ID `8999827782`, 216336758 bytes, unexpired with seven-day
+retention and API digest `sha256:89f62effb398e39bcbab7f87d0d6427b40c4e94f9d74ea0cbb4518d7d514bbac`.
+Its raw ZIP has exact API bytes/digest and exactly three root regular unencrypted entries.
+The installer is 216335276 bytes with SHA-256
+`4dd05128f9139d95ab3e9e8fcb92391559441bba221ec0c306f0579d56939727`; the checksum is exact.
+The strict 24-key evidence fixed values pass. Source SHA-256
+`6ee9f19c8348e496a80d4859fcc57486c8d4edd49aa672537d9c2c9fdec12828` and installed SHA-256
+`b7fcc5caa87e286922552383918bae04db57460e45f5368d76301557f6a98b12` are valid and distinct.
+Two independent checks neither executed nor extracted the installer, deleted their private
+temporary downloads, and confirmed repository `runtime-data` and `.runtime` are absent.
 
 Tauri CLI 2.11.4 temporarily changes the main executable's first bundle-type marker
 from `__TAURI_BUNDLE_TYPE_VAR_UNK` to `..._NSS` while NSIS captures it, then restores
@@ -166,7 +172,7 @@ The detailed checklist is in `docs/quality/windows-release-acceptance.md`.
 
 ## Signing boundary
 
-The Plan-013 production artifact is unsigned because no distribution credential is
+The Plan-028 production artifact is unsigned because no distribution credential is
 provided. Evidence records Authenticode as `NotSigned`; it must not describe the file
 as trusted, signed or ready for public distribution. Certificate acquisition,
 timestamping, SmartScreen reputation and a public release channel require separate
