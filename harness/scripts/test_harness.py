@@ -61,6 +61,22 @@ def test_sensitive_ignore_rule(failures: list[str]) -> None:
         repository_checks.ROOT = original_root
 
 
+def test_migration_line_ending_rule(failures: list[str]) -> None:
+    original_root = repository_checks.ROOT
+    try:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            repository_checks.ROOT = root
+            (root / ".gitattributes").write_text(
+                "tests/fixtures/synthetic/*.csv binary\n", encoding="utf-8"
+            )
+            errors: list[str] = []
+            repository_checks.check_migration_line_endings(errors)
+            expect_error(errors, "keep migration.sql files at LF", failures)
+    finally:
+        repository_checks.ROOT = original_root
+
+
 def test_line_limit_extensions(failures: list[str]) -> None:
     original_root = repository_checks.ROOT
     try:
@@ -215,6 +231,7 @@ def run_negative_controls() -> list[str]:
     failures: list[str] = []
     test_sensitive_artifacts(failures)
     test_sensitive_ignore_rule(failures)
+    test_migration_line_ending_rule(failures)
     test_line_limit_extensions(failures)
     test_generated_cache_and_vue_sql_detection(failures)
     test_plan_approval_and_qa(failures)

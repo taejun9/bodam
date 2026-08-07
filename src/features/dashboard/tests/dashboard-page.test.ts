@@ -12,7 +12,7 @@ const applicationMocks = vi.hoisted(() => ({ load: vi.fn() }));
 const runtimeMocks = vi.hoisted(() => ({
   referenceDate: vi.fn(() => "2026-08-06"),
   referenceInstant: vi.fn(() => "2026-08-06T03:00:00.000Z"),
-  millisecondsUntilMidnight: vi.fn(() => 100),
+  millisecondsUntilMidnight: vi.fn(() => 60_000),
 }));
 
 vi.mock("@/app/composition/dashboard", () => ({
@@ -75,6 +75,7 @@ describe("DashboardPage", () => {
   beforeEach(() => {
     vi.useRealTimers();
     vi.clearAllMocks();
+    runtimeMocks.millisecondsUntilMidnight.mockReturnValue(60_000);
     setVisibility("visible");
   });
 
@@ -190,6 +191,7 @@ describe("DashboardPage", () => {
 
   it("refreshes on focus, resume, and local midnight", async () => {
     vi.useFakeTimers();
+    runtimeMocks.millisecondsUntilMidnight.mockReturnValue(100);
     applicationMocks.load.mockResolvedValue(dashboardModel());
     const wrapper = await mountPage();
     mounted.push(wrapper);

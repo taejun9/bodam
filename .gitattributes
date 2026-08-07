@@ -1,2 +1,3 @@
+database/prisma/migrations/**/migration.sql text eol=lf
 tests/fixtures/synthetic/*.csv binary
 tests/fixtures/synthetic/*.xlsx binary

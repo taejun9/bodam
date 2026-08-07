@@ -24,7 +24,7 @@ const scheduleMocks = vi.hoisted(() => ({
 }));
 const runtimeMocks = vi.hoisted(() => ({
   referenceDate: vi.fn(() => "2026-08-06"),
-  millisecondsUntilMidnight: vi.fn(() => 100),
+  millisecondsUntilMidnight: vi.fn(() => 60_000),
 }));
 
 vi.mock("@/app/composition/calendar", () => ({
@@ -96,7 +96,7 @@ describe("CalendarPage", () => {
     vi.useRealTimers();
     vi.clearAllMocks();
     runtimeMocks.referenceDate.mockReturnValue("2026-08-06");
-    runtimeMocks.millisecondsUntilMidnight.mockReturnValue(100);
+    runtimeMocks.millisecondsUntilMidnight.mockReturnValue(60_000);
     Object.defineProperty(document, "visibilityState", {
       configurable: true,
       value: "visible",
@@ -218,6 +218,7 @@ describe("CalendarPage", () => {
 
   it("reloads on focus, resume, and local midnight", async () => {
     vi.useFakeTimers();
+    runtimeMocks.millisecondsUntilMidnight.mockReturnValue(100);
     calendarMocks.loadMonth.mockResolvedValue(calendarUiModel());
     const { wrapper } = await mountPage(
       "/calendar?month=2026-08&date=2026-08-06",

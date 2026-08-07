@@ -15,6 +15,7 @@ SQLITE_ARTIFACT = re.compile(
 )
 
 REQUIRED_FILES = (
+    ".gitattributes",
     "README.md",
     "AGENTS.md",
     "docs/product/product.md",
@@ -182,6 +183,20 @@ def check_sensitive_ignore_rules(errors: list[str]) -> None:
         errors.append(".gitignore must ignore *.bodam-backup at every repository path")
 
 
+def check_migration_line_endings(errors: list[str]) -> None:
+    attributes = ROOT / ".gitattributes"
+    if not attributes.is_file():
+        return
+    rules = {
+        line.strip()
+        for line in attributes.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    }
+    required = "database/prisma/migrations/**/migration.sql text eol=lf"
+    if required not in rules:
+        errors.append(".gitattributes must keep migration.sql files at LF")
+
+
 def check_readme_commands(errors: list[str]) -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     for command in (
@@ -199,5 +214,6 @@ def run_repository_checks() -> list[str]:
     check_line_limits(errors)
     check_sensitive_artifacts(errors)
     check_sensitive_ignore_rules(errors)
+    check_migration_line_endings(errors)
     check_readme_commands(errors)
     return errors
