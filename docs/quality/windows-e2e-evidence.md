@@ -22,6 +22,13 @@ A passing hosted run proves only the following in that runner image:
   `sharedWebViewPreserved: true`;
 - production capability and E2E-marker isolation.
 
+Tauri CLI 2.11.4 temporarily changes the main executable's first bundle-type marker
+from `__TAURI_BUNDLE_TYPE_VAR_UNK` to `..._NSS` while NSIS captures it, then restores
+the build output. The hosted identity gate therefore hashes a memory projection with
+that one exact substitution and requires every other byte to match the installed
+executable. Evidence records both the restored source hash and actual installed hash;
+raw equality between those two hashes is not expected.
+
 It does not prove a WebView2-missing bootstrap, a network-disabled installation,
 interactive NSIS wizard/UAC behavior, Authenticode trust, SmartScreen reputation,
 consumer Windows hardware, or removable/network filesystem support.

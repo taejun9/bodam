@@ -102,9 +102,15 @@ function Write-ReleaseEvidence {
   param(
     [int]$InstallExitCode,
     [int]$UninstallExitCode,
+    [Parameter(Mandatory)][string]$InstalledBinarySha256,
     [Parameter(Mandatory)][bool]$SharedWebViewPreserved
   )
   if (-not $SharedWebViewPreserved) { throw "shared WebView2 preservation is not proven" }
+  $sourceBinarySha256 = Get-BodamSha256 $contract.SourceBinary
+  if ($InstalledBinarySha256 -cnotmatch '^[0-9a-f]{64}$' -or
+      $InstalledBinarySha256 -ceq $sourceBinarySha256) {
+    throw "installed executable evidence is invalid"
+  }
   $runtimeRoot = Join-Path $projectRoot "runtime-data"
   $stage = Join-Path $runtimeRoot "windows-release"
   $runtimeItem = Get-Item -LiteralPath $runtimeRoot -Force -ErrorAction SilentlyContinue
@@ -140,7 +146,9 @@ function Write-ReleaseEvidence {
     installerFile = $contract.InstallerName
     installerBytes = (Get-Item -LiteralPath $contract.InstallerPath).Length
     installerSha256 = $installerSha
-    installedBinarySha256 = Get-BodamSha256 $contract.SourceBinary
+    sourceBinarySha256 = $sourceBinarySha256
+    installedBinarySha256 = $InstalledBinarySha256
+    binaryPatchAwareMatch = $true
     authenticodeStatus = "NotSigned"
     productionMarkerMatches = 0
     launchSmokePassed = $true
@@ -181,6 +189,7 @@ $installed = $false
 $uninstalled = $false
 $installExitCode = -1
 $uninstallExitCode = -1
+$installedBinarySha256 = $null
 $observedAppData = @()
 $webViewSnapshot = $null
 $webViewAfterUninstall = $false
@@ -190,6 +199,7 @@ try {
   $installExitCode = Invoke-BodamNsisInstall -Contract $contract
   $installed = $true
   Assert-BodamInstalled -Contract $contract
+  $installedBinarySha256 = Get-BodamSha256 $contract.InstalledBinary
   $webViewSnapshot = @(Get-BodamSharedWebViewSnapshot)
   Assert-NoProductionMarkers @($contract.InstalledBinary)
   $observedAppData = @(Invoke-BodamLaunchSmoke -Contract $contract)
@@ -216,4 +226,4 @@ if (-not $uninstalled -or $installed -or
   throw "production installer lifecycle did not complete"
 }
 Write-ReleaseEvidence -InstallExitCode $installExitCode -UninstallExitCode $uninstallExitCode `
-  -SharedWebViewPreserved $true
+  -InstalledBinarySha256 $installedBinarySha256 -SharedWebViewPreserved $true

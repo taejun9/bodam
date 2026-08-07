@@ -61,4 +61,5 @@ try {
   Remove-BodamOwnedTree -Root $env:RUNNER_TEMP -Path $testRoot
 }
 
+& (Join-Path $PSScriptRoot "test-windows-installer-identity.ps1")
 Write-Output "BODAM hosted cleanup safety controls: PASS"

@@ -61,6 +61,37 @@ function Get-BodamSha256 {
   (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
 }
 
+function Get-BodamByteSha256 {
+  param([Parameter(Mandatory)][byte[]]$Bytes)
+  $sha = [Security.Cryptography.SHA256]::Create()
+  try {
+    ([BitConverter]::ToString($sha.ComputeHash($Bytes))).Replace("-", "").ToLowerInvariant()
+  } finally {
+    $sha.Dispose()
+  }
+}
+
+function Assert-BodamNsisPayloadIdentity {
+  param(
+    [Parameter(Mandatory)][string]$SourcePath,
+    [Parameter(Mandatory)][string]$InstalledPath
+  )
+  $unknownMarker = "__TAURI_BUNDLE_TYPE_VAR_UNK"
+  $nsisMarker = "__TAURI_BUNDLE_TYPE_VAR_NSS"
+  [byte[]]$sourceBytes = [IO.File]::ReadAllBytes($SourcePath)
+  $sourceText = [Text.Encoding]::ASCII.GetString($sourceBytes)
+  $markerOffset = $sourceText.IndexOf($unknownMarker, [StringComparison]::Ordinal)
+  if ($markerOffset -lt 0) { throw "built executable is missing the Tauri bundle marker" }
+
+  [byte[]]$expectedBytes = $sourceBytes.Clone()
+  [byte[]]$nsisBytes = [Text.Encoding]::ASCII.GetBytes($nsisMarker)
+  [Array]::Copy($nsisBytes, 0, $expectedBytes, $markerOffset, $nsisBytes.Length)
+  $expectedHash = Get-BodamByteSha256 -Bytes $expectedBytes
+  if ($expectedHash -cne (Get-BodamSha256 $InstalledPath)) {
+    throw "installed executable differs outside the Tauri NSIS bundle marker"
+  }
+}
+
 function Assert-BodamX64Pe {
   param([Parameter(Mandatory)][string]$Path)
   $bytes = [IO.File]::ReadAllBytes($Path)
@@ -157,9 +188,13 @@ function Assert-BodamInstalled {
   Assert-BodamRegularPath -Path $Contract.InstalledBinary -Directory $false
   Assert-BodamRegularPath -Path $Contract.Uninstaller -Directory $false
   Assert-BodamX64Pe -Path $Contract.InstalledBinary
-  if ((Get-BodamSha256 $Contract.SourceBinary) -cne (Get-BodamSha256 $Contract.InstalledBinary)) {
-    throw "installed executable does not match the bundled executable"
+  foreach ($path in @($Contract.SourceBinary, $Contract.InstalledBinary)) {
+    if ((Get-AuthenticodeSignature -LiteralPath $path).Status.ToString() -cne "NotSigned") {
+      throw "unsigned installer executable contract is invalid"
+    }
   }
+  Assert-BodamNsisPayloadIdentity -SourcePath $Contract.SourceBinary `
+    -InstalledPath $Contract.InstalledBinary
   $items = @(Get-ChildItem -LiteralPath $Contract.InstallDirectory -Force -Recurse)
   if (@($items | Where-Object {
     ($_.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0
@@ -224,7 +259,8 @@ function Assert-BodamUninstalled {
 
 Export-ModuleMember -Function @(
   "Get-BodamInstallerContract", "Get-BodamSha256",
-  "Assert-BodamX64Pe", "Invoke-BodamNsisInstall", "Assert-BodamInstalled",
+  "Assert-BodamNsisPayloadIdentity", "Assert-BodamX64Pe",
+  "Invoke-BodamNsisInstall", "Assert-BodamInstalled",
   "Invoke-BodamLaunchSmoke", "Invoke-BodamNsisUninstall", "Assert-BodamUninstalled",
   "Get-BodamExactProcesses"
 )

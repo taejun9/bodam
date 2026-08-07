@@ -21,6 +21,8 @@
 | Tauri App lifecycle API | https://docs.rs/tauri/2/tauri/enum.RunEvent.html | exit/restart event와 prevent API | 종료 backup과 restore restart 경계 |
 | Tauri WebDriver | https://v2.tauri.app/develop/tests/webdriver/ | 실제 desktop UI 자동화 | macOS·Windows E2E |
 | Tauri WebDriver CI | https://v2.tauri.app/develop/tests/webdriver/ci/ | Windows runner 예제 | Windows release app QA |
+| Tauri CLI 2.11.4 bundle source | https://github.com/tauri-apps/tauri/blob/8909f221d1515955fc843808032bdc5d62209c96/crates/tauri-bundler/src/bundle.rs | bundle-type marker patch와 source restore | NSIS installed executable identity projection |
+| Tauri CLI 2.11.4 NSIS template | https://github.com/tauri-apps/tauri/blob/8909f221d1515955fc843808032bdc5d62209c96/crates/tauri-bundler/src/bundle/windows/nsis/installer.nsi | patched main executable의 NSIS capture | installed payload provenance |
 | Microsoft NtCreateFile | https://learn.microsoft.com/en-us/windows/win32/api/winternl/nf-winternl-ntcreatefile | directory HANDLE 상대 open과 reparse 동작 | Windows backup 경로 결속 |
 | Microsoft file handle information | https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getfileinformationbyhandleex | 열린 file/directory identity와 entry 정보 | Windows identity 대사 |
 | Microsoft SetFileInformationByHandle | https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-setfileinformationbyhandle | HANDLE 기반 rename/delete | Windows archive publish와 cleanup |
@@ -66,6 +68,7 @@
 
 - Vite의 transpile과 TypeScript typecheck는 별도 단계로 둔다.
 - Windows installer는 WebView2 offlineInstaller를 포함한다. hosted runner는 WebView2 미설치 환경을 증명하지 못하므로 clean VM 수동 검증을 분리한다.
+- Tauri CLI 2.11.4는 NSIS 생성 중 main binary의 첫 `UNK` bundle marker를 `NSS`로 patch한 payload를 담고 이후 build output을 복원한다. installed identity는 이 exact 동길이 치환 외 모든 byte의 equality로 검증하고 실제 installed hash를 별도로 기록한다.
 - Windows backup은 fixed drive로 분류된 NTFS에서 directory HANDLE 상대 open과 reparse-point 비추적을 사용하고, 열린 volume/file identity를 대사한다. native dialog 선택 순간부터 HANDLE이 이어진다고 주장하지 않는다.
 - Windows archive rename·delete는 DELETE 권한으로 연 HANDLE을 대상으로 수행하고, hosted artifact는 production installer·checksum·sanitized evidence의 exact allowlist만 허용한다.
 - `FlushFileBuffers` 증거는 지정한 열린 file의 buffered data flush에 한정한다. parent-directory metadata durability, 전원 손실 뒤 rename 영속성 또는 Unix directory `fsync`와 같은 보장을 Windows local NTFS pass에서 주장하지 않는다.

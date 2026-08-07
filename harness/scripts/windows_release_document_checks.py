@@ -19,6 +19,9 @@ REQUIREMENTS = {
         "sharedWebViewPreserved",
         "nested reparse point",
         "external sentinel",
+        "first bundle-type marker",
+        "every other byte",
+        "actual installed hash",
     ),
     "docs/quality/windows-release-acceptance.md": (
         "offlineVmAccepted: false",
@@ -26,6 +29,8 @@ REQUIREMENTS = {
         "production installer, its `.sha256` and `evidence.json`",
         "sharedWebViewPreserved",
         "nested reparse point",
+        "first exact `UNK` to `NSS`",
+        "actual installed SHA-256",
     ),
     "docs/privacy/principles.md": (
         "Hosted artifact",
@@ -40,6 +45,8 @@ REQUIREMENTS = {
         "pv (REG_SZ)",
         "FlushFileBuffers",
         "parent-directory metadata durability",
+        "https://github.com/tauri-apps/tauri/blob/8909f221d1515955fc843808032bdc5d62209c96/crates/tauri-bundler/src/bundle.rs",
+        "https://github.com/tauri-apps/tauri/blob/8909f221d1515955fc843808032bdc5d62209c96/crates/tauri-bundler/src/bundle/windows/nsis/installer.nsi",
     ),
 }
 

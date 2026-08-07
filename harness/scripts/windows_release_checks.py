@@ -23,6 +23,7 @@ REQUIRED_RELEASE_FILES = (
     "e2e/windows-installer-contract.psm1",
     "e2e/windows-host-safety.psm1",
     "e2e/test-windows-host-safety.ps1",
+    "e2e/test-windows-installer-identity.ps1",
     "e2e/assert-windows-production.ps1",
     "e2e/run-windows-installed-e2e.ps1",
     "e2e/cleanup-windows-installs.ps1",
@@ -43,6 +44,16 @@ HOST_SAFETY_MARKERS = {
         "mklink /J",
         "Remove-BodamOwnedTree",
         "sentinel",
+        "test-windows-installer-identity.ps1",
+    ),
+    "e2e/windows-installer-contract.psm1": (
+        "Assert-BodamNsisPayloadIdentity",
+        "__TAURI_BUNDLE_TYPE_VAR_UNK",
+        "__TAURI_BUNDLE_TYPE_VAR_NSS",
+    ),
+    "e2e/test-windows-installer-identity.ps1": (
+        "Assert-BodamNsisPayloadIdentity",
+        "tampered NSIS payload was accepted",
     ),
 }
 REQUIRED_SCRIPTS = {
@@ -65,7 +76,9 @@ REQUIRED_EVIDENCE_KEYS = (
     "installerFile",
     "installerBytes",
     "installerSha256",
+    "sourceBinarySha256",
     "installedBinarySha256",
+    "binaryPatchAwareMatch",
     "authenticodeStatus",
     "productionMarkerMatches",
     "silentInstallExitCode",
@@ -76,7 +89,29 @@ REQUIRED_EVIDENCE_KEYS = (
     "appDataPreserved",
     "sharedWebViewPreserved",
 )
+EVIDENCE_SEMANTICS = (
+    (
+        "actual installed binary SHA-256 capture",
+        r"^[ \t]*\$installedBinarySha256[ \t]*=[ \t]*Get-BodamSha256[ \t]+"
+        r"\$contract\.InstalledBinary[ \t]*$",
+    ),
+    (
+        "actual installed hash forwarding",
+        r"^[ \t]*-InstalledBinarySha256[ \t]+\$installedBinarySha256[ \t]+"
+        r"-SharedWebViewPreserved[ \t]+\$true[ \t]*$",
+    ),
+    (
+        "actual installed hash evidence assignment",
+        r"^[ \t]*installedBinarySha256[ \t]*=[ \t]*"
+        r"\$InstalledBinarySha256[ \t]*$",
+    ),
+    (
+        "patch-aware identity evidence",
+        r"^[ \t]*binaryPatchAwareMatch[ \t]*=[ \t]*\$true[ \t]*$",
+    ),
+)
 POWERSHELL_NUMERIC_SEPARATOR = re.compile(r"(?<![\w.])\d[\d]*_\d")
+POWERSHELL_BLOCK_COMMENT = re.compile(r"<#.*?#>", re.DOTALL)
 
 
 def read_json(relative: str, errors: list[str]) -> dict:
@@ -209,6 +244,16 @@ def check_evidence_contract(errors: list[str]) -> None:
     for key in REQUIRED_EVIDENCE_KEYS:
         if key not in text:
             errors.append(f"{relative} missing sanitized evidence key: {key}")
+    code = POWERSHELL_BLOCK_COMMENT.sub("", text)
+    code = "\n".join(
+        line for line in code.splitlines() if not line.lstrip().startswith("#")
+    )
+    for label, pattern in EVIDENCE_SEMANTICS:
+        if len(re.findall(pattern, code, re.IGNORECASE | re.MULTILINE)) != 1:
+            errors.append(
+                f"{relative} missing evidence semantic: {label}; "
+                "expected exactly one active statement"
+            )
     for marker in (
         "offlineInstaller",
         "currentUser",

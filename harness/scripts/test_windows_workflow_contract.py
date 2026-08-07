@@ -138,6 +138,56 @@ def test_evidence_and_document_boundaries(
     check_mutation(
         fixture,
         run_check,
+        "e2e/assert-windows-production.ps1",
+        "  $installedBinarySha256 = Get-BodamSha256 $contract.InstalledBinary",
+        "  # $installedBinarySha256 = Get-BodamSha256 $contract.InstalledBinary\n"
+        "  $installedBinarySha256 = Get-BodamSha256 $contract.InstalledBinaryBackup",
+        "missing evidence semantic: actual installed binary SHA-256 capture",
+        failures,
+    )
+    check_mutation(
+        fixture,
+        run_check,
+        "e2e/assert-windows-production.ps1",
+        "  $installedBinarySha256 = Get-BodamSha256 $contract.InstalledBinary",
+        "  $installedBinarySha256 = Get-BodamSha256 $contract.InstalledBinary\n"
+        "  $installedBinarySha256 = Get-BodamSha256 $contract.InstalledBinary",
+        "missing evidence semantic: actual installed binary SHA-256 capture",
+        failures,
+    )
+    check_mutation(
+        fixture,
+        run_check,
+        "e2e/assert-windows-production.ps1",
+        "  -InstalledBinarySha256 $installedBinarySha256 -SharedWebViewPreserved $true",
+        "  # -InstalledBinarySha256 $installedBinarySha256 -SharedWebViewPreserved $true\n"
+        "  -InstalledBinarySha256 $installedBinarySha256Spoof -SharedWebViewPreserved $true",
+        "missing evidence semantic: actual installed hash forwarding",
+        failures,
+    )
+    check_mutation(
+        fixture,
+        run_check,
+        "e2e/assert-windows-production.ps1",
+        "    installedBinarySha256 = $InstalledBinarySha256",
+        "    # installedBinarySha256 = $InstalledBinarySha256\n"
+        "    installedBinarySha256 = $InstalledBinarySha256Spoof",
+        "missing evidence semantic: actual installed hash evidence assignment",
+        failures,
+    )
+    check_mutation(
+        fixture,
+        run_check,
+        "e2e/assert-windows-production.ps1",
+        "    binaryPatchAwareMatch = $true",
+        "    # binaryPatchAwareMatch = $true\n"
+        "    binaryPatchAwareMatch = $trueOverride",
+        "missing evidence semantic: patch-aware identity evidence",
+        failures,
+    )
+    check_mutation(
+        fixture,
+        run_check,
         "docs/quality/windows-e2e-evidence.md",
         "nested reparse point",
         "nested redirect",
@@ -147,8 +197,49 @@ def test_evidence_and_document_boundaries(
     check_mutation(
         fixture,
         run_check,
+        "docs/quality/windows-e2e-evidence.md",
+        "every other byte",
+        "most other bytes",
+        "missing Windows evidence boundary: every other byte",
+        failures,
+    )
+    check_mutation(
+        fixture,
+        run_check,
+        "docs/quality/windows-release-acceptance.md",
+        "first exact `UNK` to `NSS`",
+        "raw source/install equality",
+        "missing Windows evidence boundary: first exact `UNK` to `NSS`",
+        failures,
+    )
+    source_url = (
+        "https://github.com/tauri-apps/tauri/blob/"
+        "8909f221d1515955fc843808032bdc5d62209c96/"
+        "crates/tauri-bundler/src/bundle.rs"
+    )
+    check_mutation(
+        fixture,
+        run_check,
+        "docs/references/official-sources.md",
+        source_url,
+        source_url.replace("8909f", "9909f", 1),
+        "missing Windows evidence boundary: " + source_url,
+        failures,
+    )
+    check_mutation(
+        fixture,
+        run_check,
         "e2e/windows-installer-contract.psm1",
-        "# synthetic Windows release contract",
+        "__TAURI_BUNDLE_TYPE_VAR_NSS",
+        "__TAURI_BUNDLE_TYPE_VAR_BAD",
+        "missing hosted safety contract",
+        failures,
+    )
+    check_mutation(
+        fixture,
+        run_check,
+        "e2e/windows-installer-contract.psm1",
+        "Set-StrictMode -Version Latest",
         "$null = 15_000",
         "unsupported PowerShell numeric separator",
         failures,

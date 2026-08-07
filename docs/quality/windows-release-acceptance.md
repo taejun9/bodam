@@ -15,7 +15,9 @@ installer SHA-256. Synthetic data is mandatory throughout.
 - [ ] Record installer basename, bytes and SHA-256 without a full temporary path.
 - [ ] Record Authenticode as `NotSigned`; do not imply public distribution trust.
 - [ ] Silent-install without elevation into the exact LocalAppData product directory.
-- [ ] Match the installed executable SHA-256 to the built production executable.
+- [ ] Match the installed executable to the built production executable after applying
+      only Tauri's first exact `UNK` to `NSS` NSIS bundle marker substitution; record
+      both the restored source SHA-256 and actual installed SHA-256.
 - [ ] Verify allowlisted HKCU install/uninstall metadata and application launch.
 - [ ] Silent-uninstall and verify app-owned process, install directory, key and shortcut
       residue is 0 without deleting user data or shared WebView2 state.
