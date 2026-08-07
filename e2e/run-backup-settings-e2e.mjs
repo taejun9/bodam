@@ -1,36 +1,23 @@
 import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import { spawnSync } from "node:child_process";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 import { runBackupSettingsScenario } from "./backup-settings-runner.mjs";
 import { resolveInstalledWindowsE2eBinary } from "./e2e-app-binary.mjs";
+import { createNpmScriptRunner } from "./node-script-runner.mjs";
 
 const projectRoot = fileURLToPath(new globalThis.URL("..", import.meta.url));
+const runScript = createNpmScriptRunner({ projectRoot });
 const targetDirectory = resolve(projectRoot, "src-tauri", "target", "e2e");
 const runtimeDirectory = mkdtempSync(resolve(tmpdir(), "bodam-e2e-backup-"));
 const backupDatabasePath = resolve(runtimeDirectory, "backup-settings-e2e.sqlite3");
 const backupDirectory = resolve(runtimeDirectory, "synthetic-backups");
-const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
 const baseEnvironment = {
   ...process.env,
   CARGO_TARGET_DIR: targetDirectory,
 };
-
-function runScript(name, environment = process.env, allowFailure = false) {
-  const result = spawnSync(npmCommand, ["run", name], {
-    cwd: projectRoot,
-    env: environment,
-    stdio: "inherit",
-  });
-  if (result.error) throw result.error;
-  if (result.status !== 0 && !allowFailure) {
-    throw new Error(`${name} failed with status ${result.status ?? result.signal}`);
-  }
-  return result.status ?? result.signal;
-}
 
 function removeRuntimeDirectory() {
   rmSync(runtimeDirectory, {

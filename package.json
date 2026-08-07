@@ -36,6 +36,7 @@
     "e2e:backup-settings-exit-changed": "wdio run wdio.conf.mjs --spec ./e2e/specs/backup-settings-exit-changed.e2e.mjs",
     "e2e:backup-settings-idempotency": "wdio run wdio.conf.mjs --spec ./e2e/specs/backup-settings-idempotency.e2e.mjs",
     "test:e2e:backup-settings": "node e2e/run-backup-settings-e2e.mjs",
+    "test:e2e:node-spawn": "node e2e/test-node-script-runner.mjs",
     "test:e2e": "node e2e/run-e2e.mjs",
     "test:e2e:windows-installed": "pwsh -NoLogo -NoProfile -File e2e/run-windows-installed-e2e.ps1",
     "prisma:validate": "prisma validate",
@@ -49,7 +50,7 @@
     "windows:assert:production": "pwsh -NoLogo -NoProfile -File e2e/assert-windows-production.ps1",
     "windows:cleanup": "pwsh -NoLogo -NoProfile -File e2e/cleanup-windows-installs.ps1",
     "harness:check": "python3 harness/scripts/run_qa.py",
-    "qa": "run-s lint typecheck test:unit prisma:validate database:contract test:db build tauri:check harness:check",
+    "qa": "run-s test:e2e:node-spawn lint typecheck test:unit prisma:validate database:contract test:db build tauri:check harness:check",
     "verify": "run-s qa test:e2e"
   },
   "dependencies": {

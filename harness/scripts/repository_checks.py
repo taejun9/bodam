@@ -53,6 +53,8 @@ REQUIRED_FILES = (
     "harness/scripts/test_windows_cleanup_contract.py",
     "harness/scripts/test_windows_launch_contract.py",
     "harness/scripts/test_windows_launch_lexer_contract.py",
+    "harness/scripts/windows_node_spawn_checks.py",
+    "harness/scripts/test_windows_node_spawn_contract.py",
     "harness/scripts/windows_workflow_checks.py",
     "harness/scripts/test_windows_workflow_contract.py",
     "harness/templates/exec-plan.md",

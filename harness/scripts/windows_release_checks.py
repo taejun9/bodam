@@ -8,6 +8,7 @@ import re
 from pathlib import Path
 
 from windows_cleanup_checks import check_windows_cleanup
+from windows_node_spawn_checks import NODE_SPAWN_FILES, check_windows_node_spawn
 from windows_release_document_checks import check_windows_release_documents
 from windows_release_launch_checks import check_windows_release_launch
 from windows_release_launch_syntax import INVALID_SOURCE, active_code
@@ -23,6 +24,7 @@ ROOT = Path(__file__).resolve().parents[2]
 PRODUCTION_CONFIG = "src-tauri/tauri.conf.json"
 E2E_CONFIG = "src-tauri/tauri.e2e.conf.json"
 REQUIRED_RELEASE_FILES = (
+    *NODE_SPAWN_FILES,
     "e2e/windows-installer-contract.psm1",
     "e2e/windows-launch-readiness.psm1",
     "e2e/windows-host-safety.psm1",
@@ -278,6 +280,7 @@ def run_windows_release_checks() -> list[str]:
     check_host_safety_contract(errors)
     check_windows_workflow(ROOT, errors)
     check_windows_cleanup(ROOT, errors)
+    check_windows_node_spawn(ROOT, errors)
     check_evidence_contract(errors)
     check_windows_release_launch(ROOT, errors)
     check_windows_release_documents(ROOT, errors)

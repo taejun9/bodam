@@ -33,6 +33,10 @@ REQUIREMENTS = {
         "`ERROR_SHARING_VIOLATION`",
         "20 attempts at 250ms intervals",
         "shared `msedgewebview2` process",
+        "direct `.cmd`",
+        "`process.execPath`",
+        "`npm_execpath`",
+        "`shell: false`",
     ),
     "docs/quality/windows-release-acceptance.md": (
         "offlineVmAccepted: false",
@@ -47,6 +51,9 @@ REQUIREMENTS = {
         "appDataPreserved: true",
         "fixed 20×250ms bound",
         "shared `msedgewebview2` process",
+        "actual Node subprocess control",
+        "Tauri `tauri.js`",
+        "`npm_execpath`",
     ),
     "docs/privacy/principles.md": (
         "Hosted artifact",
@@ -71,6 +78,10 @@ REQUIREMENTS = {
         "https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/user-data-folder",
         "https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/process-related-events",
         "https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499-",
+        "https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2",
+        "https://nodejs.org/download/release/v24.18.1/docs/api/child_process.html#spawning-bat-and-cmd-files-on-windows",
+        "https://nodejs.org/download/release/v24.18.1/docs/api/deprecations.html#DEP0190",
+        "https://nodejs.org/download/release/v24.18.1/docs/api/process.html#processexecpath",
     ),
 }
 

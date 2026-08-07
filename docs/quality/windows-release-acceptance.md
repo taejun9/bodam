@@ -39,11 +39,18 @@ installer SHA-256. Synthetic data is mandatory throughout.
 - [ ] Treat only `ItemNotFoundException` as an absent cleanup target and propagate every
       access or provider probe error before removal and its postcondition.
 
-Source-order analysis alone does not check these items. The modified production lifecycle
-remains `NOT RUN` until the exact commit executes successfully on `windows-2025`.
+The authoritative Plan-023 run records this production lifecycle as a scoped pass while
+the overall job failed later. The changed launcher, private installed E2E and upload remain
+`NOT RUN` until their exact commit executes successfully on `windows-2025`.
 
 ## Installed E2E hosted gate
 
+- [ ] Run the actual Node subprocess control on `windows-2025`; require exact argv/env,
+      shell-metacharacter preservation, absent injection sentinel and numeric exit handling.
+- [ ] Build through `process.execPath` and the locked Tauri `tauri.js` with `shell: false`;
+      do not execute `.cmd`/`.bat`, `cmd.exe` or a command-shell fallback.
+- [ ] Run installed-suite npm scripts through the parent validated and fixed
+      `npm_execpath` JavaScript CLI, never a scenario-provided shim path.
 - [ ] Build and install the private `BODAM E2E` / `app.bodam.desktop.e2e` NSIS.
 - [ ] Require the exact installed executable through `BODAM_E2E_APP_BINARY_PATH`.
 - [ ] Reject a source-tree, production, missing or path-escaped executable.

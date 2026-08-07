@@ -53,9 +53,32 @@ The workflow contract binds each evidence step to one exact active `run:` comman
 its exact step id. A filename left only in a YAML comment or multiline bypass is rejected,
 so the hosted safety outcome cannot be populated by a synthetic replacement command.
 
-That source order strongly supports the early force-stop race as the baseline failure
-explanation, but does not by itself confirm a false negative. The modified PowerShell and
-installed lifecycle remain `NOT RUN` until their exact commit passes a hosted Windows run.
+## Node launcher boundary
+
+Node 24 intentionally rejects direct `.cmd` and `.bat` execution through `spawnSync`
+without an explicit shell. The private build and installed suite do not weaken that
+security boundary with a command shell. They invoke the absolute current Node executable
+from `process.execPath`, pass an absolute regular JavaScript entrypoint and argv array,
+and force `shell: false`.
+
+The build resolves the locked Tauri `tauri.js` entrypoint rather than a platform shim.
+The installed suite captures the parent npm `npm_execpath` once, validates an absolute
+regular `npm/bin/npm-cli.js`, and overwrites child npm provenance with that fixed value.
+Scenario environment changes cannot redirect it. Spawn errors, signal termination and
+missing numeric exit status always fail; only an expected numeric nonzero scenario exit
+may use the existing failure allowance.
+
+`npm run qa` starts with an actual Node subprocess control. It executes fake JavaScript
+CLIs from a temporary directory containing spaces, `&` and `%`, requires shell-like argv
+and environment values to remain exact, proves a shell-injection sentinel is absent, and
+checks Tauri Windows/macOS/no-bundle construction plus invalid path and exit controls.
+This runs on each QA host, while the private NSIS build and installed UI suite remain
+`NOT RUN` for a changed commit until that exact commit passes `windows-2025`.
+
+The authoritative Plan-023 run records its production PowerShell and installed lifecycle
+step as a scoped pass even though the job failed later. That does not make the run a pass.
+The changed Node launcher, private NSIS build, private installed UI lifecycle and artifact
+upload remain `NOT RUN` until their exact commit passes a hosted Windows run.
 
 Tauri CLI 2.11.4 temporarily changes the main executable's first bundle-type marker
 from `__TAURI_BUNDLE_TYPE_VAR_UNK` to `..._NSS` while NSIS captures it, then restores

@@ -27,6 +27,11 @@
 | Tauri core 2.11.5 desktop path source | https://github.com/tauri-apps/tauri/blob/7cd71369c00978a3783b6ae3e9972358abbe4ae6/crates/tauri/src/path/desktop.rs | Windows app data resolver | exact roaming app-data 계약 |
 | Tauri 2.11.5 PathResolver docs | https://docs.rs/tauri/2.11.5/tauri/path/struct.PathResolver.html#method.app_data_dir | `app_data_dir = data_dir / identifier` | BODAM identifier 경로 결속 |
 | dirs 6.0.0 data_dir docs | https://docs.rs/dirs/6.0.0/dirs/fn.data_dir.html | Windows `FOLDERID_RoamingAppData` mapping | Tauri Windows roaming root 결속 |
+| Node.js April 2024 security release | https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2 | CVE-2024-27980 이후 Windows batch spawn 변경 | `.cmd` direct spawn 금지 근거 |
+| Node.js 24.18.1 child process | https://nodejs.org/download/release/v24.18.1/docs/api/child_process.html#spawning-bat-and-cmd-files-on-windows | Windows `.bat`/`.cmd` 실행과 shell 경계 | E2E launcher 이식성·주입 방지 |
+| Node.js DEP0190 | https://nodejs.org/download/release/v24.18.1/docs/api/deprecations.html#DEP0190 | `shell: true`와 args 사용 runtime deprecation | shell 우회 금지 |
+| Node.js process.execPath | https://nodejs.org/download/release/v24.18.1/docs/api/process.html#processexecpath | 현재 Node executable의 absolute path | JavaScript CLI 직접 실행 |
+| Tauri CLI releases | https://v2.tauri.app/release/%40tauri-apps/cli/ | Tauri CLI 버전별 release | 잠긴 CLI 2.11.4 경계 재확인 |
 | Microsoft Process.CloseMainWindow | https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.process.closemainwindow | GUI main-window close 요청 | production OS-close smoke |
 | Microsoft Process.WaitForExit | https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.process.waitforexit | bounded process exit wait | normal exit와 cleanup timeout 분리 |
 | Microsoft WM_CLOSE | https://learn.microsoft.com/en-us/windows/win32/winmsg/wm-close | window close message semantics | Tauri CloseRequested/exit-backup 진입 |
@@ -86,6 +91,7 @@
 - `FlushFileBuffers` 증거는 지정한 열린 file의 buffered data flush에 한정한다. parent-directory metadata durability, 전원 손실 뒤 rename 영속성 또는 Unix directory `fsync`와 같은 보장을 Windows local NTFS pass에서 주장하지 않는다.
 - Hosted WebView2 보존 검사는 production install 직후 Microsoft x64 HKLM/HKCU `pv (REG_SZ)`에서 관찰한 logical record와 version이 uninstall·cleanup 뒤에도 exact-equal임을 증명한다. pre-install version 불변, runtime 파일 전체, updater 동작이나 clean-VM bootstrap까지 증명하지 않는다.
 - WebView2 host process 종료만으로 app-owned UDF의 browser/child process handle 해제가 보장되지 않는다. Hosted cleanup은 exact direct-child·no-reparse 검사를 매 attempt 반복하고 `IOException`의 `ERROR_SHARING_VIOLATION`만 20회×250ms 재시도한다. 대상 probe는 exact `ItemNotFoundException`만 부재로 인정하고 provider·access 오류를 전파한다. shared `msedgewebview2` process는 종료하지 않으며 다른 오류와 exhausted lock은 fail-closed다.
+- Node의 CVE-2024-27980 완화 이후 Windows `.bat`/`.cmd` shim은 `spawnSync`로 직접 실행할 수 없고, args와 `shell: true`의 결합은 deprecated이자 command-injection 경계다. E2E launcher는 이 보안 변경을 되돌리지 않고 `process.execPath`로 잠긴 Tauri `tauri.js`와 부모 npm의 검증·고정된 `npm-cli.js`를 exact argv로 실행한다.
 - Release workflow의 remote action은 검증한 full-length commit SHA와 사람이 읽는 tag comment를 함께 고정한다. tag comment는 provenance 설명이며 실행 ref가 아니다.
 - upload-artifact는 점으로 시작하는 directory 내부 파일도 기본 제외하므로 release staging은 ignored non-hidden `runtime-data/windows-release`를 사용하고 `include-hidden-files: false`를 유지한다.
 - Prisma Client는 Rust runtime을 제공하지 않는다. ADR-001은 Prisma schema/migration artifact와 Rust executor의 경계를 명시한다.
