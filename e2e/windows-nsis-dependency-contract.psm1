@@ -62,7 +62,7 @@ function Assert-BodamNsisDependencyContract {
     $pluginItem = Get-Item -LiteralPath ([IO.Path]::GetFullPath($PluginDirectory)) `
       -Force -ErrorAction Stop
     foreach ($name in @("additional", "x86-unicode", "Plugins", "NSIS")) {
-      if (-not $pluginItem.PSIsContainer -or $pluginItem.Name -cne $name -or
+      if ($pluginItem -isnot [IO.DirectoryInfo] -or $pluginItem.Name -cne $name -or
           ($pluginItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
         throw $script:DependencyError
       }

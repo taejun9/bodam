@@ -10,9 +10,9 @@ from pathlib import Path
 INSTALLED_RUNNER = "e2e/run-windows-installed-e2e.ps1"
 IMMUTABLE_DIGESTS = {
     "harness/scripts/windows_installer_config_checks.py": "ab203f0907e825d9375065f4ae3caa5217541d8bf8f246d84372c6fa558d2d65",
-    "e2e/windows-nsis-dependency-contract.psm1": "dbd2b388e719506920d78b176d6e7e0622accfc9e2747f107089c505053537a6",
+    "e2e/windows-nsis-dependency-contract.psm1": "9e68ea4fc98a50fb86bac32e6b918469fda3bba7c886e78308e50d35d80095b7",
     "e2e/windows-nsis-rendered-contract.psm1": "668b8d87c8934b1c7826c71582fdd04f2c49f0b897d6b4cc1162c28ff6c0c538",
-    "e2e/test-windows-nsis-rendered-contract.ps1": "b223d9715702a1a4266771d777539ba61402dedb2a666df50ec70b47b4848777",
+    "e2e/test-windows-nsis-rendered-contract.ps1": "6c046df6e1238e072f3910dd93968f18f74530b8bca8152cfbd5e368d911ccdd",
     "e2e/test-windows-host-safety.ps1": "3e01926ad7624dfd8453d531ed9e8acac94bbfc4b95bef5df1554a25cb3f6db3",
     "e2e/assert-windows-production.ps1": "a20b35c6bbb37ae0940f95b127e691f8e03de1287dace047fa830afcc7a5a9ca",
     INSTALLED_RUNNER: "e6a7735f9aef50383459963c7b53103a26d90ec55c9ed0ab25824692367aafcd",
@@ -27,6 +27,9 @@ INSTALLED_REQUIRED_LINES = (
     '"75197fee3c6a814fe035788d1c34ead39349b860"',
 )
 REQUIRED_LINES = {
+    "e2e/windows-nsis-dependency-contract.psm1": (
+        "if ($pluginItem -isnot [IO.DirectoryInfo] -or $pluginItem.Name -cne $name -or",
+    ),
     "e2e/windows-nsis-rendered-contract.psm1": (
         "windows-nsis-dependency-contract\\Assert-BodamNsisDependencyContract "
         "$scriptDirectory `",
@@ -41,6 +44,13 @@ REQUIRED_LINES = {
     ),
     "e2e/test-windows-host-safety.ps1": (
         '& (Join-Path $PSScriptRoot "test-windows-nsis-rendered-contract.ps1")',
+    ),
+    "e2e/test-windows-nsis-rendered-contract.ps1": (
+        "$newlineContracts = @(",
+        '($valid.Replace("`n", "`r`n") + "`r`n"),',
+        '($valid.Replace("`n", "`r") + "`r")',
+        "if ($newlineContracts.Count -ne 3 -or",
+        "$pluginJunctionPath = $pluginUnicodeDirectory",
     ),
 }
 

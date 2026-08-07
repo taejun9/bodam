@@ -111,19 +111,22 @@ nesting. `ADDITIONALPLUGINSPATH` must resolve through regular, non-reparse
 `NSIS/Plugins/x86-unicode/additional` directories containing only the pinned
 `nsis_tauri_utils.dll` SHA-1, so the approved symbolic plugin line cannot redirect compilation.
 
-The authoritative Plan-025 run `31181536529` executed exact corrected commit
-`1bd13f23520d75fe3e14d82cf7b4e9ea834626a6` on `windows-2025`. Checkout, bounded cleanup
-retry, installer identity and production launch-readiness controls passed. The rendered
-PowerShell fixture then failed before its assertions because a nested forced dependency-module
-reload removed the caller-visible normalized hash helper. Isolated npm trust, setup, QA,
-Rust, build, install, installed E2E and upload were skipped; artifacts: 0. Those downstream
-steps are `NOT RUN`, not failures or passes.
+The authoritative Plan-026 run `31182975142` executed exact commit
+`a5a0bd9bf640c5ed416ba4100de2da2b48f29208` on `windows-2025`. Checkout, bounded cleanup
+retry, installer identity and production launch-readiness controls passed. The
+rendered step failed with its normalized exact-form error; the hosted log does not expose
+the inner assertion. Isolated npm trust, setup, QA, Rust, build, install, installed E2E and
+upload were skipped; artifacts: 0. Those downstream steps are `NOT RUN`.
 
-The current remediation removes the rendered module's nested reload and invokes the
-caller-loaded dependency command by its module-qualified name. Python source digests, exact
-wiring and negative mutations pass locally, but this new module-qualified wiring and its
-LF/CRLF/CR PowerShell positives and negatives remain `NOT RUN` until the next exact-commit
-`windows-2025` run. This macOS host has no PowerShell.
+The same failure reproduces in official portable PowerShell 7.6.4. A trace localizes it to
+the module-qualified fixture entering its dependency assertion and provider-added
+`PSIsContainer` being read again after `.Parent` returned a raw `DirectoryInfo`. The
+next latent fixture fault was also reproduced: comma precedence split the intended LF/CRLF/CR
+expressions into five elements. The current remediation uses CLR directory type plus reparse
+attributes, groups both concatenations, requires exactly three scalar strings and exercises
+a parent plugin reparse negative. Portable PowerShell controls and immutable mutations pass
+locally with a temporary non-Windows junction shim; that is not Windows junction evidence.
+The corrected actual Windows fixture remains `NOT RUN` until the next exact-commit run.
 
 Tauri CLI 2.11.4 temporarily changes the main executable's first bundle-type marker
 from `__TAURI_BUNDLE_TYPE_VAR_UNK` to `..._NSS` while NSIS captures it, then restores

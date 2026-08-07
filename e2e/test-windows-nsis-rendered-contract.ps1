@@ -10,7 +10,7 @@ $languagePath = Join-Path $fixtureRoot "English.nsh"
 $pluginDirectory = Join-Path $fixtureRoot "NSIS/Plugins/x86-unicode/additional"
 $includeSha256 = @{}
 $pluginSha1 = ""
-$pluginJunctionCreated = $false
+$pluginJunctionPath = ""
 
 function Write-Contract {
   param([Parameter(Mandatory)][AllowEmptyString()][string]$ScriptText)
@@ -69,8 +69,16 @@ try {
     '!define /ifndef WS_EX_LAYOUTRTL 0x00400000', '${If} 1 = 1', '${EndIf}'
   )
   $valid = New-RenderedContract -Body $validBody
-  foreach ($text in @($valid, $valid.Replace("`n", "`r`n") + "`r`n",
-      $valid.Replace("`n", "`r") + "`r")) {
+  $newlineContracts = @(
+    $valid,
+    ($valid.Replace("`n", "`r`n") + "`r`n"),
+    ($valid.Replace("`n", "`r") + "`r")
+  )
+  if ($newlineContracts.Count -ne 3 -or
+      @($newlineContracts | Where-Object { $_ -isnot [string] }).Count -ne 0) {
+    throw "rendered NSIS newline positive setup failed"
+  }
+  foreach ($text in $newlineContracts) {
     Write-Contract $text
     Assert-BodamRenderedNsisContract $scriptPath "currentUser" "" $includeSha256 $pluginSha1
   }
@@ -152,15 +160,33 @@ try {
   $command = "mklink /J `"$pluginDirectory`" `"$pluginTarget`""
   & cmd.exe /D /C $command 2>$null | Out-Null
   if ($LASTEXITCODE -ne 0) { throw "plugin junction negative-control setup failed" }
-  $pluginJunctionCreated = $true
+  $pluginJunctionPath = $pluginDirectory
   Assert-RejectedContract $valid
-  [IO.Directory]::Delete($pluginDirectory)
-  $pluginJunctionCreated = $false
+  [IO.Directory]::Delete($pluginJunctionPath)
+  $pluginJunctionPath = ""
+
+  [void](New-Item -ItemType Directory -Path $pluginDirectory)
+  [IO.File]::WriteAllText($pluginPath, "synthetic plugin", $utf8)
+  $pluginParentTarget = Join-Path $fixtureRoot "plugin-parent-target"
+  $pluginParentAdditional = Join-Path $pluginParentTarget "additional"
+  [void](New-Item -ItemType Directory -Path $pluginParentAdditional)
+  [IO.File]::WriteAllText(
+    (Join-Path $pluginParentAdditional "nsis_tauri_utils.dll"), "synthetic plugin", $utf8
+  )
+  $pluginUnicodeDirectory = Split-Path $pluginDirectory -Parent
+  Remove-Item -LiteralPath $pluginUnicodeDirectory -Recurse -Force
+  $command = "mklink /J `"$pluginUnicodeDirectory`" `"$pluginParentTarget`""
+  & cmd.exe /D /C $command 2>$null | Out-Null
+  if ($LASTEXITCODE -ne 0) { throw "plugin parent junction negative-control setup failed" }
+  $pluginJunctionPath = $pluginUnicodeDirectory
+  Assert-RejectedContract $valid
+  [IO.Directory]::Delete($pluginJunctionPath)
+  $pluginJunctionPath = ""
   Write-Output "BODAM rendered NSIS controls: PASS"
 } finally {
-  if ($pluginJunctionCreated -and
-      $null -ne (Get-Item -LiteralPath $pluginDirectory -Force -ErrorAction SilentlyContinue)) {
-    [IO.Directory]::Delete($pluginDirectory)
+  if ($pluginJunctionPath.Length -gt 0 -and
+      $null -ne (Get-Item -LiteralPath $pluginJunctionPath -Force -ErrorAction SilentlyContinue)) {
+    [IO.Directory]::Delete($pluginJunctionPath)
   }
   if (Test-Path -LiteralPath $fixtureRoot) {
     Remove-Item -LiteralPath $fixtureRoot -Recurse -Force

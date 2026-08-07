@@ -39,13 +39,15 @@ installer SHA-256. Synthetic data is mandatory throughout.
 - [ ] Treat only `ItemNotFoundException` as an absent cleanup target and propagate every
       access or provider probe error before removal and its postcondition.
 
-The authoritative Plan-025 run `31181536529` executed exact corrected commit
-`1bd13f23520d75fe3e14d82cf7b4e9ea834626a6` on `windows-2025`. Its checkout, bounded cleanup
+The authoritative Plan-026 run `31182975142` executed exact commit
+`a5a0bd9bf640c5ed416ba4100de2da2b48f29208` on `windows-2025`. Its checkout, bounded cleanup
 retry, installer identity and production launch-readiness controls passed. The rendered
-PowerShell fixture failed before its assertions when a nested forced module reload removed
-the caller-visible normalized hash helper. Npm trust, setup, QA, Rust, build, production
-lifecycle, installed E2E and upload were skipped; artifacts: 0. The replacement
-module-qualified wiring remains `NOT RUN` until the next exact-commit hosted run.
+fixture failed with a normalized exact-form error; the hosted log exposes no inner assertion.
+Npm trust, setup, QA, Rust, build, production lifecycle, installed E2E and upload were
+skipped; artifacts: 0. Portable PowerShell reproduction and trace entered the module-qualified
+dependency assertion, then exposed a raw `DirectoryInfo` ancestor property fault and a latent
+comma-precedence fixture split. The CLR-type and exact three-scalar remediation's
+actual Windows result remains `NOT RUN` until the next hosted run.
 
 ## Installed E2E hosted gate
 

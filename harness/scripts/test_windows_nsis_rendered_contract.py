@@ -31,6 +31,8 @@ def run_windows_nsis_rendered_negative_controls(
 
     parser = "e2e/windows-nsis-rendered-contract.psm1"
     parser_source = (SOURCE_ROOT / parser).read_text(encoding="utf-8")
+    dependency = "e2e/windows-nsis-dependency-contract.psm1"
+    dependency_source = (SOURCE_ROOT / dependency).read_text(encoding="utf-8")
     control = "e2e/test-windows-nsis-rendered-contract.ps1"
     control_source = (SOURCE_ROOT / control).read_text(encoding="utf-8")
     expected = next(line for line in INSTALLED_REQUIRED_LINES if "RenderedNsisContract" in line)
@@ -55,6 +57,20 @@ def run_windows_nsis_rendered_negative_controls(
         ("unqualified dependency call", parser, parser_source.replace(
             "windows-nsis-dependency-contract\\Assert-BodamNsisDependencyContract",
             "Assert-BodamNsisDependencyContract", 1
+        )),
+        ("provider-only parent directory check", dependency, dependency_source.replace(
+            "$pluginItem -isnot [IO.DirectoryInfo] -or",
+            "-not $pluginItem.PSIsContainer -or", 1
+        )),
+        ("ungrouped CRLF positive", control, control_source.replace(
+            '    ($valid.Replace("`n", "`r`n") + "`r`n"),\n',
+            '    $valid.Replace("`n", "`r`n") + "`r`n",\n', 1
+        )),
+        ("removed newline scalar count", control, control_source.replace(
+            "  if ($newlineContracts.Count -ne 3 -or\n"
+            "      @($newlineContracts | Where-Object { $_ -isnot [string] }).Count -ne 0) {\n"
+            '    throw "rendered NSIS newline positive setup failed"\n'
+            "  }\n", "", 1
         )),
         ("removed block-comment control", control, control_source.replace(
             "  (New-RenderedContract -Body @($mode, '/*', $webView, '*/')),\n",
@@ -82,7 +98,11 @@ def run_windows_nsis_rendered_negative_controls(
             "  Assert-RejectedContract $valid\n", "", 1
         )),
         ("removed plugin-reparse control", control, control_source.replace(
-            "  $pluginJunctionCreated = $true\n"
+            "  $pluginJunctionPath = $pluginDirectory\n"
+            "  Assert-RejectedContract $valid\n", "", 1
+        )),
+        ("removed parent plugin-reparse control", control, control_source.replace(
+            "  $pluginJunctionPath = $pluginUnicodeDirectory\n"
             "  Assert-RejectedContract $valid\n", "", 1
         )),
     )
