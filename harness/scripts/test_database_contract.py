@@ -4,10 +4,38 @@
 from __future__ import annotations
 
 import hashlib
+import os
+import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
-from database_contract_checks import check_registry
+from database_contract_checks import check_registry, success_summary
+
+
+ROOT = Path(__file__).resolve().parents[2]
+
+
+def check_cp1252_cli_output(failures: list[str]) -> None:
+    environment = os.environ.copy()
+    environment["PYTHONIOENCODING"] = "cp1252"
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(Path(__file__).with_name("database_contract_checks.py")),
+            "--registry-only",
+        ],
+        cwd=ROOT,
+        env=environment,
+        capture_output=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        failures.append("database CLI summary is not CP1252-safe")
+    if not result.stdout.isascii() or not result.stderr.isascii():
+        failures.append("database CLI summary must remain ASCII")
+    if not success_summary(registry_only=False).isascii():
+        failures.append("full database CLI summary must remain ASCII")
 
 
 def registry_source(entries: list[tuple[str, str, str]]) -> str:
@@ -45,6 +73,7 @@ def expect_error(errors: list[str], phrase: str, failures: list[str]) -> None:
 
 def run_database_negative_controls() -> list[str]:
     failures: list[str] = []
+    check_cp1252_cli_output(failures)
     with tempfile.TemporaryDirectory() as temporary:
         root = Path(temporary)
         registry, checksum = create_fixture(root)

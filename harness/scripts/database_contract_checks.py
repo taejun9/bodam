@@ -123,6 +123,16 @@ def run_database_contract_checks(registry_only: bool = False) -> list[str]:
     return errors
 
 
+def success_summary(registry_only: bool) -> str:
+    lines = [
+        "BODAM database contract: PASS",
+        "- Prisma migration directory <-> Rust registry order/hash: pass",
+    ]
+    if not registry_only:
+        lines.append("- Prisma schema <-> migration history diff: pass")
+    return "\n".join(lines)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--registry-only", action="store_true")
@@ -133,10 +143,7 @@ def main() -> int:
         for error in errors:
             print(f"- {error}")
         return 1
-    print("BODAM database contract: PASS")
-    print("- Prisma migration directory ↔ Rust registry order/hash: pass")
-    if not args.registry_only:
-        print("- Prisma schema ↔ migration history diff: pass")
+    print(success_summary(args.registry_only))
     return 0
 
 
