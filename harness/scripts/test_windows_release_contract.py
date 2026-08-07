@@ -206,6 +206,37 @@ def test_offline_claim(failures: list[str]) -> None:
         expect_error(errors, "must record offlineVmAccepted as false", failures)
 
 
+def test_document_outcome_claims(failures: list[str]) -> None:
+    evidence = "docs/quality/windows-e2e-evidence.md"
+    release = "docs/quality/windows-release-acceptance.md"
+    sha = "exact commit `e42ad20d75acb9f33c5529f2397b25e3796089ee`"
+    cases = (
+        (evidence, sha, "exact commit `0000000000000000000000000000000000000000`"),
+        (release, sha, "exact commit `0000000000000000000000000000000000000000`"),
+        (evidence, "controls passed on actual Windows", "controls failed on actual Windows"),
+        (release, "fixture controls passed on actual Windows", "fixture controls failed on actual Windows"),
+        (evidence, "actual production Windows lifecycle is\n`PASS`", "actual production Windows lifecycle is\n`FAIL`"),
+        (release, "actual production Windows lifecycle is\n`PASS`", "actual production Windows lifecycle is\n`FAIL`"),
+        (evidence, "remaining installed E2E scenarios are `NOT RUN`", "remaining installed E2E scenarios are `PASS`"),
+        (release, "remaining installed E2E scenarios\nare `NOT RUN`", "remaining installed E2E scenarios\nare `PASS`"),
+    )
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        for relative, approved, reversed_claim in cases:
+            create_valid_fixture(root)
+            path = root / relative
+            text = path.read_text(encoding="utf-8")
+            if approved not in text:
+                failures.append(f"missing approved document control fixture: {approved}")
+                continue
+            write(path, text.replace(approved, reversed_claim, 1))
+            expect_error(
+                run_check(root),
+                f"{relative} missing Windows evidence boundary: {approved}",
+                failures,
+            )
+
+
 def test_comment_parser(failures: list[str]) -> None:
     quoted = '$left = "<#"\n$active = $true\n$right = "#>"\n'
     if strip_comments(quoted) != quoted:
@@ -227,6 +258,7 @@ def run_windows_release_negative_controls() -> list[str]:
     test_config_line_endings(failures)
     test_artifact_allowlist(failures)
     test_offline_claim(failures)
+    test_document_outcome_claims(failures)
     test_comment_parser(failures)
     failures.extend(run_windows_workflow_negative_controls(create_valid_fixture, run_check))
     failures.extend(run_windows_npm_preflight_negative_controls(create_valid_fixture))

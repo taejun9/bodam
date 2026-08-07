@@ -11,9 +11,9 @@ from pathlib import Path
 WORKFLOW = ".github/workflows/tauri-e2e-windows.yml"
 WORKFLOW_SHA256 = "2d777a0715d2dc57ca7786b042711d945fd8d1717b4eeeee76bca27842cab3a3"
 NPM_PREFLIGHT = "harness/scripts/windows_npm_preflight.py"
-NPM_PREFLIGHT_SHA256 = "bf082e3b0e584ebf3c9f3b7be17f521f4ec51ba986cb910cbdb37976eb7898a8"
+NPM_PREFLIGHT_SHA256 = "69d7a2cbad3501decaeeb272012122aca27a4cc75a25f83cd9ee52358a044311"
 NPM_CHECKER = "harness/scripts/windows_node_spawn_checks.py"
-NPM_CHECKER_SHA256 = "193748713e8682052b314c0991b887f56e9c27a4a6e8b443ad5d95c97de72478"
+NPM_CHECKER_SHA256 = "b9cf2af5092485584781a48a5fadd06ce6e98a60a7b4c604f6b7d49c9aa5cb25"
 PRODUCTION_INSTALLER = "runtime-data/windows-release/BODAM_0.1.0_x64-setup.exe"
 UPLOAD_ALLOWLIST = (
     PRODUCTION_INSTALLER,

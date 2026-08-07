@@ -5,7 +5,10 @@ import { nextTick } from "vue";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CoverageCategory } from "@/features/coverage/types/coverage";
-import { CoverageBenchmarkValidationError } from "@/features/coverage-benchmark/types/coverage-benchmark-error";
+import {
+  CoverageBenchmarkRepositoryError,
+  CoverageBenchmarkValidationError,
+} from "@/features/coverage-benchmark/types/coverage-benchmark-error";
 import type { CoverageBenchmark } from "@/features/coverage-benchmark/types/coverage-benchmark";
 
 const benchmarkMocks = vi.hoisted(() => ({
@@ -192,6 +195,61 @@ describe("CoverageBenchmark settings UI", () => {
       bubbles: true,
       cancelable: true,
     }));
+    await nextTick();
+    expect(document.querySelector("dialog[open]")).toBeNull();
+    expect(document.activeElement).toBe(create.element);
+    wrapper.unmount();
+  });
+
+  it("exposes pending dismissal state and closes after a conflict settles", async () => {
+    let rejectCreate!: (reason: unknown) => void;
+    benchmarkMocks.create.mockReturnValueOnce(new Promise((_, reject) => {
+      rejectCreate = reject;
+    }));
+    const wrapper = mount(CoverageBenchmarkSection, { attachTo: document.body });
+    await flushPromises();
+    const create = wrapper.get("[data-testid='create-benchmark']");
+    (create.element as HTMLElement).focus();
+    await create.trigger("click");
+    await flushPromises();
+
+    const values = {
+      "select[name='categoryId']": categoryIds[0],
+      "input[name='gender']": "합성 성별",
+      "input[name='minAgeYears']": "20",
+      "input[name='maxAgeYears']": "39",
+      "input[name='adequateMinWon']": "50000000",
+      "input[name='excessiveMinWon']": "100000000",
+    };
+    for (const [selector, value] of Object.entries(values)) {
+      const field = document.querySelector<HTMLInputElement | HTMLSelectElement>(selector)!;
+      field.value = value;
+      field.dispatchEvent(new Event(field instanceof HTMLSelectElement ? "change" : "input", {
+        bubbles: true,
+      }));
+    }
+    document.querySelector<HTMLFormElement>("[data-testid='benchmark-form']")!
+      .dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    await nextTick();
+
+    let dialog = document.querySelector<HTMLDialogElement>("dialog[open]")!;
+    expect(dialog.getAttribute("aria-busy")).toBe("true");
+    expect(dialog.querySelector<HTMLButtonElement>(".dialog-close")?.disabled).toBe(true);
+    dialog.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    await nextTick();
+    expect(document.querySelector("dialog[open]")).toBe(dialog);
+
+    rejectCreate(new CoverageBenchmarkRepositoryError(
+      "같은 성별과 겹치는 나이 구간의 기준이 있습니다.",
+      "conflict",
+    ));
+    await flushPromises();
+    dialog = document.querySelector<HTMLDialogElement>("dialog[open]")!;
+    expect(dialog.querySelector("[role='alert']")?.textContent).toContain("겹치는");
+    expect(dialog.hasAttribute("aria-busy")).toBe(false);
+    const close = dialog.querySelector<HTMLButtonElement>(".dialog-close")!;
+    expect(close.disabled).toBe(false);
+    close.click();
     await nextTick();
     expect(document.querySelector("dialog[open]")).toBeNull();
     expect(document.activeElement).toBe(create.element);

@@ -39,15 +39,23 @@ installer SHA-256. Synthetic data is mandatory throughout.
 - [ ] Treat only `ItemNotFoundException` as an absent cleanup target and propagate every
       access or provider probe error before removal and its postcondition.
 
-The authoritative Plan-026 run `31182975142` executed exact commit
-`a5a0bd9bf640c5ed416ba4100de2da2b48f29208` on `windows-2025`. Its checkout, bounded cleanup
-retry, installer identity and production launch-readiness controls passed. The rendered
-fixture failed with a normalized exact-form error; the hosted log exposes no inner assertion.
-Npm trust, setup, QA, Rust, build, production lifecycle, installed E2E and upload were
-skipped; artifacts: 0. Portable PowerShell reproduction and trace entered the module-qualified
-dependency assertion, then exposed a raw `DirectoryInfo` ancestor property fault and a latent
-comma-precedence fixture split. The CLR-type and exact three-scalar remediation's
-actual Windows result remains `NOT RUN` until the next hosted run.
+The authoritative Plan-027 run `31185908075`, attempt 1 and job `92890241298`, executed
+exact commit `e42ad20d75acb9f33c5529f2397b25e3796089ee` from a main push on
+`windows-2025`. Corrected fixture controls passed on actual Windows, followed by isolated npm
+trust, QA, all-feature Rust and both NSIS builds. The actual production Windows lifecycle is
+`PASS`: the production executable installed, launched to full readiness, closed normally,
+uninstalled and preserved its app data and observed shared WebView2 state. This is production
+lifecycle evidence, not a complete installed feature-suite pass.
+
+The installed full E2E result is `FAIL`. The installed E2E first spec is `2 PASS / 4 FAIL`.
+Overlap rejection and an unchanged one-row count passed, but one global Escape then did not close
+the open benchmark dialog. The later Family, Dashboard and Calendar results are consistent with
+an inferred downstream cascade; this run does not establish them as independent defects. The remaining installed E2E scenarios
+are `NOT RUN`: `restart/persistence`, import/export, rollback and backup/restore did not start
+on this Windows run. Failure cleanup passed. Artifact upload was skipped; artifacts: 0, and
+downloaded-artifact acceptance is `NOT RUN`. The explicit close-after-settle dismissal
+remediation passes component and complete local actual-app bundle E2E checks, but its actual
+Windows result is `NOT RUN` until the next exact-commit hosted run.
 
 ## Installed E2E hosted gate
 

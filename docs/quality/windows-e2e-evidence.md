@@ -111,22 +111,31 @@ nesting. `ADDITIONALPLUGINSPATH` must resolve through regular, non-reparse
 `NSIS/Plugins/x86-unicode/additional` directories containing only the pinned
 `nsis_tauri_utils.dll` SHA-1, so the approved symbolic plugin line cannot redirect compilation.
 
-The authoritative Plan-026 run `31182975142` executed exact commit
-`a5a0bd9bf640c5ed416ba4100de2da2b48f29208` on `windows-2025`. Checkout, bounded cleanup
-retry, installer identity and production launch-readiness controls passed. The
-rendered step failed with its normalized exact-form error; the hosted log does not expose
-the inner assertion. Isolated npm trust, setup, QA, Rust, build, install, installed E2E and
-upload were skipped; artifacts: 0. Those downstream steps are `NOT RUN`.
+The authoritative Plan-027 run `31185908075`, attempt 1 and job `92890241298`, executed
+exact commit `e42ad20d75acb9f33c5529f2397b25e3796089ee` from a main push on
+`windows-2025`. The corrected CLR ancestor, exactly-three-newline and parent-reparse
+controls passed on actual Windows. Isolated npm trust, cross-layer QA, Windows all-feature Rust tests,
+production and private NSIS builds also passed. The actual production Windows lifecycle is
+`PASS`: the current-user NSIS installed and launched the exact production executable,
+observed the responsive main window plus roaming database and daily backup, closed it normally,
+uninstalled it, and preserved app data and the observed shared WebView2 state.
 
-The same failure reproduces in official portable PowerShell 7.6.4. A trace localizes it to
-the module-qualified fixture entering its dependency assertion and provider-added
-`PSIsContainer` being read again after `.Parent` returned a raw `DirectoryInfo`. The
-next latent fixture fault was also reproduced: comma precedence split the intended LF/CRLF/CR
-expressions into five elements. The current remediation uses CLR directory type plus reparse
-attributes, groups both concatenations, requires exactly three scalar strings and exercises
-a parent plugin reparse negative. Portable PowerShell controls and immutable mutations pass
-locally with a temporary non-Windows junction shim; that is not Windows junction evidence.
-The corrected actual Windows fixture remains `NOT RUN` until the next exact-commit run.
+The installed full E2E result is `FAIL`. The installed E2E first spec is `2 PASS / 4 FAIL`:
+customer and policy totals plus consultation persistence passed. Benchmark overlap rejection
+and the unchanged one-row count were already confirmed before the first failure: one global
+Escape then did not close the open dialog within ten seconds. The later Family, Dashboard and
+Calendar failures are consistent with an inferred downstream cascade; this run does not
+establish them as independent feature defects. The remaining installed E2E scenarios are `NOT RUN`:
+`restart/persistence`, import/export, rollback and backup/restore did not start on this Windows
+run. Failure cleanup and the hosted evidence-boundary step passed. Artifact upload was skipped;
+artifacts: 0, and downloaded-artifact acceptance is `NOT RUN`.
+
+The remediation exposes the submit-pending state through the real dialog, prevents dismissal
+while pending, waits for the rejection to settle, and clicks the scoped close control instead
+of sending an unscoped key. A deferred-conflict component regression and the complete local
+actual-app bundle E2E orchestration pass. The explicit close-after-settle dismissal remediation's
+actual Windows result is `NOT RUN` until the next exact-commit hosted run; local evidence cannot
+promote the failed Plan-027 installed suite or its absent artifact.
 
 Tauri CLI 2.11.4 temporarily changes the main executable's first bundle-type marker
 from `__TAURI_BUNDLE_TYPE_VAR_UNK` to `..._NSS` while NSIS captures it, then restores

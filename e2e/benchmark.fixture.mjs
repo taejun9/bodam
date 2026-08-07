@@ -1,4 +1,4 @@
-/* global Event */
+/* global document, Event */
 
 import { $, $$, browser, expect } from "@wdio/globals";
 
@@ -143,8 +143,18 @@ export async function expectOverlapRejected(input) {
     { timeout: 10_000, timeoutMsg: "overlap benchmark was not rejected" },
   );
   expect((await visibleBenchmarkRows()).length).toBe(1);
-  await browser.keys(["Escape"]);
+  const close = await dialog.$(".dialog-close");
+  await browser.waitUntil(
+    async () => (await dialog.getAttribute("aria-busy")) !== "true" &&
+      (await close.isEnabled()),
+    { timeout: 10_000, timeoutMsg: "rejected benchmark dialog did not settle" },
+  );
+  await close.click();
   await dialog.waitForDisplayed({ reverse: true });
+  expect((await $$("dialog[open]")).length).toBe(0);
+  expect(await browser.execute(
+    () => document.activeElement?.getAttribute("data-testid"),
+  )).toBe("create-benchmark");
 }
 
 export async function updateBenchmark(id, input) {

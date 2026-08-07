@@ -95,6 +95,8 @@ watch(
     :title="isEditing ? '보장 비교 기준 수정' : '새 보장 비교 기준'"
     description="카테고리·성별 저장값·포함 만나이 구간별 금액 기준을 입력합니다."
     size="large"
+    :busy="submitting"
+    :dismiss-disabled="submitting"
     @close="emit('close')"
   >
     <form
