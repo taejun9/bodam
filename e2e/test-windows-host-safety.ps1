@@ -20,6 +20,10 @@ foreach ($path in $powershellFiles) {
 
 Import-Module (Join-Path $PSScriptRoot "windows-host-safety.psm1") -Force
 Assert-BodamHostedWindows
+$projectRoot = Split-Path $PSScriptRoot -Parent
+if (Test-Path -LiteralPath (Join-Path $projectRoot ".npmrc")) {
+  throw "project npm configuration is not approved"
+}
 
 $testRoot = Join-Path $env:RUNNER_TEMP "bodam-host-safety-$([Guid]::NewGuid())"
 $owned = Join-Path $testRoot "owned"
@@ -64,4 +68,5 @@ try {
 & (Join-Path $PSScriptRoot "test-windows-cleanup-retry.ps1")
 & (Join-Path $PSScriptRoot "test-windows-installer-identity.ps1")
 & (Join-Path $PSScriptRoot "test-windows-launch-readiness.ps1")
+& (Join-Path $PSScriptRoot "test-windows-nsis-rendered-contract.ps1")
 Write-Output "BODAM hosted cleanup safety controls: PASS"

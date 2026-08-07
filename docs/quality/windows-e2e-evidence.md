@@ -72,13 +72,56 @@ may use the existing failure allowance.
 CLIs from a temporary directory containing spaces, `&` and `%`, requires shell-like argv
 and environment values to remain exact, proves a shell-injection sentinel is absent, and
 checks Tauri Windows/macOS/no-bundle construction plus invalid path and exit controls.
-This runs on each QA host, while the private NSIS build and installed UI suite remain
-`NOT RUN` for a changed commit until that exact commit passes `windows-2025`.
+This runs on each QA host. Plan-024 proved that control and the new JavaScript launcher on
+`windows-2025`, including a complete private NSIS build past the former `.cmd` failure.
 
-The authoritative Plan-023 run records its production PowerShell and installed lifecycle
-step as a scoped pass even though the job failed later. That does not make the run a pass.
-The changed Node launcher, private NSIS build, private installed UI lifecycle and artifact
-upload remain `NOT RUN` until their exact commit passes a hosted Windows run.
+Immediately after checkout, direct PowerShell and isolated `python3 -I` trust steps run before
+setup-node's npm cache lookup and every later npm command. The isolated Python gate verifies the
+exact reviewed checker source hash before executing it, and a project `.npmrc` is forbidden. The steps
+pin the complete newline-normalized `package.json` and `package-lock.json`, reject higher-precedence
+`npm-shrinkwrap.json`, and bind the entire `package.json` scripts map as one canonical command graph.
+The install uses `npm ci --ignore-scripts`, so repository `script-shell`, package pre/post lifecycle
+hooks, dependency install scripts or a no-op nested E2E command cannot run ahead of the gate.
+The npm cleanup step also requires a successful trust outcome; when the gate rejects checkout
+content, cleanup is skipped because no setup, build or install step has yet created app state.
+This also pins the reviewed WDIO and Tauri CLI dependency graph, not only their command names.
+The transitive installed-suite trust tree covers all 54 `e2e/**/*.mjs` files plus
+`wdio.conf.mjs`; changing an imported binary-path, backup, spec or helper module fails even
+when the six launcher entrypoints are unchanged.
+
+Tauri CLI 2.11.4 parses the private source config `type: "skip"` but renders that mode as
+an empty `INSTALLWEBVIEW2MODE ""` NSIS value; only download, embed and offline modes receive
+named values. The source-config `skip` guard and the rendered empty-value guard are both
+required so a different mode cannot pass. Both complete Tauri source configs have exact
+newline-normalized UTF-8 hashes, their NSIS objects permit only `installMode`, and
+all three Tauri-supported Windows platform config filenames must be absent. This catches any base,
+E2E or automatically merged file-association, resource, custom-template, hook or language
+surface while remaining valid for LF, CRLF and CR checkouts.
+
+Against the pinned default template, a shared parser requires four protected unconditional
+top-level quoted defines, including empty `UNINSTALLERSIGNCOMMAND`. Install/WebView order is fixed,
+and each dependency define must precede its symbolic use. It permits nine preprocessor directive
+names and the exact include sequence. The generated `utils.nsh`,
+`FileAssociation.nsh` and `English.nsh` must be regular files with pinned normalized hashes;
+English must be in the actual `installer.nsi` directory and built-in include shadows must be
+absent there. The parser rejects block or continued syntax, condition/macro targets,
+duplicates, all `!undef`, switched or dynamic defines, command aliases, later includes,
+`!addincludedir`, `!cd`, arbitrary plugin/finalizer directives, inline suffixes and malformed
+nesting. `ADDITIONALPLUGINSPATH` must resolve through regular, non-reparse
+`NSIS/Plugins/x86-unicode/additional` directories containing only the pinned
+`nsis_tauri_utils.dll` SHA-1, so the approved symbolic plugin line cannot redirect compilation.
+
+The corrected PowerShell control is designed to exercise LF/CRLF/CR positives and those
+negative forms on Windows. It is `NOT RUN` in the current tree because this macOS host has
+no PowerShell and no `windows-2025` run yet contains the corrected parser. Python source
+digests, exact wiring and mutation controls do run locally; the earlier hosted PowerShell
+PASS belongs only to commit `79b23f98eb3604247bf64188b5cd62f2025b9ecb` before this fix.
+
+The authoritative Plan-024 run records cross-layer QA, PowerShell controls, all-feature
+Rust, production build/lifecycle/staging and private E2E build as scoped passes even though
+the job failed later. Its installed step rejected the correct empty rendered value before
+installation because the preflight expected literal `skip`. Installed UI/native E2E and
+artifact upload/download therefore remain `NOT RUN` until the corrected exact commit passes.
 
 Tauri CLI 2.11.4 temporarily changes the main executable's first bundle-type marker
 from `__TAURI_BUNDLE_TYPE_VAR_UNK` to `..._NSS` while NSIS captures it, then restores

@@ -61,6 +61,36 @@ def empty_file_mutation(create_fixture, run_check, relative: str, failures: list
             failures.append(f"empty Node spawn control was accepted: {relative}")
 
 
+def npmrc_mutation(create_fixture, run_check, failures: list[str]) -> None:
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        create_fixture(root)
+        (root / ".npmrc").write_text("script-shell=C:\\synthetic\\fake.cmd\n", encoding="utf-8")
+        errors = run_check(root)
+        if not any("project .npmrc must be absent" in error for error in errors):
+            failures.append("project script-shell .npmrc was accepted")
+
+
+def dependency_mutations(create_fixture, run_check, failures: list[str]) -> None:
+    cases = (
+        ("package.json", '"@wdio/cli": "9.30.1"', '"@wdio/cli": "file:./synthetic-wdio"'),
+        ("package-lock.json", '"@tauri-apps/cli": "2.11.4"',
+         '"@tauri-apps/cli": "file:./synthetic-tauri"'),
+    )
+    for relative, old, new in cases:
+        expect_mutation(
+            create_fixture, run_check, relative, old, new,
+            "immutable Windows npm source changed", failures,
+        )
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        create_fixture(root)
+        (root / "npm-shrinkwrap.json").write_text("{}\n", encoding="utf-8")
+        errors = run_check(root)
+        if not any("project npm-shrinkwrap.json must be absent" in error for error in errors):
+            failures.append("npm shrinkwrap precedence override was accepted")
+
+
 def run_windows_node_spawn_negative_controls(create_fixture, run_check) -> list[str]:
     failures: list[str] = []
     cases = (
@@ -110,6 +140,18 @@ def run_windows_node_spawn_negative_controls(create_fixture, run_check) -> list[
             "immutable Node spawn contract changed",
         ),
         (
+            "e2e/e2e-app-binary.mjs",
+            "return actual;",
+            "return expected;",
+            "immutable Windows E2E trust tree changed",
+        ),
+        (
+            "e2e/backup-settings-runner.mjs",
+            "await assertIndependentBackupArchive({",
+            "if (false) await assertIndependentBackupArchive({",
+            "immutable Windows E2E trust tree changed",
+        ),
+        (
             "docs/quality/windows-e2e-evidence.md",
             "`process.execPath`",
             "`process.argv0`",
@@ -136,6 +178,8 @@ def run_windows_node_spawn_negative_controls(create_fixture, run_check) -> list[
         "e2e/test-node-script-runner.mjs",
         failures,
     )
+    npmrc_mutation(create_fixture, run_check, failures)
+    dependency_mutations(create_fixture, run_check, failures)
     package_mutation(
         create_fixture,
         run_check,
@@ -144,6 +188,23 @@ def run_windows_node_spawn_negative_controls(create_fixture, run_check) -> list[
         "test:e2e:node-spawn",
         failures,
     )
+    package_mutation(
+        create_fixture,
+        run_check,
+        "test:e2e",
+        lambda _: 'node -e "process.exit(0)"',
+        "test:e2e must run",
+        failures,
+    )
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        create_fixture(root)
+        path = root / "package.json"
+        package = json.loads(path.read_text(encoding="utf-8"))
+        package["scripts"]["postqa"] = "node -e \"process.exit(0)\""
+        path.write_text(json.dumps(package, indent=2), encoding="utf-8")
+        if not any("immutable E2E command graph" in error for error in run_check(root)):
+            failures.append("npm lifecycle script addition was accepted")
     package_mutation(
         create_fixture,
         run_check,

@@ -3,6 +3,8 @@ $ErrorActionPreference = "Stop"
 
 Import-Module (Join-Path $PSScriptRoot "windows-installer-contract.psm1") -Force
 Import-Module (Join-Path $PSScriptRoot "windows-host-safety.psm1") -Force
+Import-Module (Join-Path $PSScriptRoot "windows-nsis-dependency-contract.psm1") -Force
+Import-Module (Join-Path $PSScriptRoot "windows-nsis-rendered-contract.psm1") -Force
 Assert-BodamHostedWindows
 $projectRoot = Split-Path $PSScriptRoot -Parent
 $contract = Get-BodamInstallerContract -Flavor Production
@@ -26,7 +28,18 @@ function Assert-ExactStringArray {
 }
 
 function Assert-ProductionSourceContract {
+  foreach ($platformConfig in @(
+    "tauri.windows.conf.json", "tauri.windows.conf.json5", "Tauri.windows.toml"
+  )) {
+    if (Test-Path -LiteralPath (Join-Path $projectRoot "src-tauri/$platformConfig")) {
+      throw "Windows platform-specific Tauri configuration is not approved"
+    }
+  }
   $configPath = Join-Path $projectRoot "src-tauri/tauri.conf.json"
+  if ((Get-BodamNormalizedUtf8Sha256 $configPath) -cne
+      "99e3a3eecf63c5ab92e87f509c1996c303c72d070e3a2b1709e972322f55d852") {
+    throw "production Tauri configuration source is not approved"
+  }
   $config = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
   if ($config.productName -cne "BODAM" -or $config.identifier -cne "app.bodam.desktop" -or
       $config.version -cne "0.1.0" -or
@@ -34,6 +47,8 @@ function Assert-ProductionSourceContract {
       $config.bundle.windows.nsis.installMode -cne "currentUser") {
     throw "production Tauri installer configuration is invalid"
   }
+  Assert-ExactStringArray @($config.bundle.windows.nsis.PSObject.Properties.Name) `
+    @("installMode") "production NSIS configuration keys"
 
   $capabilityPath = Join-Path $projectRoot "src-tauri/capabilities/default.json"
   $capability = Get-Content -LiteralPath $capabilityPath -Raw | ConvertFrom-Json
@@ -58,11 +73,13 @@ function Assert-NsisBuildContract {
         [StringComparison]::OrdinalIgnoreCase)) {
     throw "production NSIS output must contain the exact single installer"
   }
-  $scriptText = Get-Content -LiteralPath $contract.NsisScript -Raw
-  if (-not $scriptText.Contains('!define INSTALLMODE "currentUser"') -or
-      -not $scriptText.Contains('!define INSTALLWEBVIEW2MODE "offlineInstaller"')) {
-    throw "rendered production NSIS configuration is invalid"
+  $includeSha256 = @{
+    "utils.nsh" = "b27b407f886cca738e44e774f15e6b556b43ce52557a7c8891ee4eca7dd8013d"
+    "FileAssociation.nsh" = "85ce72519d5461b5777f95123176b5536de163abd9a4742f9235453c4ddf56d8"
+    "English.nsh" = "1dad40b023707a61f828db1e184d9c1b029cb530c2dbbc4790db265872ef7b5e"
   }
+  Assert-BodamRenderedNsisContract $contract.NsisScript "currentUser" `
+    "offlineInstaller" $includeSha256 "75197fee3c6a814fe035788d1c34ead39349b860"
   $signature = Get-AuthenticodeSignature -LiteralPath $contract.InstallerPath
   if ($signature.Status.ToString() -cne "NotSigned") {
     throw "production acceptance expects an explicitly unsigned installer"

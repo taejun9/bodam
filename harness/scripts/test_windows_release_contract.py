@@ -9,11 +9,14 @@ from pathlib import Path
 
 import windows_release_checks
 from test_windows_node_spawn_contract import run_windows_node_spawn_negative_controls
+from test_windows_npm_preflight_contract import run_windows_npm_preflight_negative_controls
+from test_windows_nsis_rendered_contract import run_windows_nsis_rendered_negative_controls
 from test_windows_cleanup_contract import run_windows_cleanup_negative_controls
 from test_windows_launch_contract import run_windows_launch_negative_controls
 from test_windows_launch_lexer_contract import run_windows_launch_lexer_negative_controls
 from test_windows_workflow_contract import run_windows_workflow_negative_controls
 from windows_release_document_checks import REQUIREMENTS as DOCUMENT_REQUIREMENTS
+from windows_installer_config_checks import WINDOWS_PLATFORM_CONFIGS
 from windows_release_launch_syntax import strip_comments
 
 
@@ -40,11 +43,16 @@ def create_valid_fixture(root: Path) -> None:
         windows_release_checks.E2E_CONFIG,
         windows_release_checks.WORKFLOW,
         "package.json",
+        "package-lock.json",
         *windows_release_checks.REQUIRED_RELEASE_FILES,
         *DOCUMENT_REQUIREMENTS,
     }
     for relative in sorted(relatives):
         write(root / relative, (SOURCE_ROOT / relative).read_text(encoding="utf-8"))
+    for path in sorted((SOURCE_ROOT / "e2e").rglob("*.mjs")):
+        relative = path.relative_to(SOURCE_ROOT)
+        write(root / relative, path.read_text(encoding="utf-8"))
+    write(root / "wdio.conf.mjs", (SOURCE_ROOT / "wdio.conf.mjs").read_text(encoding="utf-8"))
 
 
 def run_check(root: Path) -> list[str]:
@@ -85,6 +93,65 @@ def test_installer_modes(failures: list[str]) -> None:
         write_json(root / windows_release_checks.E2E_CONFIG, e2e)
         errors = run_check(root)
         expect_error(errors, "must set bundle.windows.webviewInstallMode.type to 'skip'", failures)
+
+        create_valid_fixture(root)
+        production = json.loads(
+            (root / windows_release_checks.PRODUCTION_CONFIG).read_text(encoding="utf-8")
+        )
+        production["bundle"]["windows"]["nsis"]["template"] = "custom.nsi"
+        write_json(root / windows_release_checks.PRODUCTION_CONFIG, production)
+        expect_error(run_check(root), "bundle.windows.nsis keys", failures)
+
+        create_valid_fixture(root)
+        production = json.loads(
+            (root / windows_release_checks.PRODUCTION_CONFIG).read_text(encoding="utf-8")
+        )
+        production["bundle"]["fileAssociations"] = [{"ext": ["safe"]}]
+        write_json(root / windows_release_checks.PRODUCTION_CONFIG, production)
+        expect_error(run_check(root), "immutable Tauri config changed", failures)
+
+        create_valid_fixture(root)
+        e2e = json.loads(
+            (root / windows_release_checks.E2E_CONFIG).read_text(encoding="utf-8")
+        )
+        e2e["bundle"]["windows"]["nsis"]["installerHooks"] = "hooks.nsh"
+        write_json(root / windows_release_checks.E2E_CONFIG, e2e)
+        expect_error(run_check(root), "bundle.windows.nsis keys", failures)
+
+        for platform_config in WINDOWS_PLATFORM_CONFIGS:
+            create_valid_fixture(root)
+            write_json(
+                root / platform_config,
+                {"bundle": {"windows": {"nsis": {"template": "custom.nsi"}}}},
+            )
+            expect_error(
+                run_check(root), "platform-specific Tauri config must be absent", failures
+            )
+
+        create_valid_fixture(root)
+        package_path = root / "package.json"
+        package = json.loads(package_path.read_text(encoding="utf-8"))
+        package["scripts"]["windows:build:production"] += (
+            " --config src-tauri/release-override.json"
+        )
+        write_json(package_path, package)
+        expect_error(run_check(root), "must equal its exact approved command", failures)
+
+
+def test_config_line_endings(failures: list[str]) -> None:
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        create_valid_fixture(root)
+        for relative in (
+            windows_release_checks.PRODUCTION_CONFIG,
+            windows_release_checks.E2E_CONFIG,
+        ):
+            path = root / relative
+            text = path.read_text(encoding="utf-8")
+            path.write_bytes(text.replace("\n", "\r\n").encode("utf-8"))
+        errors = run_check(root)
+        if errors:
+            failures.append(f"valid CRLF Tauri configs were rejected: {errors}")
 
 
 def test_artifact_allowlist(failures: list[str]) -> None:
@@ -157,11 +224,14 @@ def run_windows_release_negative_controls() -> list[str]:
     failures: list[str] = []
     test_valid_contract(failures)
     test_installer_modes(failures)
+    test_config_line_endings(failures)
     test_artifact_allowlist(failures)
     test_offline_claim(failures)
     test_comment_parser(failures)
     failures.extend(run_windows_workflow_negative_controls(create_valid_fixture, run_check))
+    failures.extend(run_windows_npm_preflight_negative_controls(create_valid_fixture))
     failures.extend(run_windows_node_spawn_negative_controls(create_valid_fixture, run_check))
+    failures.extend(run_windows_nsis_rendered_negative_controls(create_valid_fixture, run_check))
     failures.extend(run_windows_cleanup_negative_controls(create_valid_fixture, run_check))
     failures.extend(run_windows_launch_negative_controls(create_valid_fixture, run_check))
     failures.extend(run_windows_launch_lexer_negative_controls(create_valid_fixture, run_check))

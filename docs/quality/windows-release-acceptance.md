@@ -39,9 +39,10 @@ installer SHA-256. Synthetic data is mandatory throughout.
 - [ ] Treat only `ItemNotFoundException` as an absent cleanup target and propagate every
       access or provider probe error before removal and its postcondition.
 
-The authoritative Plan-023 run records this production lifecycle as a scoped pass while
-the overall job failed later. The changed launcher, private installed E2E and upload remain
-`NOT RUN` until their exact commit executes successfully on `windows-2025`.
+The authoritative Plan-024 run records this production lifecycle as a scoped pass while
+the overall job failed later. Its Node launcher and private NSIS build passed, but the
+installed preflight rejected Tauri's correct empty rendered WebView skip value before
+installation. Installed UI/native E2E and upload remain `NOT RUN` for the corrected commit.
 
 ## Installed E2E hosted gate
 
@@ -51,7 +52,35 @@ the overall job failed later. The changed launcher, private installed E2E and up
       do not execute `.cmd`/`.bat`, `cmd.exe` or a command-shell fallback.
 - [ ] Run installed-suite npm scripts through the parent validated and fixed
       `npm_execpath` JavaScript CLI, never a scenario-provided shim path.
+- [ ] Bind the entire `package.json` scripts map, including exact `test:e2e` and Windows
+      lifecycle commands; reject added npm pre/post hooks and nested no-op substitutions.
+- [ ] Reject a project `.npmrc`; repository `script-shell` configuration must not replace
+      the reviewed npm command graph.
+- [ ] Before setup-node's npm cache lookup and every later npm command, run the direct
+      `python3 -I` trust gate; bind its exact reviewed checker before validating complete
+      `package.json`, `package-lock.json`, scripts map and E2E trust tree; reject `npm-shrinkwrap.json`.
+- [ ] Install with exact `npm ci --ignore-scripts` so no root or dependency lifecycle script
+      can run before cross-layer QA.
+- [ ] Run npm cleanup only when the direct trust gate succeeded; a trust rejection must not
+      execute an untrusted cleanup lifecycle, and occurs before any setup/build/install state.
+- [ ] Bind all 54 `e2e/**/*.mjs` files plus `wdio.conf.mjs` as the transitive installed-suite
+      trust tree, not only the six launcher entrypoints.
 - [ ] Build and install the private `BODAM E2E` / `app.bodam.desktop.e2e` NSIS.
+- [ ] Require source WebView mode `skip` and rendered `INSTALLWEBVIEW2MODE ""` exactly;
+      Tauri 2.11.4 gives only download, embed and offline modes named NSIS values.
+- [ ] Require the pinned default NSIS template preprocessor surface and pin the complete
+      base/E2E Tauri configs by newline-normalized UTF-8 hash; require each source NSIS object
+      to contain only `installMode`; reject all Windows platform config overrides, custom
+      templates, hooks, languages, resources and associations across JSON/JSON5/TOML.
+- [ ] Parse the rendered install/WebView defines as two fixed-order, unconditional
+      top-level quoted lines; reject block/continued syntax, conditional or macro targets,
+      missing/duplicate values, every `!undef`, switched/dynamic defines and command aliases.
+- [ ] Require the pinned preprocessor directive and include order; bind same-directory
+      `utils.nsh`, `FileAssociation.nsh` and `English.nsh` hashes, reject built-in include
+      shadows, later includes, `!addincludedir`, `!cd`, arbitrary plugin and finalizer lines.
+- [ ] Require empty `UNINSTALLERSIGNCOMMAND`; bind `ADDITIONALPLUGINSPATH` to regular,
+      non-reparse `NSIS/Plugins/x86-unicode/additional` parents and the sole pinned
+      `nsis_tauri_utils.dll` SHA-1.
 - [ ] Require the exact installed executable through `BODAM_E2E_APP_BINARY_PATH`.
 - [ ] Reject a source-tree, production, missing or path-escaped executable.
 - [ ] Run the complete synthetic Customer, policy, coverage, benchmark, family,

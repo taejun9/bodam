@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Callable
 
 import windows_release_checks
+from test_windows_workflow_order_contract import run_workflow_order_negative_controls
 
 
 FixtureFactory = Callable[[Path], None]
@@ -40,8 +41,6 @@ def check_mutation(
         fixture(root)
         mutate_text(root / relative, old, new)
         expect_error(run_check(root), expected, failures)
-
-
 def test_action_pins(
     fixture: FixtureFactory, run_check: CheckRunner, failures: list[str]
 ) -> None:
@@ -64,8 +63,6 @@ def test_action_pins(
         "approved immutable full-length SHA",
         failures,
     )
-
-
 def test_summary_and_safety(
     fixture: FixtureFactory, run_check: CheckRunner, failures: list[str]
 ) -> None:
@@ -77,6 +74,15 @@ def test_summary_and_safety(
         "- jobStatus: ${{ job.status }}",
         "- jobStatus: unknown",
         "summary must report jobStatus",
+        failures,
+    )
+    check_mutation(
+        fixture,
+        run_check,
+        "harness/scripts/windows_npm_preflight.py",
+        "function(root, errors)",
+        "errors.clear()",
+        "must equal the exact direct npm trust preflight",
         failures,
     )
     check_mutation(
@@ -287,4 +293,5 @@ def run_windows_workflow_negative_controls(
     test_action_pins(fixture, run_check, failures)
     test_summary_and_safety(fixture, run_check, failures)
     test_evidence_and_document_boundaries(fixture, run_check, failures)
+    failures.extend(run_workflow_order_negative_controls(fixture, run_check))
     return failures

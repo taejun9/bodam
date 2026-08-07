@@ -3,6 +3,8 @@ $ErrorActionPreference = "Stop"
 
 Import-Module (Join-Path $PSScriptRoot "windows-installer-contract.psm1") -Force
 Import-Module (Join-Path $PSScriptRoot "windows-host-safety.psm1") -Force
+Import-Module (Join-Path $PSScriptRoot "windows-nsis-dependency-contract.psm1") -Force
+Import-Module (Join-Path $PSScriptRoot "windows-nsis-rendered-contract.psm1") -Force
 Assert-BodamHostedWindows
 $projectRoot = Split-Path $PSScriptRoot -Parent
 $contract = Get-BodamInstallerContract -Flavor E2E
@@ -15,14 +17,33 @@ function Assert-ExactSet {
 }
 
 function Assert-E2eBuildContract {
-  $config = Get-Content -LiteralPath (Join-Path $projectRoot "src-tauri/tauri.e2e.conf.json") -Raw |
-    ConvertFrom-Json
+  foreach ($platformConfig in @(
+    "tauri.windows.conf.json", "tauri.windows.conf.json5", "Tauri.windows.toml"
+  )) {
+    if (Test-Path -LiteralPath (Join-Path $projectRoot "src-tauri/$platformConfig")) {
+      throw "Windows platform-specific Tauri configuration is not approved"
+    }
+  }
+  $baseConfigPath = Join-Path $projectRoot "src-tauri/tauri.conf.json"
+  $configPath = Join-Path $projectRoot "src-tauri/tauri.e2e.conf.json"
+  if ((Get-BodamNormalizedUtf8Sha256 $baseConfigPath) -cne
+      "99e3a3eecf63c5ab92e87f509c1996c303c72d070e3a2b1709e972322f55d852" -or
+      (Get-BodamNormalizedUtf8Sha256 $configPath) -cne
+      "db01f9c7b74dca7b2bfc30344f976dfdaa1e83c3b30039494cc8b236b8b09699") {
+    throw "E2E Tauri configuration source is not approved"
+  }
+  $baseConfig = Get-Content -LiteralPath $baseConfigPath -Raw | ConvertFrom-Json
+  $config = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
   if ($config.productName -cne "BODAM E2E" -or
       $config.identifier -cne "app.bodam.desktop.e2e" -or
       $config.bundle.windows.webviewInstallMode.type -cne "skip" -or
       $config.bundle.windows.nsis.installMode -cne "currentUser") {
     throw "E2E Tauri installer configuration is invalid"
   }
+  Assert-ExactSet @($baseConfig.bundle.windows.nsis.PSObject.Properties.Name) `
+    @("installMode") "base NSIS configuration keys"
+  Assert-ExactSet @($config.bundle.windows.nsis.PSObject.Properties.Name) `
+    @("installMode") "E2E NSIS configuration keys"
   $capability = Get-Content -LiteralPath (Join-Path $projectRoot "src-tauri/capabilities/e2e.json") -Raw |
     ConvertFrom-Json
   if ($capability.identifier -cne "e2e") { throw "E2E capability identifier is invalid" }
@@ -38,11 +59,13 @@ function Assert-E2eBuildContract {
         [StringComparison]::OrdinalIgnoreCase)) {
     throw "E2E NSIS output must contain the exact single private installer"
   }
-  $scriptText = Get-Content -LiteralPath $contract.NsisScript -Raw
-  if (-not $scriptText.Contains('!define INSTALLMODE "currentUser"') -or
-      -not $scriptText.Contains('!define INSTALLWEBVIEW2MODE "skip"')) {
-    throw "rendered E2E NSIS configuration is invalid"
+  $includeSha256 = @{
+    "utils.nsh" = "b27b407f886cca738e44e774f15e6b556b43ce52557a7c8891ee4eca7dd8013d"
+    "FileAssociation.nsh" = "85ce72519d5461b5777f95123176b5536de163abd9a4742f9235453c4ddf56d8"
+    "English.nsh" = "1dad40b023707a61f828db1e184d9c1b029cb530c2dbbc4790db265872ef7b5e"
   }
+  Assert-BodamRenderedNsisContract $contract.NsisScript "currentUser" "" $includeSha256 `
+    "75197fee3c6a814fe035788d1c34ead39349b860"
   if ((Get-AuthenticodeSignature -LiteralPath $contract.InstallerPath).Status.ToString() -cne "NotSigned") {
     throw "private E2E installer must remain unsigned"
   }

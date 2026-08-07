@@ -56,6 +56,10 @@ EXPECTED_QA_TOKENS = (
     "tauri:check",
     "harness:check",
 )
+EXPECTED_E2E_TRUST_SHA256 = "4e46c4901c815e7f7e58dc4006b22d813ee27274b54a1502914d7eed90391f0a"
+EXPECTED_PACKAGE_SCRIPTS_SHA256 = "e904aa0604653462b240a9b4956f1ed1da9f4760a2ba1d35dde924d8e764e383"
+EXPECTED_PACKAGE_SHA256 = "45e88f708d281676d5be8f926e56ff41fa474e031659e10a33f414210c8de7f5"
+EXPECTED_PACKAGE_LOCK_SHA256 = "9b1e624cdc7a679e6cd4c8cdc33566f57364ef9006c235f313a7805f7edac2fd"
 
 
 def read_text(root: Path, relative: str, errors: list[str]) -> str:
@@ -71,6 +75,26 @@ def check_immutable_files(root: Path, errors: list[str]) -> None:
         text = read_text(root, relative, errors)
         if hashlib.sha256(text.encode("utf-8")).hexdigest() != expected:
             errors.append(f"immutable Node spawn contract changed: {relative}")
+
+
+def check_e2e_trust_tree(root: Path, errors: list[str]) -> None:
+    files = sorted((root / "e2e").rglob("*.mjs")) + [root / "wdio.conf.mjs"]
+    digest = hashlib.sha256()
+    for path in files:
+        try:
+            relative = path.relative_to(root).as_posix()
+            if path.is_symlink() or not path.is_file():
+                raise OSError
+            text = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeError, ValueError):
+            errors.append("Windows E2E trust tree contains an invalid source")
+            return
+        digest.update(relative.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(text.encode("utf-8"))
+        digest.update(b"\0")
+    if digest.hexdigest() != EXPECTED_E2E_TRUST_SHA256:
+        errors.append("immutable Windows E2E trust tree changed")
 
 
 def check_consumers(root: Path, errors: list[str]) -> None:
@@ -89,6 +113,23 @@ def check_consumers(root: Path, errors: list[str]) -> None:
 
 
 def check_package(root: Path, errors: list[str]) -> None:
+    for name in (".npmrc", "npm-shrinkwrap.json"):
+        path = root / name
+        if path.exists() or path.is_symlink():
+            errors.append(f"project {name} must be absent from the Windows E2E command graph")
+    for name, expected in (
+        ("package.json", EXPECTED_PACKAGE_SHA256),
+        ("package-lock.json", EXPECTED_PACKAGE_LOCK_SHA256),
+    ):
+        path = root / name
+        try:
+            if path.is_symlink() or not path.is_file():
+                raise OSError
+            source = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeError):
+            source = ""
+        if hashlib.sha256(source.encode("utf-8")).hexdigest() != expected:
+            errors.append(f"immutable Windows npm source changed: {name}")
     relative = "package.json"
     try:
         package = json.loads((root / relative).read_text(encoding="utf-8"))
@@ -103,9 +144,17 @@ def check_package(root: Path, errors: list[str]) -> None:
     tokens = qa.split() if isinstance(qa, str) else []
     if tuple(tokens) != EXPECTED_QA_TOKENS:
         errors.append("package.json qa must run the Node spawn control fail-closed first")
+    if scripts.get("test:e2e") != "node e2e/run-e2e.mjs":
+        errors.append("package.json test:e2e must run the exact installed suite orchestrator")
+    canonical = json.dumps(
+        scripts, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+    if hashlib.sha256(canonical).hexdigest() != EXPECTED_PACKAGE_SCRIPTS_SHA256:
+        errors.append("package.json scripts map must equal the immutable E2E command graph")
 
 
 def check_windows_node_spawn(root: Path, errors: list[str]) -> None:
     check_immutable_files(root, errors)
+    check_e2e_trust_tree(root, errors)
     check_consumers(root, errors)
     check_package(root, errors)

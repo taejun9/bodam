@@ -24,6 +24,16 @@ jobs:
     timeout-minutes: 75
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Run hosted cleanup safety negative controls
+        id: host_safety
+        shell: pwsh
+        run: pwsh -NoLogo -NoProfile -File e2e/test-windows-host-safety.ps1
+
+      - name: Verify npm command trust before npm execution
+        id: npm_trust
+        run: python3 -I harness/scripts/windows_npm_preflight.py
+
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24
@@ -34,16 +44,12 @@ jobs:
           workspaces: src-tauri
 
       - name: Install locked dependencies
-        run: npm ci
+        id: dependencies
+        run: npm ci --ignore-scripts
 
       - name: Run cross-layer QA
         id: cross_layer_qa
         run: npm run qa
-
-      - name: Run hosted cleanup safety negative controls
-        id: host_safety
-        shell: pwsh
-        run: pwsh -NoLogo -NoProfile -File e2e/test-windows-host-safety.ps1
 
       - name: Run Windows all-feature Rust tests
         id: windows_tests
@@ -67,7 +73,7 @@ jobs:
 
       - name: Remove exact app-owned CI state
         id: cleanup
-        if: always()
+        if: always() && steps.npm_trust.outcome == 'success'
         run: npm run windows:cleanup
 
       - name: Record hosted evidence boundary
@@ -79,6 +85,7 @@ jobs:
           "- jobStatus: ${{ job.status }}" >> $env:GITHUB_STEP_SUMMARY
           "- crossLayerQa: ${{ steps.cross_layer_qa.outcome }}" >> $env:GITHUB_STEP_SUMMARY
           "- hostSafety: ${{ steps.host_safety.outcome }}" >> $env:GITHUB_STEP_SUMMARY
+          "- npmTrust: ${{ steps.npm_trust.outcome }}" >> $env:GITHUB_STEP_SUMMARY
           "- windowsTests: ${{ steps.windows_tests.outcome }}" >> $env:GITHUB_STEP_SUMMARY
           "- productionBuild: ${{ steps.production_build.outcome }}" >> $env:GITHUB_STEP_SUMMARY
           "- productionLifecycle: ${{ steps.production_lifecycle.outcome }}" >> $env:GITHUB_STEP_SUMMARY

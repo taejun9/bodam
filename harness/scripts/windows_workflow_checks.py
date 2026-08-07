@@ -9,7 +9,11 @@ from pathlib import Path
 
 
 WORKFLOW = ".github/workflows/tauri-e2e-windows.yml"
-WORKFLOW_SHA256 = "ed21f2aa09528b1fc2b95c73847a72f8f67d0a3772d742b6041f391eb1b5ff0e"
+WORKFLOW_SHA256 = "2d777a0715d2dc57ca7786b042711d945fd8d1717b4eeeee76bca27842cab3a3"
+NPM_PREFLIGHT = "harness/scripts/windows_npm_preflight.py"
+NPM_PREFLIGHT_SHA256 = "bf082e3b0e584ebf3c9f3b7be17f521f4ec51ba986cb910cbdb37976eb7898a8"
+NPM_CHECKER = "harness/scripts/windows_node_spawn_checks.py"
+NPM_CHECKER_SHA256 = "193748713e8682052b314c0991b887f56e9c27a4a6e8b443ad5d95c97de72478"
 PRODUCTION_INSTALLER = "runtime-data/windows-release/BODAM_0.1.0_x64-setup.exe"
 UPLOAD_ALLOWLIST = (
     PRODUCTION_INSTALLER,
@@ -24,6 +28,8 @@ ACTION_PINS = {
     "actions/upload-artifact": ("ea165f8d65b6e75b540449e92b4886f43607fa02", "v4"),
 }
 STEP_IDS = {
+    "python3 -I harness/scripts/windows_npm_preflight.py": "npm_trust",
+    "npm ci --ignore-scripts": "dependencies",
     "npm run qa": "cross_layer_qa",
     "pwsh -NoLogo -NoProfile -File e2e/test-windows-host-safety.ps1": "host_safety",
     "cargo test --manifest-path src-tauri/Cargo.toml --all-features": "windows_tests",
@@ -37,6 +43,7 @@ SUMMARY_OUTCOMES = {
     "jobStatus": "${{ job.status }}",
     "crossLayerQa": "${{ steps.cross_layer_qa.outcome }}",
     "hostSafety": "${{ steps.host_safety.outcome }}",
+    "npmTrust": "${{ steps.npm_trust.outcome }}",
     "windowsTests": "${{ steps.windows_tests.outcome }}",
     "productionBuild": "${{ steps.production_build.outcome }}",
     "productionLifecycle": "${{ steps.production_lifecycle.outcome }}",
@@ -129,14 +136,43 @@ def check_action_pins(text: str, errors: list[str]) -> None:
 
 def check_steps_and_summary(text: str, errors: list[str]) -> None:
     blocks = step_blocks(text)
+    host_index = -1
+    npm_trust_index = -1
     for command, expected_id in STEP_IDS.items():
         matches = [block for block in blocks if has_exact_step_field(block, "run", command)]
         if len(matches) != 1 or not has_exact_step_field(matches[0], "id", expected_id):
             errors.append(f"{WORKFLOW} must give {command} the exact step id {expected_id}")
-        elif expected_id == "host_safety" and any(
+        elif expected_id in {"host_safety", "npm_trust"} and any(
             has_step_field(matches[0], field) for field in ("if", "continue-on-error")
         ):
-            errors.append(f"{WORKFLOW} host safety step must run unconditionally and fail closed")
+            label = "host safety" if expected_id == "host_safety" else "npm trust"
+            errors.append(
+                f"{WORKFLOW} {label} step must run unconditionally and fail closed"
+            )
+        elif expected_id == "cleanup" and not has_exact_step_field(
+            matches[0], "if", "always() && steps.npm_trust.outcome == 'success'"
+        ):
+            errors.append(
+                f"{WORKFLOW} npm cleanup must run only after the direct trust gate succeeds"
+            )
+        if expected_id == "host_safety" and len(matches) == 1:
+            host_index = blocks.index(matches[0])
+        if expected_id == "npm_trust" and len(matches) == 1:
+            npm_trust_index = blocks.index(matches[0])
+    npm_indexes = [
+        index for index, block in enumerate(blocks)
+        if re.search(r"(?m)^\s*run:\s+npm(?:\.cmd)?\s", block)
+    ]
+    if (host_index < 0 or npm_trust_index < 0 or
+            any(host_index >= index or npm_trust_index >= index for index in npm_indexes)):
+        errors.append(f"{WORKFLOW} direct trust steps must precede every npm command")
+    positions = tuple(text.find(token) for token in (
+        "actions/checkout@", "id: host_safety", "id: npm_trust", "actions/setup-node@",
+    ))
+    if any(position < 0 for position in positions) or positions != tuple(sorted(positions)):
+        errors.append(
+            f"{WORKFLOW} isolated direct trust gates must follow checkout and precede setup-node cache"
+        )
     summaries = [block for block in blocks if "GITHUB_STEP_SUMMARY" in block]
     if len(summaries) != 1 or "if: always()" not in summaries[0]:
         errors.append(f"{WORKFLOW} must contain one always-running hosted evidence summary")
@@ -183,6 +219,18 @@ def check_windows_workflow(root: Path, errors: list[str]) -> None:
     for phrase in ("runs-on: windows-2025", "contents: read", "offlineVmAccepted: false"):
         if phrase not in text:
             errors.append(f"{WORKFLOW} missing release contract: {phrase}")
+    try:
+        preflight = (root / NPM_PREFLIGHT).read_text(encoding="utf-8")
+    except (OSError, UnicodeError):
+        preflight = ""
+    if hashlib.sha256(preflight.encode("utf-8")).hexdigest() != NPM_PREFLIGHT_SHA256:
+        errors.append(f"{NPM_PREFLIGHT} must equal the exact direct npm trust preflight")
+    try:
+        checker = (root / NPM_CHECKER).read_text(encoding="utf-8")
+    except (OSError, UnicodeError):
+        checker = ""
+    if hashlib.sha256(checker.encode("utf-8")).hexdigest() != NPM_CHECKER_SHA256:
+        errors.append(f"{NPM_CHECKER} must equal the exact reviewed npm trust checker")
     check_action_pins(text, errors)
     check_steps_and_summary(text, errors)
     check_upload(text, errors)

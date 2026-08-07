@@ -20,8 +20,8 @@ READINESS_TEST = "e2e/test-windows-launch-readiness.ps1"
 HOST_SAFETY_TEST = "e2e/test-windows-host-safety.ps1"
 PRODUCTION_ASSERTION = "e2e/assert-windows-production.ps1"
 READINESS_TEST_SHA256 = "a205e94d7ff8e45de6b26e9ce1eda8ce506bf99ee0f2dd433dceebda3258339b"
-HOST_SAFETY_TEST_SHA256 = "0eaeb178835b4a78927e6b475a35879bb2e98cb7e0290e9f7e69e471ace3ad1d"
-PRODUCTION_ASSERTION_SHA256 = "a0ea017e438e8606fa2f33a2d55c5f96bc950a8ed8b1a8c87cdda1e0efcf115d"
+HOST_SAFETY_TEST_SHA256 = "3e01926ad7624dfd8453d531ed9e8acac94bbfc4b95bef5df1554a25cb3f6db3"
+PRODUCTION_ASSERTION_SHA256 = "a20b35c6bbb37ae0940f95b127e691f8e03de1287dace047fa830afcc7a5a9ca"
 
 
 def check_control_oracle(root: Path, errors: list[str]) -> None:
