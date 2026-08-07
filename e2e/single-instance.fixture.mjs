@@ -6,6 +6,8 @@ import { fileURLToPath } from "node:url";
 
 import { $, browser, expect } from "@wdio/globals";
 
+import { resolveE2eAppBinary } from "./e2e-app-binary.mjs";
+
 const projectRoot = fileURLToPath(new globalThis.URL("..", import.meta.url));
 const expectedTarget = resolve(projectRoot, "src-tauri", "target", "e2e");
 
@@ -16,10 +18,7 @@ export async function expectSecondInstanceRejected() {
       !database || !isAbsolute(database)) {
     throw new Error("single-instance E2E paths are invalid");
   }
-  const release = resolve(target, "release");
-  const binary = process.platform === "darwin"
-    ? resolve(release, "bundle", "macos", "BODAM E2E.app", "Contents", "MacOS", "bodam")
-    : resolve(release, process.platform === "win32" ? "bodam.exe" : "bodam");
+  const binary = resolveE2eAppBinary(expectedTarget);
   if (!existsSync(binary)) throw new Error("single-instance E2E binary is unavailable");
 
   const second = spawnSync(binary, ["--synthetic-second-instance"], {

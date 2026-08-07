@@ -14,6 +14,9 @@ use crate::backup::snapshot::{create_online_snapshot, DatabaseDescriptor};
 use crate::backup::temporary_cleanup::{OsTemporaryCleanupOps, TemporaryCleanupOps};
 use crate::database;
 
+#[cfg(any(target_os = "macos", target_os = "linux", windows))]
+const IDENTITY_SWAP_HELD_SIBLING: &str = ".bodam-identity-swap-held.tmp.bodam-backup";
+
 #[test]
 fn final_directory_sync_failure_reports_failure_without_losing_the_archive() {
     let fixture = Fixture::new();
@@ -86,7 +89,7 @@ fn path_retarget_after_final_sync_is_reported_instead_of_success() {
     assert!(fixture.backups.is_symlink());
 }
 
-#[cfg(any(target_os = "macos", target_os = "linux"))]
+#[cfg(any(target_os = "macos", target_os = "linux", windows))]
 #[test]
 fn verified_temporary_entry_swap_is_rejected_even_when_bytes_stay_valid() {
     let fixture = Fixture::new();
@@ -105,6 +108,11 @@ fn verified_temporary_entry_swap_is_rejected_even_when_bytes_stay_valid() {
 
     assert_eq!(error.code, "BACKUP_SAVE_FAILED");
     assert!(inspect_verified_archive(&target).is_ok());
+    fixture
+        .destination
+        .remove_regular(IDENTITY_SWAP_HELD_SIBLING)
+        .unwrap();
+    assert!(!fixture.backups.join(IDENTITY_SWAP_HELD_SIBLING).exists());
 }
 
 #[test]
@@ -128,7 +136,7 @@ fn final_archive_is_strictly_revalidated_after_replace() {
 }
 
 enum PublishMutation {
-    #[cfg(any(target_os = "macos", target_os = "linux"))]
+    #[cfg(any(target_os = "macos", target_os = "linux", windows))]
     ReplaceWithClone,
     CorruptFinal,
 }
@@ -145,10 +153,10 @@ impl AtomicReplacer for PublishMutation {
         target: &str,
     ) -> io::Result<()> {
         let source_path = directory.path().join(source);
-        #[cfg(any(target_os = "macos", target_os = "linux"))]
+        #[cfg(any(target_os = "macos", target_os = "linux", windows))]
         if matches!(self, Self::ReplaceWithClone) {
             let bytes = fs::read(&source_path)?;
-            fs::remove_file(&source_path)?;
+            directory.rename(source, IDENTITY_SWAP_HELD_SIBLING)?;
             fs::write(&source_path, bytes)?;
         }
         OsAtomicReplacer.replace_in(directory, source, target)?;

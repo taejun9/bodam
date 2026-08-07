@@ -31,6 +31,32 @@ fn selection_resolves_a_symlinked_ancestor_and_pins_the_final_directory() {
     fs::remove_dir_all(root).unwrap();
 }
 
+#[cfg(windows)]
+#[test]
+fn selection_rejects_an_ancestor_junction_before_storing_the_path() {
+    use std::process::{Command, Stdio};
+
+    let root = temporary_root();
+    let target = root.join("target-parent");
+    let alias = root.join("selected-parent");
+    fs::create_dir_all(target.join("backups")).unwrap();
+    validate_directory_identity(&target.join("backups")).unwrap();
+    let status = Command::new("cmd.exe")
+        .args(["/D", "/C", "mklink", "/J"])
+        .arg(&alias)
+        .arg(&target)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+        .unwrap();
+    assert!(status.success(), "junction creation failed");
+
+    assert!(canonicalize_selected_directory(&alias.join("backups")).is_err());
+
+    fs::remove_dir(alias).unwrap();
+    fs::remove_dir_all(root).unwrap();
+}
+
 fn temporary_root() -> std::path::PathBuf {
     let path = std::env::temp_dir().join(format!("bodam-directory-identity-{}", Uuid::new_v4()));
     fs::create_dir(&path).unwrap();

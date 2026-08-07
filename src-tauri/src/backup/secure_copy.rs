@@ -74,7 +74,12 @@ fn open_regular_source(source: &Path, maximum_bytes: u64) -> Result<File, Backup
     Ok(File::from(descriptor))
 }
 
-#[cfg(not(any(target_os = "macos", target_os = "linux")))]
+#[cfg(windows)]
+fn open_regular_source(source: &Path, maximum_bytes: u64) -> Result<File, BackupError> {
+    super::windows_file_identity::open_absolute_regular(source, maximum_bytes)
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "linux", windows)))]
 fn open_regular_source(source: &Path, maximum_bytes: u64) -> Result<File, BackupError> {
     let metadata =
         std::fs::symlink_metadata(source).map_err(|_| BackupError::path_unavailable())?;
@@ -107,3 +112,7 @@ pub(super) fn copy_secure_bounded_with_pre_open_hook(
 #[cfg(test)]
 #[path = "secure_copy_tests.rs"]
 mod tests;
+
+#[cfg(all(test, windows))]
+#[path = "secure_copy_windows_tests.rs"]
+mod windows_tests;

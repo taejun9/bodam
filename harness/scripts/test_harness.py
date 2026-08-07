@@ -70,10 +70,12 @@ def test_line_limit_extensions(failures: list[str]) -> None:
             content = "\n".join("model X {}" for _ in range(300))
             (root / "schema.prisma").write_text(content, encoding="utf-8")
             (root / "worker.mjs").write_text(content, encoding="utf-8")
+            (root / "contract.psm1").write_text(content, encoding="utf-8")
             errors: list[str] = []
             repository_checks.check_line_limits(errors)
             expect_error(errors, "schema.prisma has 300 lines", failures)
             expect_error(errors, "worker.mjs has 300 lines", failures)
+            expect_error(errors, "contract.psm1 has 300 lines", failures)
     finally:
         repository_checks.ROOT = original_root
 

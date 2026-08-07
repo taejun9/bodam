@@ -7,9 +7,14 @@ mod backup_write;
 mod clock;
 mod commands;
 mod directory_capability;
+mod directory_capability_entries;
 mod directory_capability_probe;
 #[cfg(any(target_os = "macos", target_os = "linux"))]
 mod directory_capability_unix;
+#[cfg(windows)]
+mod directory_capability_windows;
+#[cfg(windows)]
+mod directory_entries_windows;
 mod directory_identity;
 mod error;
 mod file_ops;
@@ -28,6 +33,12 @@ mod secure_copy;
 mod snapshot;
 mod temporary_cleanup;
 mod temporary_cleanup_capability;
+#[cfg(windows)]
+mod windows_file_identity;
+#[cfg(windows)]
+mod windows_handle;
+#[cfg(windows)]
+mod windows_local_path;
 
 pub(crate) use app_lifecycle::handle_run_event;
 pub(crate) use commands::{

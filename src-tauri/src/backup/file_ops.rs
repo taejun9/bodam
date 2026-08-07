@@ -7,6 +7,10 @@ use uuid::Uuid;
 use super::directory_capability::DirectoryCapability;
 use super::error::BackupError;
 
+#[cfg(any(windows, test))]
+#[path = "windows_basename.rs"]
+mod windows_basename;
+
 pub(super) trait AtomicReplacer: Send + Sync {
     fn replace(&self, source: &Path, target: &Path) -> io::Result<()>;
 
@@ -36,11 +40,11 @@ impl AtomicReplacer for OsAtomicReplacer {
         source: &str,
         target: &str,
     ) -> io::Result<()> {
-        #[cfg(any(target_os = "macos", target_os = "linux"))]
+        #[cfg(any(target_os = "macos", target_os = "linux", windows))]
         {
             directory.rename(source, target)
         }
-        #[cfg(not(any(target_os = "macos", target_os = "linux")))]
+        #[cfg(not(any(target_os = "macos", target_os = "linux", windows)))]
         {
             self.replace(
                 &directory.path().join(source),
@@ -55,13 +59,21 @@ pub(super) fn random_sibling(parent: &Path, prefix: &str, extension: &str) -> Pa
 }
 
 pub(super) fn is_safe_basename(value: &str) -> bool {
-    !value.is_empty()
+    let common = !value.is_empty()
         && value != "."
         && value != ".."
         && value.encode_utf16().count() <= 255
         && !value
             .chars()
-            .any(|character| character.is_control() || matches!(character, '/' | '\\'))
+            .any(|character| character.is_control() || matches!(character, '/' | '\\'));
+    #[cfg(windows)]
+    {
+        common && windows_basename::is_safe(value)
+    }
+    #[cfg(not(windows))]
+    {
+        common
+    }
 }
 
 pub(super) fn ensure_private_directory(path: &Path) -> Result<(), BackupError> {
@@ -79,6 +91,7 @@ pub(super) fn ensure_private_directory(path: &Path) -> Result<(), BackupError> {
     Ok(())
 }
 
+#[cfg(any(test, not(windows)))]
 pub(super) fn validate_user_directory(path: &Path) -> Result<(), BackupError> {
     let metadata = fs::symlink_metadata(path).map_err(|_| BackupError::path_unavailable())?;
     if !path.is_absolute() || !metadata.file_type().is_dir() || metadata.file_type().is_symlink() {
@@ -114,10 +127,10 @@ pub(super) fn write_atomic(
     Ok(())
 }
 
-pub(super) fn sync_parent(parent: &Path) -> Result<(), BackupError> {
+pub(super) fn sync_parent(_parent: &Path) -> Result<(), BackupError> {
     #[cfg(unix)]
     {
-        File::open(parent)
+        File::open(_parent)
             .and_then(|directory| directory.sync_all())
             .map_err(|_| BackupError::save_failed())?;
     }
@@ -223,13 +236,9 @@ fn replace_target(source: &Path, target: &Path) -> io::Result<()> {
 #[cfg(windows)]
 fn replace_target(source: &Path, target: &Path) -> io::Result<()> {
     use std::os::windows::ffi::OsStrExt;
-
-    const REPLACE_EXISTING: u32 = 0x0000_0001;
-    const WRITE_THROUGH: u32 = 0x0000_0008;
-    #[link(name = "Kernel32")]
-    unsafe extern "system" {
-        fn MoveFileExW(existing: *const u16, replacement: *const u16, flags: u32) -> i32;
-    }
+    use windows_sys::Win32::Storage::FileSystem::{
+        MoveFileExW, MOVEFILE_REPLACE_EXISTING, MOVEFILE_WRITE_THROUGH,
+    };
     let source = source
         .as_os_str()
         .encode_wide()
@@ -244,7 +253,7 @@ fn replace_target(source: &Path, target: &Path) -> io::Result<()> {
         MoveFileExW(
             source.as_ptr(),
             target.as_ptr(),
-            REPLACE_EXISTING | WRITE_THROUGH,
+            MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH,
         )
     };
     (replaced != 0)

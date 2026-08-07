@@ -1,14 +1,19 @@
-use std::fs::{self, File};
+#[cfg(not(windows))]
+use std::fs;
+use std::fs::File;
 use std::io;
 use std::path::{Path, PathBuf};
 
-#[cfg(not(any(target_os = "macos", target_os = "linux")))]
+#[cfg(not(any(target_os = "macos", target_os = "linux", windows)))]
 use std::fs::OpenOptions;
 
 use super::file_ops::is_safe_basename;
-#[cfg(not(any(target_os = "macos", target_os = "linux")))]
+#[cfg(not(any(target_os = "macos", target_os = "linux", windows)))]
 use super::file_ops::validate_user_directory;
 use super::BackupError;
+
+#[cfg(windows)]
+use super::directory_capability_windows::WindowsDirectory;
 
 #[cfg(any(target_os = "macos", target_os = "linux"))]
 use super::directory_capability_unix::open_absolute_directory;
@@ -26,9 +31,11 @@ pub(super) enum DirectoryEntryKind {
 
 #[derive(Debug)]
 pub(super) struct DirectoryCapability {
-    path: PathBuf,
+    pub(super) path: PathBuf,
     #[cfg(any(target_os = "macos", target_os = "linux"))]
-    descriptor: OwnedFd,
+    pub(super) descriptor: OwnedFd,
+    #[cfg(windows)]
+    pub(super) windows: WindowsDirectory,
 }
 
 impl DirectoryCapability {
@@ -36,13 +43,24 @@ impl DirectoryCapability {
         if !path.is_absolute() {
             return Err(BackupError::path_unavailable());
         }
+        #[cfg(windows)]
+        let capability = {
+            let _ = require_canonical;
+            let windows = WindowsDirectory::acquire(path)?;
+            Self {
+                path: path.to_owned(),
+                windows,
+            }
+        };
+        #[cfg(not(windows))]
         let canonical = fs::canonicalize(path).map_err(|_| BackupError::path_unavailable())?;
+        #[cfg(not(windows))]
         if require_canonical && canonical != path {
             return Err(BackupError::path_unavailable());
         }
         #[cfg(any(target_os = "macos", target_os = "linux"))]
         let capability = Self::acquire_unix(canonical)?;
-        #[cfg(not(any(target_os = "macos", target_os = "linux")))]
+        #[cfg(not(any(target_os = "macos", target_os = "linux", windows)))]
         let capability = {
             validate_user_directory(&canonical)?;
             Self { path: canonical }
@@ -56,6 +74,10 @@ impl DirectoryCapability {
     }
 
     pub(super) fn ensure_path_identity(&self) -> Result<(), BackupError> {
+        #[cfg(windows)]
+        {
+            return self.windows.ensure_path_identity(&self.path);
+        }
         #[cfg(any(target_os = "macos", target_os = "linux"))]
         {
             let current =
@@ -68,7 +90,7 @@ impl DirectoryCapability {
             }
             Ok(())
         }
-        #[cfg(not(any(target_os = "macos", target_os = "linux")))]
+        #[cfg(not(any(target_os = "macos", target_os = "linux", windows)))]
         {
             let current =
                 fs::canonicalize(&self.path).map_err(|_| BackupError::path_unavailable())?;
@@ -79,72 +101,12 @@ impl DirectoryCapability {
         }
     }
 
-    pub(super) fn entries(&self) -> Result<Vec<String>, BackupError> {
-        #[cfg(any(target_os = "macos", target_os = "linux"))]
-        {
-            use std::os::unix::ffi::OsStrExt;
-
-            let directory = unix_fs::Dir::read_from(&self.descriptor)
-                .map_err(|_| BackupError::path_unavailable())?;
-            let mut names = Vec::new();
-            for entry in directory {
-                let entry = entry.map_err(|_| BackupError::path_unavailable())?;
-                let bytes = entry.file_name().to_bytes();
-                if matches!(bytes, b"." | b"..") {
-                    continue;
-                }
-                let Some(name) = std::ffi::OsStr::from_bytes(bytes).to_str() else {
-                    continue;
-                };
-                names.push(name.to_owned());
-            }
-            Ok(names)
-        }
-        #[cfg(not(any(target_os = "macos", target_os = "linux")))]
-        {
-            let mut names = Vec::new();
-            for entry in fs::read_dir(&self.path).map_err(|_| BackupError::path_unavailable())? {
-                let entry = entry.map_err(|_| BackupError::path_unavailable())?;
-                if let Ok(name) = entry.file_name().into_string() {
-                    names.push(name);
-                }
-            }
-            Ok(names)
-        }
-    }
-
-    pub(super) fn entry_kind(&self, name: &str) -> Result<DirectoryEntryKind, BackupError> {
-        validate_name(name)?;
-        #[cfg(any(target_os = "macos", target_os = "linux"))]
-        {
-            match unix_fs::statat(&self.descriptor, name, AtFlags::SYMLINK_NOFOLLOW) {
-                Ok(stat) if FileType::from_raw_mode(stat.st_mode) == FileType::RegularFile => {
-                    Ok(DirectoryEntryKind::RegularFile)
-                }
-                Ok(_) => Ok(DirectoryEntryKind::Other),
-                Err(rustix::io::Errno::NOENT) => Ok(DirectoryEntryKind::Missing),
-                Err(_) => Err(BackupError::path_unavailable()),
-            }
-        }
-        #[cfg(not(any(target_os = "macos", target_os = "linux")))]
-        {
-            match fs::symlink_metadata(self.path.join(name)) {
-                Ok(metadata)
-                    if metadata.file_type().is_file() && !metadata.file_type().is_symlink() =>
-                {
-                    Ok(DirectoryEntryKind::RegularFile)
-                }
-                Ok(_) => Ok(DirectoryEntryKind::Other),
-                Err(error) if error.kind() == io::ErrorKind::NotFound => {
-                    Ok(DirectoryEntryKind::Missing)
-                }
-                Err(_) => Err(BackupError::path_unavailable()),
-            }
-        }
-    }
-
     pub(super) fn open_regular(&self, name: &str) -> Result<File, BackupError> {
         validate_name(name)?;
+        #[cfg(windows)]
+        {
+            return self.windows.open_regular(name);
+        }
         #[cfg(any(target_os = "macos", target_os = "linux"))]
         {
             let descriptor = unix_fs::openat(
@@ -160,7 +122,7 @@ impl DirectoryCapability {
             }
             Ok(File::from(descriptor))
         }
-        #[cfg(not(any(target_os = "macos", target_os = "linux")))]
+        #[cfg(not(any(target_os = "macos", target_os = "linux", windows)))]
         {
             if self.entry_kind(name)? != DirectoryEntryKind::RegularFile {
                 return Err(BackupError::path_unavailable());
@@ -176,6 +138,10 @@ impl DirectoryCapability {
 
     pub(super) fn create_new(&self, name: &str) -> Result<File, BackupError> {
         validate_name(name)?;
+        #[cfg(windows)]
+        {
+            return self.windows.create_new(name);
+        }
         #[cfg(any(target_os = "macos", target_os = "linux"))]
         {
             let descriptor = unix_fs::openat(
@@ -187,7 +153,7 @@ impl DirectoryCapability {
             .map_err(|_| BackupError::path_unavailable())?;
             Ok(File::from(descriptor))
         }
-        #[cfg(not(any(target_os = "macos", target_os = "linux")))]
+        #[cfg(not(any(target_os = "macos", target_os = "linux", windows)))]
         {
             OpenOptions::new()
                 .read(true)
@@ -201,12 +167,16 @@ impl DirectoryCapability {
     pub(super) fn rename(&self, source: &str, target: &str) -> io::Result<()> {
         validate_name_io(source)?;
         validate_name_io(target)?;
+        #[cfg(windows)]
+        {
+            return self.windows.rename(source, target);
+        }
         #[cfg(any(target_os = "macos", target_os = "linux"))]
         {
             unix_fs::renameat(&self.descriptor, source, &self.descriptor, target)
                 .map_err(io::Error::from)
         }
-        #[cfg(not(any(target_os = "macos", target_os = "linux")))]
+        #[cfg(not(any(target_os = "macos", target_os = "linux", windows)))]
         {
             fs::rename(self.path.join(source), self.path.join(target))
         }
@@ -217,11 +187,15 @@ impl DirectoryCapability {
         if self.entry_kind(name).map_err(backup_io)? != DirectoryEntryKind::RegularFile {
             return Err(io::Error::other("backup entry is not a regular file"));
         }
+        #[cfg(windows)]
+        {
+            return self.windows.remove_regular(name);
+        }
         #[cfg(any(target_os = "macos", target_os = "linux"))]
         {
             unix_fs::unlinkat(&self.descriptor, name, AtFlags::empty()).map_err(io::Error::from)
         }
-        #[cfg(not(any(target_os = "macos", target_os = "linux")))]
+        #[cfg(not(any(target_os = "macos", target_os = "linux", windows)))]
         {
             fs::remove_file(self.path.join(name))
         }
@@ -263,7 +237,7 @@ impl DirectoryCapability {
     }
 }
 
-fn validate_name(name: &str) -> Result<(), BackupError> {
+pub(super) fn validate_name(name: &str) -> Result<(), BackupError> {
     is_safe_basename(name)
         .then_some(())
         .ok_or_else(BackupError::path_unavailable)
@@ -282,3 +256,7 @@ fn backup_io(_: BackupError) -> io::Error {
 #[cfg(test)]
 #[path = "directory_capability_tests.rs"]
 mod tests;
+
+#[cfg(all(test, windows))]
+#[path = "directory_capability_windows_tests.rs"]
+mod windows_tests;

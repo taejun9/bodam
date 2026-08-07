@@ -7,6 +7,7 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 import { runBackupSettingsScenario } from "./backup-settings-runner.mjs";
+import { resolveInstalledWindowsE2eBinary } from "./e2e-app-binary.mjs";
 
 const projectRoot = fileURLToPath(new globalThis.URL("..", import.meta.url));
 const e2eTargetDirectory = resolve(projectRoot, "src-tauri", "target", "e2e");
@@ -144,8 +145,11 @@ try {
   copyFileSync(sourceCsvFixture, runtimeCsvFixture);
   const xlsxDigest = fileDigest(runtimeXlsxFixture);
   const csvDigest = fileDigest(runtimeCsvFixture);
-  const buildScript = process.platform === "darwin" ? "e2e:build:macos" : "e2e:build";
-  runScript(buildScript, baseEnvironment);
+  const installedBinary = resolveInstalledWindowsE2eBinary();
+  if (!installedBinary) {
+    const buildScript = process.platform === "darwin" ? "e2e:build:macos" : "e2e:build";
+    runScript(buildScript, baseEnvironment);
+  }
   const customerEnvironment = {
     ...baseEnvironment,
     BODAM_E2E_DB_PATH: customerDatabasePath,

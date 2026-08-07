@@ -5,8 +5,14 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 const mode = process.argv[2];
-if (!new Set(["macos", "no-bundle"]).has(mode)) {
+if (!new Set(["macos", "no-bundle", "windows-nsis"]).has(mode)) {
   throw new Error("BODAM E2E build mode is invalid");
+}
+if (mode === "macos" && process.platform !== "darwin") {
+  throw new Error("BODAM E2E macOS bundle mode requires macOS");
+}
+if (mode === "windows-nsis" && process.platform !== "win32") {
+  throw new Error("BODAM E2E NSIS mode requires Windows");
 }
 
 const projectRoot = fileURLToPath(new globalThis.URL("..", import.meta.url));
@@ -22,8 +28,11 @@ const args = [
   "build",
   "--config",
   resolve(projectRoot, "src-tauri", "tauri.e2e.conf.json"),
-  mode === "macos" ? "--bundles" : "--no-bundle",
-  ...(mode === "macos" ? ["app"] : []),
+  ...(mode === "macos"
+    ? ["--bundles", "app"]
+    : mode === "windows-nsis"
+      ? ["--ci", "--no-sign", "--bundles", "nsis"]
+      : ["--no-bundle"]),
   "--features",
   "e2e",
 ];

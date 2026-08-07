@@ -30,6 +30,8 @@ REQUIRED_FILES = (
     "docs/quality/rules.md",
     "docs/quality/test-strategy.md",
     "docs/quality/review-checklist.md",
+    "docs/quality/windows-e2e-evidence.md",
+    "docs/quality/windows-release-acceptance.md",
     "docs/privacy/principles.md",
     "docs/references/official-sources.md",
     "docs/references/input-artifacts.md",
@@ -40,6 +42,11 @@ REQUIRED_FILES = (
     "harness/scripts/run_review.py",
     "harness/scripts/test_harness.py",
     "harness/scripts/test_database_contract.py",
+    "harness/scripts/windows_release_checks.py",
+    "harness/scripts/windows_release_document_checks.py",
+    "harness/scripts/test_windows_release_contract.py",
+    "harness/scripts/windows_workflow_checks.py",
+    "harness/scripts/test_windows_workflow_contract.py",
     "harness/templates/exec-plan.md",
     "harness/templates/review.md",
     "harness/templates/meeting.md",
@@ -85,6 +92,7 @@ SOURCE_SUFFIXES = {
     ".less",
     ".sh",
     ".ps1",
+    ".psm1",
 }
 TABULAR_SUFFIXES = {".xlsx", ".xls", ".xlsm", ".xlsb", ".ods", ".csv", ".tsv"}
 BACKUP_ARTIFACT_SUFFIX = ".bodam-backup"

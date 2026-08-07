@@ -21,6 +21,20 @@
 | Tauri App lifecycle API | https://docs.rs/tauri/2/tauri/enum.RunEvent.html | exit/restart event와 prevent API | 종료 backup과 restore restart 경계 |
 | Tauri WebDriver | https://v2.tauri.app/develop/tests/webdriver/ | 실제 desktop UI 자동화 | macOS·Windows E2E |
 | Tauri WebDriver CI | https://v2.tauri.app/develop/tests/webdriver/ci/ | Windows runner 예제 | Windows release app QA |
+| Microsoft NtCreateFile | https://learn.microsoft.com/en-us/windows/win32/api/winternl/nf-winternl-ntcreatefile | directory HANDLE 상대 open과 reparse 동작 | Windows backup 경로 결속 |
+| Microsoft file handle information | https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getfileinformationbyhandleex | 열린 file/directory identity와 entry 정보 | Windows identity 대사 |
+| Microsoft SetFileInformationByHandle | https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-setfileinformationbyhandle | HANDLE 기반 rename/delete | Windows archive publish와 cleanup |
+| Microsoft GetVolumeInformationByHandleW | https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getvolumeinformationbyhandlew | 열린 객체의 filesystem·volume 정보 | local NTFS 경계 |
+| Microsoft FlushFileBuffers | https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-flushfilebuffers | 열린 file HANDLE의 buffered data flush | file 내용 flush와 metadata durability 주장 경계 |
+| Microsoft WebView2 Distribution | https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/distribution#detect-if-a-suitable-webview2-runtime-is-already-installed | x64 HKLM/HKCU `pv (REG_SZ)` runtime 탐지 | shared WebView2 등록 보존 snapshot |
+| GitHub Actions Secure Use | https://docs.github.com/en/actions/reference/security/secure-use#using-third-party-actions | full-length commit SHA만 immutable action release | release workflow action pinning |
+| actions/checkout pinned commit | https://github.com/actions/checkout/commit/11d5960a326750d5838078e36cf38b85af677262 | verified `v4` commit | source checkout pin |
+| actions/setup-node pinned commit | https://github.com/actions/setup-node/commit/49933ea5288caeca8642d1e84afbd3f7d6820020 | verified `v4` commit | Node setup pin |
+| dtolnay/rust-toolchain pinned commit | https://github.com/dtolnay/rust-toolchain/commit/4360b52568e2003a75bf9bc1d59f33a8e3fc893c | verified `stable` commit | Rust setup action pin |
+| Swatinem/rust-cache pinned commit | https://github.com/Swatinem/rust-cache/commit/49a0bdc70d2e1b713ca9e2869b211fcce03d3c1c | verified `v2` commit | Rust cache action pin |
+| actions/upload-artifact pinned commit | https://github.com/actions/upload-artifact/commit/ea165f8d65b6e75b540449e92b4886f43607fa02 | verified `v4` commit | production artifact upload pin |
+| GitHub workflow artifacts | https://docs.github.com/en/actions/concepts/workflows-and-actions/workflow-artifacts | Actions artifact 경계 | production installer allowlist |
+| GitHub upload-artifact | https://github.com/actions/upload-artifact | upload path와 hidden-file 기본 제외 | 비숨김 staging과 exact three-file upload |
 | WebdriverIO Tauri Service | https://webdriver.io/docs/desktop-testing/tauri/ | embedded WebDriver service | 단일 cross-platform E2E 구성 |
 | WebdriverIO Tauri Plugin Setup | https://webdriver.io/docs/desktop-testing/tauri/plugin-setup/ | test-only plugin과 권한 | production surface 분리 |
 | Vue TypeScript Guide | https://vuejs.org/guide/typescript/overview | Vue 3 TypeScript와 typecheck | vue-tsc 분리 QA |
@@ -52,6 +66,12 @@
 
 - Vite의 transpile과 TypeScript typecheck는 별도 단계로 둔다.
 - Windows installer는 WebView2 offlineInstaller를 포함한다. hosted runner는 WebView2 미설치 환경을 증명하지 못하므로 clean VM 수동 검증을 분리한다.
+- Windows backup은 fixed drive로 분류된 NTFS에서 directory HANDLE 상대 open과 reparse-point 비추적을 사용하고, 열린 volume/file identity를 대사한다. native dialog 선택 순간부터 HANDLE이 이어진다고 주장하지 않는다.
+- Windows archive rename·delete는 DELETE 권한으로 연 HANDLE을 대상으로 수행하고, hosted artifact는 production installer·checksum·sanitized evidence의 exact allowlist만 허용한다.
+- `FlushFileBuffers` 증거는 지정한 열린 file의 buffered data flush에 한정한다. parent-directory metadata durability, 전원 손실 뒤 rename 영속성 또는 Unix directory `fsync`와 같은 보장을 Windows local NTFS pass에서 주장하지 않는다.
+- Hosted WebView2 보존 검사는 production install 직후 Microsoft x64 HKLM/HKCU `pv (REG_SZ)`에서 관찰한 logical record와 version이 uninstall·cleanup 뒤에도 exact-equal임을 증명한다. pre-install version 불변, runtime 파일 전체, updater 동작이나 clean-VM bootstrap까지 증명하지 않는다.
+- Release workflow의 remote action은 검증한 full-length commit SHA와 사람이 읽는 tag comment를 함께 고정한다. tag comment는 provenance 설명이며 실행 ref가 아니다.
+- upload-artifact는 점으로 시작하는 directory 내부 파일도 기본 제외하므로 release staging은 ignored non-hidden `runtime-data/windows-release`를 사용하고 `include-hidden-files: false`를 유지한다.
 - Prisma Client는 Rust runtime을 제공하지 않는다. ADR-001은 Prisma schema/migration artifact와 Rust executor의 경계를 명시한다.
 - Prisma provider 변경 시 SQLite migration history를 PostgreSQL에 그대로 재사용한다고 가정하지 않는다.
 - dayjs는 달력 UI component가 아니다.

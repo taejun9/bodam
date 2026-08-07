@@ -5,8 +5,10 @@ use std::path::PathBuf;
 
 use uuid::Uuid;
 
+#[cfg(unix)]
+use super::read_marker;
 use super::{
-    acknowledge_status, acknowledge_status_with_ops, pending_marker_path, read_marker, read_status,
+    acknowledge_status, acknowledge_status_with_ops, pending_marker_path, read_status,
     restore_root, status_path, write_marker, write_status, PendingMarker, StatusAcknowledgeOps,
 };
 use crate::backup::file_ops::OsAtomicReplacer;

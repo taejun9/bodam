@@ -3,6 +3,8 @@ import { basename, dirname, isAbsolute, relative, resolve } from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
+import { resolveE2eAppBinary } from "./e2e/e2e-app-binary.mjs";
+
 const projectRoot = fileURLToPath(new globalThis.URL(".", import.meta.url));
 const databasePath = process.env.BODAM_E2E_DB_PATH;
 
@@ -59,10 +61,7 @@ if (configuredTargetDirectory && (
 )) {
   throw new Error("CARGO_TARGET_DIR must be the isolated BODAM E2E target");
 }
-const releaseDirectory = resolve(targetDirectory, "release");
-const appBinaryPath = process.platform === "darwin"
-  ? resolve(releaseDirectory, "bundle", "macos", "BODAM E2E.app", "Contents", "MacOS", "bodam")
-  : resolve(releaseDirectory, process.platform === "win32" ? "bodam.exe" : "bodam");
+const appBinaryPath = resolveE2eAppBinary(targetDirectory);
 
 export const config = {
   runner: "local",

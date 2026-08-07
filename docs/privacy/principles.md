@@ -71,6 +71,16 @@ form, import schema, memo 도움말, test fixture, log에도 위 항목을 위�
 - shell, process, sidecar 권한은 Prisma runtime 결정 뒤 최소 command만 허용한다.
 - remote URL과 network capability는 MVP 기본값에서 허용하지 않는다.
 
+## Windows Release Evidence
+
+- Production과 E2E installer는 product identifier, install directory, registry key와 Cargo feature를 분리한다. Production package에는 WebDriver, E2E environment override와 synthetic fixture를 포함하지 않는다.
+- Hosted artifact는 successful non-pull-request run의 unsigned production NSIS, 그 SHA-256과 sanitized evidence JSON 세 파일만 허용한다. Pull request는 artifact를 upload하지 않고 E2E installer, SQLite, `.bodam-backup`, import/export 결과, screenshot과 raw log는 어떤 run에서도 upload하지 않는다.
+- Evidence는 product/version/architecture, basename, byte size, SHA-256, 상태 code와 count만 기록한다. 전체 임시 path, 환경 변수 dump, 업무 row, credential을 기록하지 않는다.
+- Code-signing credential이 제공되지 않은 artifact는 `NotSigned`로 기록하고 signed·trusted·public distribution으로 표현하지 않는다.
+- Uninstaller는 user app-data와 shared WebView2 runtime을 삭제하지 않는다. Production install 직후 Microsoft x64 탐지 위치에서 관찰한 WebView2 `pv` logical record와 version이 uninstall·cleanup 뒤에도 exact-equal인지 대사하며, `sharedWebViewPreserved`가 true일 때만 release evidence를 만든다.
+- Hosted 검증이 끝난 뒤에만 일회용 synthetic E2E runtime·app-data를 exact resolved allowlist로 별도 정리한다. 재귀 삭제 전에 모든 descendant를 검사해 nested reparse point를 거부하고, Windows safety negative control은 cleanup tree 밖 external sentinel이 그대로인지 확인한다.
+- Hosted Windows pass는 WebView2 미설치·network-blocked clean VM, interactive wizard/UAC, Authenticode·SmartScreen을 증명하지 않는다. 실행하지 못한 항목은 `NOT RUN`으로 남긴다.
+
 ## Logs
 
 - 고객 이름, 연락처, 주소, 메모, 계약 식별값, workbook row 전체를 기록하지 않는다.
@@ -86,7 +96,7 @@ form, import schema, memo 도움말, test fixture, log에도 위 항목을 위�
 - custom backup directory는 다른 장치로 전달하면 안 되는 host-local capability다. restore working DB에서 이 값만 제거하고 기본 위치로 돌아가며, 사용자가 현재 장치에서 다시 선택한다.
 - macOS/Linux custom 위치는 component별 nofollow-open으로 고정한 directory FD에 상대해 create/open/rename/unlink/fsync하고, 작업 시작·최종 sync 뒤 현재 path의 device/inode identity를 대사한다. rename·symlink retarget 또는 위치 소실은 오류로 보고하며 replacement path로 따라가지 않는다.
 - macOS/Linux restore 선택 파일은 final-component `O_NOFOLLOW|O_CLOEXEC`, descriptor `fstat`와 bounded copy를 사용한다. app-owned restore staging root/file은 각각 `0700`/`0600`으로 제한한다.
-- Windows는 현재 canonical/path validation fallback이다. junction/reparse point·UNC/network·removable volume을 directory HANDLE로 고정하는 보장과 실제 local NTFS acceptance는 plan-013 전까지 완료로 주장하지 않는다.
+- Windows Plan-013은 local fixed NTFS에서 directory/archive/restore source를 열린 HANDLE identity에 결속하고 junction/reparse 교체를 fail closed하는 경계만 검증한다. UNC/network/removable filesystem의 atomicity와 운영 지원은 미결정이며 local NTFS pass로 증명되지 않는다.
 - `.bodam-backup`은 암호화하지 않은 평문이다. 같은 디스크 backup은 기기 손상·분실에 대한 별도 복구 수단이 아니며 OS 계정·전체 디스크 보호에 의존한다.
 - restore 전에 checksum·schema·SQLite integrity와 현재 DB 안전 사본을 검증한다. 실패하면 현재 DB를 보존하고 staging/temp 삭제 실패도 숨기지 않고 다음 startup 정리 대상으로 남긴다.
 - process 중단으로 남을 수 있는 state atomic-write와 backup directory write-probe는 exact app-owned canonical v4 이름과 regular-file 조건일 때만 다음 startup/작업에서 삭제한다. 유사 이름, symlink와 directory는 지우지 않으며 삭제·parent sync 실패는 재시도 가능한 오류로 남긴다.

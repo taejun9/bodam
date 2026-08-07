@@ -8,6 +8,8 @@ from base_checks import ROOT, run_base_checks
 from database_contract_checks import run_database_contract_checks
 from test_database_contract import run_database_negative_controls
 from test_harness import run_negative_controls
+from test_windows_release_contract import run_windows_release_negative_controls
+from windows_release_checks import run_windows_release_checks
 
 
 def main() -> int:
@@ -16,6 +18,8 @@ def main() -> int:
     errors.extend(run_database_contract_checks())
     errors.extend(run_negative_controls())
     errors.extend(run_database_negative_controls())
+    errors.extend(run_windows_release_checks())
+    errors.extend(run_windows_release_negative_controls())
     if errors:
         print("BODAM base QA: FAIL")
         for error in errors:
@@ -35,6 +39,7 @@ def main() -> int:
     print("- Prisma/Rust migration registry order and hash: pass")
     print("- Prisma schema/migration diff: pass")
     print("- README commands: pass")
+    print("- Windows installer, hosted evidence, and artifact allowlist: pass")
     return 0
 
 

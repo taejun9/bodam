@@ -6,6 +6,7 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 import { runBackupSettingsScenario } from "./backup-settings-runner.mjs";
+import { resolveInstalledWindowsE2eBinary } from "./e2e-app-binary.mjs";
 
 const projectRoot = fileURLToPath(new globalThis.URL("..", import.meta.url));
 const targetDirectory = resolve(projectRoot, "src-tauri", "target", "e2e");
@@ -44,8 +45,11 @@ function removeRuntimeDirectory() {
 }
 
 try {
-  const buildScript = process.platform === "darwin" ? "e2e:build:macos" : "e2e:build";
-  runScript(buildScript, baseEnvironment);
+  const installedBinary = resolveInstalledWindowsE2eBinary();
+  if (!installedBinary) {
+    const buildScript = process.platform === "darwin" ? "e2e:build:macos" : "e2e:build";
+    runScript(buildScript, baseEnvironment);
+  }
   await runBackupSettingsScenario({
     baseEnvironment,
     backupDatabasePath,

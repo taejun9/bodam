@@ -28,13 +28,13 @@
 ## Desktop / Database
 
 - Prisma Client를 Node sidecar에서 실행할지, Prisma를 schema/migration에만 사용할지
-- Windows installer가 인터넷 없이 설치되어야 하는지, 실행만 오프라인이면 되는지
 - removable·network filesystem을 custom backup 위치로 쓸 때 platform별 atomicity와 운영 지원 범위
 - 자동 backup 파일을 앱 안에서 열람·개별 삭제·복사할 관리 UI 필요 여부
 - 향후 backup 암호화, recovery key와 앱 잠금 필요 여부
 
 ## 승인 프로필로 해결된 항목
 
+- Windows x64 NSIS는 WebView2 `offlineInstaller`를 포함해 설치와 핵심 실행 모두 offline을 목표로 한다. Hosted Windows CI는 설치된 앱 경로와 기능을 검증하지만, WebView2가 없는 network-blocked clean VM의 installer bootstrap·wizard를 대신 증명하지 않는다.
 - 담당상태와 상담 결과는 선택 자유입력으로 시작하며 enum을 고정하지 않는다.
 - Coverage Benchmark는 카테고리·정확히 같은 자유입력 성별·포함 만 나이 구간별 적정하한과 과다하한을 사용한다. 겹치는 활성 구간은 거부하고 일치 기준이 없으면 부족으로 간주하지 않는다.
 - Benchmark 판정은 `< 적정하한` 부족, `적정하한 ≤ 금액 < 과다하한` 적정, `≥ 과다하한` 과다이며 권고금액 seed나 우선순위를 만들지 않는다.

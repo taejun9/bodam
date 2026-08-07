@@ -7,5 +7,15 @@
   },
   "app": {
     "withGlobalTauri": true
+  },
+  "bundle": {
+    "windows": {
+      "webviewInstallMode": {
+        "type": "skip"
+      },
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    }
   }
 }

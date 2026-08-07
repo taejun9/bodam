@@ -27,6 +27,16 @@ REQUIRED_EVIDENCE = {
         "민감 병력",
         "상세 병력",
     ),
+    "docs/quality/windows-e2e-evidence.md": (
+        "NOT RUN - environment unavailable",
+        "NotSigned",
+        "bodam-windows-x64-unsigned",
+    ),
+    "docs/quality/windows-release-acceptance.md": (
+        "offlineVmAccepted: false",
+        "local fixed NTFS",
+        "UNC, network and removable",
+    ),
     "docs/references/official-sources.md": (
         "확인일:",
         "https://v2.tauri.app/",
