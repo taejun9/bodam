@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from application_checks import run_application_checks
-from base_checks import ROOT, run_base_checks
+from base_checks import run_base_checks
 from database_contract_checks import run_database_contract_checks
 from test_database_contract import run_database_negative_controls
 from test_harness import run_negative_controls
@@ -27,7 +27,7 @@ def main() -> int:
         return 1
 
     print("BODAM base QA: PASS")
-    print(f"- repository: {ROOT}")
+    print("- repository scope: current worktree")
     print("- required structure: pass")
     print("- plan approval and status: pass")
     print("- branch and worktree flow: pass")

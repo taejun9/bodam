@@ -144,7 +144,10 @@ def check_worktree_flow(errors: list[str]) -> None:
     if expected_plan not in active_plans | completed_plans:
         errors.append(f"branch {branch} has no matching plan {expected_plan}")
     if ROOT.parent.name != ".worktree" or ROOT.name != plan_stem:
-        errors.append(f"branch {branch} must run in .worktree/{plan_stem}, found {ROOT}")
+        errors.append(
+            f"branch {branch} must run in .worktree/{plan_stem}; "
+            "current location does not match"
+        )
 
 
 def run_base_checks() -> list[str]:

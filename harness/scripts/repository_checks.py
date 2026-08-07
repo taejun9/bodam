@@ -139,7 +139,7 @@ def check_line_limits(errors: list[str]) -> None:
             continue
         line_count = len(path.read_text(encoding="utf-8").splitlines())
         if line_count >= 300:
-            errors.append(f"{relative} has {line_count} lines; split before 300")
+            errors.append(f"{relative.as_posix()} has {line_count} lines; split before 300")
 
 
 def is_synthetic_fixture(relative: Path) -> bool:
@@ -153,7 +153,8 @@ def check_sensitive_artifacts(errors: list[str]) -> None:
     for path in source_files():
         text = path.read_text(encoding="utf-8")
         if RESIDENT_ID.search(text):
-            errors.append(f"resident registration number pattern found: {path.relative_to(ROOT)}")
+            relative = path.relative_to(ROOT).as_posix()
+            errors.append(f"resident registration number pattern found: {relative}")
 
     for path in ROOT.rglob("*"):
         relative = path.relative_to(ROOT)
@@ -166,7 +167,10 @@ def check_sensitive_artifacts(errors: list[str]) -> None:
             continue
         if is_tabular and is_synthetic_fixture(relative):
             continue
-        errors.append(f"sensitive/runtime artifact must not be committed: {relative}")
+        errors.append(
+            "sensitive/runtime artifact must not be committed: "
+            f"{relative.as_posix()}"
+        )
 
 
 def check_sensitive_ignore_rules(errors: list[str]) -> None:
