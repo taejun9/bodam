@@ -144,6 +144,15 @@ def test_evidence_and_document_boundaries(
         "missing Windows evidence boundary: nested reparse point",
         failures,
     )
+    check_mutation(
+        fixture,
+        run_check,
+        "e2e/windows-installer-contract.psm1",
+        "# synthetic Windows release contract",
+        "$null = 15_000",
+        "unsupported PowerShell numeric separator",
+        failures,
+    )
 
 
 def run_windows_workflow_negative_controls(

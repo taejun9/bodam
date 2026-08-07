@@ -10,9 +10,13 @@ const componentDirectory = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../components",
 );
-const css = readFileSync(
+
+function readStyleSource(path: string): string {
+  return readFileSync(path, "utf8").replace(/\r\n?/g, "\n");
+}
+
+const css = readStyleSource(
   resolve(componentDirectory, "app-settings-section.css"),
-  "utf8",
 );
 
 function cssBlock(selector: string): string {

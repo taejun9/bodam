@@ -1,6 +1,23 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
+$powershellFiles = @(
+  Get-ChildItem -LiteralPath $PSScriptRoot -File -Recurse |
+    Where-Object { $_.Extension -in @(".ps1", ".psm1") }
+)
+foreach ($path in $powershellFiles) {
+  $tokens = $null
+  $parseErrors = $null
+  [System.Management.Automation.Language.Parser]::ParseFile(
+    $path.FullName,
+    [ref]$tokens,
+    [ref]$parseErrors
+  ) | Out-Null
+  if ($parseErrors.Count -ne 0) {
+    throw "PowerShell syntax contract failed for $($path.Name)"
+  }
+}
+
 Import-Module (Join-Path $PSScriptRoot "windows-host-safety.psm1") -Force
 Assert-BodamHostedWindows
 

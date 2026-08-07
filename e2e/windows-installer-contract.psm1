@@ -191,7 +191,7 @@ function Invoke-BodamLaunchSmoke {
   } finally {
     if (-not $process.HasExited -and (Test-BodamSamePath $process.Path $Contract.InstalledBinary)) {
       Stop-Process -Id $process.Id -Force
-      $process.WaitForExit(15_000) | Out-Null
+      $process.WaitForExit(15000) | Out-Null
     }
   }
   if (-not (Test-Path -LiteralPath $Contract.RoamingAppData -PathType Container)) {

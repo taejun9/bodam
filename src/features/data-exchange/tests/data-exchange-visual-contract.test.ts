@@ -9,18 +9,22 @@ import { describe, expect, it } from "vitest";
 const testDirectory = dirname(fileURLToPath(import.meta.url));
 const featureDirectory = resolve(testDirectory, "..");
 const assetsDirectory = resolve(testDirectory, "../../../assets");
-const themeCss = readFileSync(resolve(assetsDirectory, "theme.css"), "utf8");
-const shellCss = readFileSync(resolve(assetsDirectory, "shell.css"), "utf8");
-const appDialogVue = readFileSync(
+
+function readStyleSource(path: string): string {
+  return readFileSync(path, "utf8").replace(/\r\n?/g, "\n");
+}
+
+const themeCss = readStyleSource(resolve(assetsDirectory, "theme.css"));
+const shellCss = readStyleSource(resolve(assetsDirectory, "shell.css"));
+const appDialogVue = readStyleSource(
   resolve(testDirectory, "../../../shared/components/AppDialog.vue"),
-  "utf8",
 );
 
 function styleSources(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const path = resolve(directory, entry.name);
     if (entry.isDirectory()) return styleSources(path);
-    return /\.(css|vue)$/.test(entry.name) ? [readFileSync(path, "utf8")] : [];
+    return /\.(css|vue)$/.test(entry.name) ? [readStyleSource(path)] : [];
   });
 }
 
@@ -75,13 +79,11 @@ describe("data exchange visual contracts", () => {
   });
 
   it("bounds long customer and source reference wrappers at narrow widths", () => {
-    const previewCss = readFileSync(
+    const previewCss = readStyleSource(
       resolve(featureDirectory, "components/data-exchange-preview.css"),
-      "utf8",
     );
-    const dialogVue = readFileSync(
+    const dialogVue = readStyleSource(
       resolve(featureDirectory, "components/DataExchangeNewCustomerDialog.vue"),
-      "utf8",
     );
 
     for (const rule of [
@@ -95,9 +97,8 @@ describe("data exchange visual contracts", () => {
   });
 
   it("keeps export counts and long basenames bounded at 390px in both themes", () => {
-    const exportCss = readFileSync(
+    const exportCss = readStyleSource(
       resolve(featureDirectory, "components/contract-export-panel.css"),
-      "utf8",
     );
 
     expect(cssBlock(exportCss, ".contract-export-panel")).toContain("min-width: 0");

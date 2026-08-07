@@ -38,6 +38,8 @@ HOST_SAFETY_MARKERS = {
     ),
     "e2e/test-windows-host-safety.ps1": (
         "windows-host-safety.psm1",
+        "System.Management.Automation.Language.Parser",
+        "PowerShell syntax contract failed",
         "mklink /J",
         "Remove-BodamOwnedTree",
         "sentinel",
@@ -74,6 +76,7 @@ REQUIRED_EVIDENCE_KEYS = (
     "appDataPreserved",
     "sharedWebViewPreserved",
 )
+POWERSHELL_NUMERIC_SEPARATOR = re.compile(r"(?<![\w.])\d[\d]*_\d")
 
 
 def read_json(relative: str, errors: list[str]) -> dict:
@@ -174,6 +177,17 @@ def check_release_files(errors: list[str]) -> None:
             errors.append(f"missing Windows release script: {relative}")
 
 
+def check_powershell_portability(errors: list[str]) -> None:
+    for path in sorted((ROOT / "e2e").rglob("*.ps*")):
+        if path.suffix.lower() not in {".ps1", ".psm1"}:
+            continue
+        text = path.read_text(encoding="utf-8")
+        if POWERSHELL_NUMERIC_SEPARATOR.search(text):
+            errors.append(
+                f"{path.relative_to(ROOT)} contains an unsupported PowerShell numeric separator"
+            )
+
+
 def check_host_safety_contract(errors: list[str]) -> None:
     for relative, markers in HOST_SAFETY_MARKERS.items():
         path = ROOT / relative
@@ -213,6 +227,7 @@ def run_windows_release_checks() -> list[str]:
     check_installer_configs(errors)
     check_package_scripts(errors)
     check_release_files(errors)
+    check_powershell_portability(errors)
     check_host_safety_contract(errors)
     check_windows_workflow(ROOT, errors)
     check_evidence_contract(errors)
