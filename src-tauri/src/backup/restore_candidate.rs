@@ -1,11 +1,10 @@
-use std::fs::File;
 use std::path::Path;
 
 use crate::database;
 
 use super::error::BackupError;
 use super::snapshot::{
-    inspect_database, migrate_working_database, remove_sidecars, DatabaseDescriptor,
+    inspect_database, migrate_working_database, remove_sidecars, sync_file, DatabaseDescriptor,
 };
 
 pub(super) fn prepare_working_database(path: &Path) -> Result<DatabaseDescriptor, BackupError> {
@@ -25,9 +24,7 @@ pub(super) fn prepare_working_database(path: &Path) -> Result<DatabaseDescriptor
         .map_err(|_| BackupError::restore_failed())?;
     drop(connection);
     remove_sidecars(path)?;
-    File::open(path)
-        .and_then(|file| file.sync_all())
-        .map_err(|_| BackupError::restore_failed())?;
+    sync_file(path).map_err(|_| BackupError::restore_failed())?;
     inspect_database(path, true)
 }
 

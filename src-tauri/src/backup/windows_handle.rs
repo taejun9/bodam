@@ -75,11 +75,9 @@ pub(super) fn rename_relative(source: &File, directory: &File, target: &str) -> 
     let target = wide_name(OsStr::new(target))?;
     let name_bytes = target.len().checked_mul(2).ok_or_else(invalid_input)?;
     let name_offset = mem::offset_of!(FILE_RENAME_INFO, FileName);
-    let buffer_bytes = mem::size_of::<FILE_RENAME_INFO>().max(
-        name_offset
-            .checked_add(name_bytes)
-            .ok_or_else(invalid_input)?,
-    );
+    let buffer_bytes = mem::size_of::<FILE_RENAME_INFO>()
+        .checked_add(name_bytes)
+        .ok_or_else(invalid_input)?;
     let words = buffer_bytes
         .checked_add(mem::size_of::<u64>() - 1)
         .ok_or_else(invalid_input)?

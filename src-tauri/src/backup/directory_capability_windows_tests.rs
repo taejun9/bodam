@@ -56,17 +56,16 @@ fn relative_crud_listing_and_file_identity_are_handle_bound() {
 }
 
 #[test]
-fn ancestor_junction_is_rejected_while_the_pinned_handle_stays_original() {
-    let root = temporary("windows-ancestor-junction");
-    let selected_parent = root.join("selected-parent");
-    let selected = selected_parent.join("backups");
+fn selected_directory_name_swap_is_rejected_while_pinned_handle_stays_original() {
+    let root = temporary("windows-directory-swap");
+    let selected = root.join("backups");
     let replacement = root.join("replacement");
     fs::create_dir_all(&selected).unwrap();
-    fs::create_dir_all(replacement.join("backups")).unwrap();
+    fs::create_dir(&replacement).unwrap();
     let capability = DirectoryCapability::acquire(&selected, false).unwrap();
-    let original_parent = root.join("original-parent");
-    fs::rename(&selected_parent, &original_parent).unwrap();
-    create_junction(&selected_parent, &replacement);
+    let original = root.join("original-backups");
+    fs::rename(&selected, &original).unwrap();
+    create_junction(&selected, &replacement);
 
     assert_eq!(
         capability.ensure_path_identity().unwrap_err().code,
@@ -77,14 +76,11 @@ fn ancestor_junction_is_rejected_while_the_pinned_handle_stays_original() {
     let mut file = capability.create_new(name).unwrap();
     file.write_all(b"original").unwrap();
     drop(file);
-    assert_eq!(
-        fs::read(original_parent.join("backups").join(name)).unwrap(),
-        b"original"
-    );
-    assert!(!replacement.join("backups").join(name).exists());
+    assert_eq!(fs::read(original.join(name)).unwrap(), b"original");
+    assert!(!replacement.join(name).exists());
     capability.remove_regular(name).unwrap();
     drop(capability);
-    fs::remove_dir(&selected_parent).unwrap();
+    fs::remove_dir(&selected).unwrap();
     fs::remove_dir_all(root).unwrap();
 }
 

@@ -2,6 +2,8 @@ use std::fs;
 
 use uuid::Uuid;
 
+#[cfg(windows)]
+use super::sync_file;
 use super::{inspect_database, open_read_only};
 use crate::database;
 
@@ -60,4 +62,16 @@ fn future_and_drifted_migration_histories_are_rejected_without_migration() {
         "BACKUP_SCHEMA_INCOMPATIBLE"
     );
     fs::remove_dir_all(root).unwrap();
+}
+
+#[cfg(windows)]
+#[test]
+fn durable_sync_uses_a_writable_windows_handle() {
+    let path = std::env::temp_dir().join(format!("bodam-sync-{}.sqlite3", Uuid::new_v4()));
+    fs::write(&path, b"durable").unwrap();
+
+    sync_file(&path).unwrap();
+    assert_eq!(fs::read(&path).unwrap(), b"durable");
+
+    fs::remove_file(path).unwrap();
 }

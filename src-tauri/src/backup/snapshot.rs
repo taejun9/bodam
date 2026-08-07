@@ -218,8 +218,10 @@ fn suffixed_path(path: &Path, suffix: &str) -> PathBuf {
     PathBuf::from(value)
 }
 
-fn sync_file(path: &Path) -> Result<(), BackupError> {
-    File::open(path)
+pub(super) fn sync_file(path: &Path) -> Result<(), BackupError> {
+    OpenOptions::new()
+        .write(true)
+        .open(path)
         .and_then(|file| file.sync_all())
         .map_err(|_| BackupError::snapshot_failed())
 }
