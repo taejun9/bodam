@@ -17,6 +17,8 @@ A passing hosted run proves only the following in that runner image:
 - local NTFS HANDLE identity and reparse-point regression cases that actually ran;
 - the hosted safety negative control rejects a nested reparse point before recursive
   cleanup and leaves its external sentinel unchanged;
+- native persistent/transient lock controls prove that exact app-owned cleanup rejects
+  an exhausted sharing violation and recovers only after a transient handle release;
 - every official x64 WebView2 `pv` logical record and version observed immediately after
   production install is exact-equal after uninstall and cleanup, recorded as
   `sharedWebViewPreserved: true`;
@@ -36,6 +38,20 @@ cleanup after failure only. This is a production renderer-to-IPC, SQLite/daily-b
 and OS-close smoke, while the private installed suite remains the full feature proof.
 The database and observed daily-backup hashes must also survive normal NSIS uninstall
 before evidence may record `appDataPreserved: true`.
+
+WebView2 can retain files in an app-owned user data folder after the host process exits.
+The hosted cleanup therefore retries only `IOException` with exact Windows
+`ERROR_SHARING_VIOLATION` for 20 attempts at 250ms intervals. Every attempt revalidates
+the exact direct-child target and scans the tree for reparse points; other deletion
+errors fail immediately and an exhausted lock fails with a pathless error. Cleanup never
+terminates a shared `msedgewebview2` process. The native controls also require a sibling
+sentinel to remain unchanged. Target probes treat only `ItemNotFoundException` as
+absence; access and provider errors propagate, and the hosted control exercises this
+boundary with a real missing PowerShell drive.
+
+The workflow contract binds each evidence step to one exact active `run:` command and
+its exact step id. A filename left only in a YAML comment or multiline bypass is rejected,
+so the hosted safety outcome cannot be populated by a synthetic replacement command.
 
 That source order strongly supports the early force-stop race as the baseline failure
 explanation, but does not by itself confirm a false negative. The modified PowerShell and

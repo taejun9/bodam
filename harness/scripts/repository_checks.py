@@ -49,6 +49,8 @@ REQUIRED_FILES = (
     "harness/scripts/windows_release_launch_checks.py",
     "harness/scripts/windows_release_launch_syntax.py",
     "harness/scripts/test_windows_release_contract.py",
+    "harness/scripts/windows_cleanup_checks.py",
+    "harness/scripts/test_windows_cleanup_contract.py",
     "harness/scripts/test_windows_launch_contract.py",
     "harness/scripts/test_windows_launch_lexer_contract.py",
     "harness/scripts/windows_workflow_checks.py",

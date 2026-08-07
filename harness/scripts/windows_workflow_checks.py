@@ -3,11 +3,13 @@
 
 from __future__ import annotations
 
+import hashlib
 import re
 from pathlib import Path
 
 
 WORKFLOW = ".github/workflows/tauri-e2e-windows.yml"
+WORKFLOW_SHA256 = "ed21f2aa09528b1fc2b95c73847a72f8f67d0a3772d742b6041f391eb1b5ff0e"
 PRODUCTION_INSTALLER = "runtime-data/windows-release/BODAM_0.1.0_x64-setup.exe"
 UPLOAD_ALLOWLIST = (
     PRODUCTION_INSTALLER,
@@ -23,7 +25,7 @@ ACTION_PINS = {
 }
 STEP_IDS = {
     "npm run qa": "cross_layer_qa",
-    "e2e/test-windows-host-safety.ps1": "host_safety",
+    "pwsh -NoLogo -NoProfile -File e2e/test-windows-host-safety.ps1": "host_safety",
     "cargo test --manifest-path src-tauri/Cargo.toml --all-features": "windows_tests",
     "npm run windows:build:production": "production_build",
     "npm run windows:assert:production": "production_lifecycle",
@@ -92,6 +94,24 @@ def block_paths(block: str) -> tuple[str, ...]:
     return tuple(paths)
 
 
+def has_exact_step_field(block: str, field: str, value: str) -> bool:
+    lines = block.splitlines()
+    if not lines:
+        return False
+    step_indent = len(lines[0]) - len(lines[0].lstrip(" "))
+    expected = f"{' ' * (step_indent + 2)}{field}: {value}"
+    return lines.count(expected) == 1
+
+
+def has_step_field(block: str, field: str) -> bool:
+    lines = block.splitlines()
+    if not lines:
+        return False
+    step_indent = len(lines[0]) - len(lines[0].lstrip(" "))
+    prefix = f"{' ' * (step_indent + 2)}{field}:"
+    return any(line.startswith(prefix) for line in lines)
+
+
 def check_action_pins(text: str, errors: list[str]) -> None:
     actual = action_uses(text)
     if len(actual) != len(ACTION_PINS):
@@ -110,9 +130,13 @@ def check_action_pins(text: str, errors: list[str]) -> None:
 def check_steps_and_summary(text: str, errors: list[str]) -> None:
     blocks = step_blocks(text)
     for command, expected_id in STEP_IDS.items():
-        matches = [block for block in blocks if command in block]
-        if len(matches) != 1 or f"id: {expected_id}" not in matches[0]:
+        matches = [block for block in blocks if has_exact_step_field(block, "run", command)]
+        if len(matches) != 1 or not has_exact_step_field(matches[0], "id", expected_id):
             errors.append(f"{WORKFLOW} must give {command} the exact step id {expected_id}")
+        elif expected_id == "host_safety" and any(
+            has_step_field(matches[0], field) for field in ("if", "continue-on-error")
+        ):
+            errors.append(f"{WORKFLOW} host safety step must run unconditionally and fail closed")
     summaries = [block for block in blocks if "GITHUB_STEP_SUMMARY" in block]
     if len(summaries) != 1 or "if: always()" not in summaries[0]:
         errors.append(f"{WORKFLOW} must contain one always-running hosted evidence summary")
@@ -154,6 +178,8 @@ def check_windows_workflow(root: Path, errors: list[str]) -> None:
         errors.append(f"missing Windows release workflow: {WORKFLOW}")
         return
     text = path.read_text(encoding="utf-8")
+    if hashlib.sha256(text.encode("utf-8")).hexdigest() != WORKFLOW_SHA256:
+        errors.append(f"{WORKFLOW} must equal the exact reviewed workflow")
     for phrase in ("runs-on: windows-2025", "contents: read", "offlineVmAccepted: false"):
         if phrase not in text:
             errors.append(f"{WORKFLOW} missing release contract: {phrase}")

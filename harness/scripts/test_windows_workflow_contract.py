@@ -97,6 +97,40 @@ def test_summary_and_safety(
         "exact step id host_safety",
         failures,
     )
+    for field in ("if: false", "continue-on-error: true"):
+        check_mutation(
+            fixture,
+            run_check,
+            workflow,
+            "        id: host_safety",
+            f"        id: host_safety\n        {field}",
+            "host safety step must run unconditionally and fail closed",
+            failures,
+        )
+    check_mutation(
+        fixture,
+        run_check,
+        workflow,
+        "        run: pwsh -NoLogo -NoProfile -File e2e/test-windows-host-safety.ps1",
+        "        run: |\n"
+        "          <#\n"
+        "          run: pwsh -NoLogo -NoProfile -File e2e/test-windows-host-safety.ps1\n"
+        "          #>\n"
+        '          Write-Output "synthetic bypass"',
+        "exact step id host_safety",
+        failures,
+    )
+    check_mutation(
+        fixture,
+        run_check,
+        workflow,
+        "        run: pwsh -NoLogo -NoProfile -File e2e/test-windows-host-safety.ps1",
+        "        run: |\n"
+        "          # e2e/test-windows-host-safety.ps1\n"
+        '          Write-Output "synthetic bypass"',
+        "exact step id host_safety",
+        failures,
+    )
     for relative in ("e2e/windows-host-safety.psm1", "e2e/test-windows-host-safety.ps1"):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

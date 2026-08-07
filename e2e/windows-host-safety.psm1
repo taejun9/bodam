@@ -22,6 +22,15 @@ function Test-BodamHostSamePath {
   )
 }
 
+function Get-BodamCleanupItem {
+  param([Parameter(Mandatory)][string]$Path)
+  try {
+    Get-Item -LiteralPath $Path -Force -ErrorAction Stop
+  } catch [Management.Automation.ItemNotFoundException] {
+    return $null
+  }
+}
+
 function Assert-BodamExactCleanupPath {
   param(
     [Parameter(Mandatory)][string]$Root,
@@ -34,7 +43,7 @@ function Assert-BodamExactCleanupPath {
   if ($relative -in @("", ".", "..") -or $relative.Contains('\') -or $relative.Contains('/')) {
     throw "CI cleanup target must be an exact direct child of its approved root"
   }
-  $item = Get-Item -LiteralPath $targetPath -Force -ErrorAction SilentlyContinue
+  $item = Get-BodamCleanupItem -Path $targetPath
   if ($null -ne $item) {
     if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
       throw "CI cleanup target must not be a reparse point"
@@ -63,19 +72,36 @@ function Assert-BodamOwnedTreeSafe {
   }
 }
 
+function Test-BodamCleanupSharingViolation {
+  param([Parameter(Mandatory)][Exception]$Exception)
+  $Exception -is [IO.IOException] -and $Exception.HResult -eq -2147024864
+}
+
 function Remove-BodamOwnedTree {
   param([Parameter(Mandatory)][string]$Root, [Parameter(Mandatory)][string]$Path)
   Assert-BodamHostedWindows
-  $target = Assert-BodamExactCleanupPath -Root $Root -Path $Path -Directory $true
-  if ($null -eq (Get-Item -LiteralPath $target -Force -ErrorAction SilentlyContinue)) { return }
-  Assert-BodamOwnedTreeSafe -Path $target
-  Remove-Item -LiteralPath $target -Recurse -Force
+  for ($attempt = 1; $attempt -le 20; $attempt += 1) {
+    $target = Assert-BodamExactCleanupPath -Root $Root -Path $Path -Directory $true
+    if ($null -eq (Get-BodamCleanupItem -Path $target)) { return }
+    Assert-BodamOwnedTreeSafe -Path $target
+    try {
+      Remove-Item -LiteralPath $target -Recurse -Force -ErrorAction Stop
+      if ($null -ne (Get-BodamCleanupItem -Path $target)) {
+        throw "CI cleanup target remains after deletion"
+      }
+      return
+    } catch {
+      if (-not (Test-BodamCleanupSharingViolation -Exception $_.Exception)) { throw }
+      if ($attempt -eq 20) { throw "CI cleanup target remained locked after bounded retries" }
+    }
+    Start-Sleep -Milliseconds 250
+  }
 }
 
 function Remove-BodamOwnedFile {
   param([Parameter(Mandatory)][string]$Root, [Parameter(Mandatory)][string]$Path)
   $target = Assert-BodamExactCleanupPath -Root $Root -Path $Path -Directory $false
-  if ($null -ne (Get-Item -LiteralPath $target -Force -ErrorAction SilentlyContinue)) {
+  if ($null -ne (Get-BodamCleanupItem -Path $target)) {
     Remove-Item -LiteralPath $target -Force
   }
 }

@@ -8,6 +8,7 @@ import tempfile
 from pathlib import Path
 
 import windows_release_checks
+from test_windows_cleanup_contract import run_windows_cleanup_negative_controls
 from test_windows_launch_contract import run_windows_launch_negative_controls
 from test_windows_launch_lexer_contract import run_windows_launch_lexer_negative_controls
 from test_windows_workflow_contract import run_windows_workflow_negative_controls
@@ -159,6 +160,7 @@ def run_windows_release_negative_controls() -> list[str]:
     test_offline_claim(failures)
     test_comment_parser(failures)
     failures.extend(run_windows_workflow_negative_controls(create_valid_fixture, run_check))
+    failures.extend(run_windows_cleanup_negative_controls(create_valid_fixture, run_check))
     failures.extend(run_windows_launch_negative_controls(create_valid_fixture, run_check))
     failures.extend(run_windows_launch_lexer_negative_controls(create_valid_fixture, run_check))
     return failures

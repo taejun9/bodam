@@ -30,6 +30,9 @@ REQUIREMENTS = {
         "`LocalAppData` alone as readiness",
         "one `CloseMainWindow()`",
         "force-stop fallback",
+        "`ERROR_SHARING_VIOLATION`",
+        "20 attempts at 250ms intervals",
+        "shared `msedgewebview2` process",
     ),
     "docs/quality/windows-release-acceptance.md": (
         "offlineVmAccepted: false",
@@ -42,6 +45,8 @@ REQUIREMENTS = {
         "exact roaming `bodam.sqlite3`",
         "one `CloseMainWindow()`",
         "appDataPreserved: true",
+        "fixed 20×250ms bound",
+        "shared `msedgewebview2` process",
     ),
     "docs/privacy/principles.md": (
         "Hosted artifact",
@@ -63,6 +68,9 @@ REQUIREMENTS = {
         "https://docs.rs/tauri/2.11.5/tauri/path/struct.PathResolver.html#method.app_data_dir",
         "https://docs.rs/dirs/6.0.0/dirs/fn.data_dir.html",
         "https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.process.closemainwindow",
+        "https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/user-data-folder",
+        "https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/process-related-events",
+        "https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499-",
     ),
 }
 

@@ -32,6 +32,12 @@ installer SHA-256. Synthetic data is mandatory throughout.
 - [ ] Snapshot documented x64 HKLM/HKCU WebView2 logical records immediately after
       production install; require every record and nonzero `pv` to compare exact-equal
       after uninstall and cleanup before recording `sharedWebViewPreserved: true`.
+- [ ] For the exact app-owned WebView2 UDF only, retry `ERROR_SHARING_VIOLATION` with a
+      fixed 20×250ms bound while rechecking direct-child/no-reparse safety every attempt.
+- [ ] Let every non-sharing deletion error and exhausted lock fail closed; never stop a
+      shared `msedgewebview2` process to make hosted cleanup pass.
+- [ ] Treat only `ItemNotFoundException` as an absent cleanup target and propagate every
+      access or provider probe error before removal and its postcondition.
 
 Source-order analysis alone does not check these items. The modified production lifecycle
 remains `NOT RUN` until the exact commit executes successfully on `windows-2025`.
@@ -46,6 +52,8 @@ remains `NOT RUN` until the exact commit executes successfully on `windows-2025`
 - [ ] Run Windows local NTFS HANDLE/reparse, replace, restart and file-lock cases.
 - [ ] Run the hosted cleanup safety control: reject a nested reparse point and confirm
       its cleanup-tree-external sentinel remains unchanged.
+- [ ] Run native persistent/transient UDF lock controls and preserve their sibling sentinel.
+- [ ] Run the native missing-drive negative control and require the provider error to escape.
 - [ ] Uninstall the E2E package and remove only exact app-owned temporary artifacts.
 - [ ] Confirm no E2E installer, database, backup, export or raw log is uploaded.
 

@@ -7,6 +7,7 @@ import json
 import re
 from pathlib import Path
 
+from windows_cleanup_checks import check_windows_cleanup
 from windows_release_document_checks import check_windows_release_documents
 from windows_release_launch_checks import check_windows_release_launch
 from windows_release_launch_syntax import INVALID_SOURCE, active_code
@@ -26,6 +27,7 @@ REQUIRED_RELEASE_FILES = (
     "e2e/windows-launch-readiness.psm1",
     "e2e/windows-host-safety.psm1",
     "e2e/test-windows-host-safety.ps1",
+    "e2e/test-windows-cleanup-retry.ps1",
     "e2e/test-windows-installer-identity.ps1",
     "e2e/test-windows-launch-readiness.ps1",
     "e2e/assert-windows-production.ps1",
@@ -275,6 +277,7 @@ def run_windows_release_checks() -> list[str]:
     check_powershell_portability(errors)
     check_host_safety_contract(errors)
     check_windows_workflow(ROOT, errors)
+    check_windows_cleanup(ROOT, errors)
     check_evidence_contract(errors)
     check_windows_release_launch(ROOT, errors)
     check_windows_release_documents(ROOT, errors)

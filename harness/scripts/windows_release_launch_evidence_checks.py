@@ -20,7 +20,7 @@ READINESS_TEST = "e2e/test-windows-launch-readiness.ps1"
 HOST_SAFETY_TEST = "e2e/test-windows-host-safety.ps1"
 PRODUCTION_ASSERTION = "e2e/assert-windows-production.ps1"
 READINESS_TEST_SHA256 = "a205e94d7ff8e45de6b26e9ce1eda8ce506bf99ee0f2dd433dceebda3258339b"
-HOST_SAFETY_TEST_SHA256 = "776000c2419dba450383fcbd1df03a8cf2c54abd52b839dbc2185d36c898b09a"
+HOST_SAFETY_TEST_SHA256 = "0eaeb178835b4a78927e6b475a35879bb2e98cb7e0290e9f7e69e471ace3ad1d"
 PRODUCTION_ASSERTION_SHA256 = "a0ea017e438e8606fa2f33a2d55c5f96bc950a8ed8b1a8c87cdda1e0efcf115d"
 
 

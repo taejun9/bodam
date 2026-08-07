@@ -36,6 +36,9 @@
 | Microsoft GetVolumeInformationByHandleW | https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getvolumeinformationbyhandlew | 열린 객체의 filesystem·volume 정보 | local NTFS 경계 |
 | Microsoft FlushFileBuffers | https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-flushfilebuffers | 열린 file HANDLE의 buffered data flush | file 내용 flush와 metadata durability 주장 경계 |
 | Microsoft WebView2 Distribution | https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/distribution#detect-if-a-suitable-webview2-runtime-is-already-installed | x64 HKLM/HKCU `pv (REG_SZ)` runtime 탐지 | shared WebView2 등록 보존 snapshot |
+| Microsoft WebView2 user data folders | https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/user-data-folder | host 종료 뒤 UDF file handle 해제 경계 | app-owned UDF bounded cleanup retry |
+| Microsoft WebView2 process events | https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/process-related-events | browser process와 child process lifecycle | host process exit와 UDF release 구분 |
+| Microsoft system error codes | https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499- | `ERROR_SHARING_VIOLATION` 32 / `0x20` | retry 가능한 exact Windows sharing violation |
 | GitHub Actions Secure Use | https://docs.github.com/en/actions/reference/security/secure-use#using-third-party-actions | full-length commit SHA만 immutable action release | release workflow action pinning |
 | actions/checkout pinned commit | https://github.com/actions/checkout/commit/11d5960a326750d5838078e36cf38b85af677262 | verified `v4` commit | source checkout pin |
 | actions/setup-node pinned commit | https://github.com/actions/setup-node/commit/49933ea5288caeca8642d1e84afbd3f7d6820020 | verified `v4` commit | Node setup pin |
@@ -82,6 +85,7 @@
 - Windows archive rename·delete는 DELETE 권한으로 연 HANDLE을 대상으로 수행하고, hosted artifact는 production installer·checksum·sanitized evidence의 exact allowlist만 허용한다.
 - `FlushFileBuffers` 증거는 지정한 열린 file의 buffered data flush에 한정한다. parent-directory metadata durability, 전원 손실 뒤 rename 영속성 또는 Unix directory `fsync`와 같은 보장을 Windows local NTFS pass에서 주장하지 않는다.
 - Hosted WebView2 보존 검사는 production install 직후 Microsoft x64 HKLM/HKCU `pv (REG_SZ)`에서 관찰한 logical record와 version이 uninstall·cleanup 뒤에도 exact-equal임을 증명한다. pre-install version 불변, runtime 파일 전체, updater 동작이나 clean-VM bootstrap까지 증명하지 않는다.
+- WebView2 host process 종료만으로 app-owned UDF의 browser/child process handle 해제가 보장되지 않는다. Hosted cleanup은 exact direct-child·no-reparse 검사를 매 attempt 반복하고 `IOException`의 `ERROR_SHARING_VIOLATION`만 20회×250ms 재시도한다. 대상 probe는 exact `ItemNotFoundException`만 부재로 인정하고 provider·access 오류를 전파한다. shared `msedgewebview2` process는 종료하지 않으며 다른 오류와 exhausted lock은 fail-closed다.
 - Release workflow의 remote action은 검증한 full-length commit SHA와 사람이 읽는 tag comment를 함께 고정한다. tag comment는 provenance 설명이며 실행 ref가 아니다.
 - upload-artifact는 점으로 시작하는 directory 내부 파일도 기본 제외하므로 release staging은 ignored non-hidden `runtime-data/windows-release`를 사용하고 `include-hidden-files: false`를 유지한다.
 - Prisma Client는 Rust runtime을 제공하지 않는다. ADR-001은 Prisma schema/migration artifact와 Rust executor의 경계를 명시한다.
