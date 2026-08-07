@@ -26,6 +26,9 @@ fn relative_crud_listing_and_file_identity_are_handle_bound() {
     created.sync_all().unwrap();
     drop(created);
     let held = capability.open_regular(&temporary).unwrap();
+    let mut stale = capability.create_new(target).unwrap();
+    stale.write_all(b"stale bytes").unwrap();
+    drop(stale);
     let first = capability.entries().unwrap();
     let second = capability.entries().unwrap();
     assert_eq!(
@@ -72,13 +75,17 @@ fn selected_directory_name_swap_is_rejected_while_pinned_handle_stays_original()
         "BACKUP_PATH_UNAVAILABLE"
     );
     assert!(DirectoryCapability::acquire(&selected, false).is_err());
-    let name = "pinned.bodam-backup";
-    let mut file = capability.create_new(name).unwrap();
+    let source = "pinned-source.bodam-backup";
+    let target = "pinned-target.bodam-backup";
+    let mut file = capability.create_new(source).unwrap();
     file.write_all(b"original").unwrap();
     drop(file);
-    assert_eq!(fs::read(original.join(name)).unwrap(), b"original");
-    assert!(!replacement.join(name).exists());
-    capability.remove_regular(name).unwrap();
+    capability.rename(source, target).unwrap();
+    assert!(!original.join(source).exists());
+    assert_eq!(fs::read(original.join(target)).unwrap(), b"original");
+    assert!(!replacement.join(source).exists());
+    assert!(!replacement.join(target).exists());
+    capability.remove_regular(target).unwrap();
     drop(capability);
     fs::remove_dir(&selected).unwrap();
     fs::remove_dir_all(root).unwrap();

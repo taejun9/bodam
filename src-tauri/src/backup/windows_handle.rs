@@ -8,16 +8,16 @@ use std::ptr;
 
 use windows_sys::Wdk::Foundation::OBJECT_ATTRIBUTES;
 use windows_sys::Wdk::Storage::FileSystem::{
-    NtCreateFile, FILE_OPEN_REPARSE_POINT, FILE_SYNCHRONOUS_IO_NONALERT,
-    NTCREATEFILE_CREATE_DISPOSITION, NTCREATEFILE_CREATE_OPTIONS,
+    FileRenameInformation, NtCreateFile, NtSetInformationFile, FILE_OPEN_REPARSE_POINT,
+    FILE_RENAME_INFORMATION, FILE_SYNCHRONOUS_IO_NONALERT, NTCREATEFILE_CREATE_DISPOSITION,
+    NTCREATEFILE_CREATE_OPTIONS,
 };
 use windows_sys::Win32::Foundation::{
     RtlNtStatusToDosError, HANDLE, INVALID_HANDLE_VALUE, OBJ_CASE_INSENSITIVE, UNICODE_STRING,
 };
 use windows_sys::Win32::Storage::FileSystem::{
-    FileDispositionInfo, FileRenameInfo, FlushFileBuffers, SetFileInformationByHandle,
-    FILE_ACCESS_RIGHTS, FILE_ATTRIBUTE_NORMAL, FILE_DISPOSITION_INFO, FILE_RENAME_INFO,
-    FILE_SHARE_MODE,
+    FileDispositionInfo, FlushFileBuffers, SetFileInformationByHandle, FILE_ACCESS_RIGHTS,
+    FILE_ATTRIBUTE_NORMAL, FILE_DISPOSITION_INFO, FILE_SHARE_MODE,
 };
 use windows_sys::Win32::System::IO::IO_STATUS_BLOCK;
 
@@ -74,8 +74,8 @@ pub(super) fn open_relative(
 pub(super) fn rename_relative(source: &File, directory: &File, target: &str) -> io::Result<()> {
     let target = wide_name(OsStr::new(target))?;
     let name_bytes = target.len().checked_mul(2).ok_or_else(invalid_input)?;
-    let name_offset = mem::offset_of!(FILE_RENAME_INFO, FileName);
-    let buffer_bytes = mem::size_of::<FILE_RENAME_INFO>()
+    let name_offset = mem::offset_of!(FILE_RENAME_INFORMATION, FileName);
+    let buffer_bytes = mem::size_of::<FILE_RENAME_INFORMATION>()
         .checked_add(name_bytes)
         .ok_or_else(invalid_input)?;
     let words = buffer_bytes
@@ -83,11 +83,11 @@ pub(super) fn rename_relative(source: &File, directory: &File, target: &str) -> 
         .ok_or_else(invalid_input)?
         / mem::size_of::<u64>();
     let mut buffer = vec![MaybeUninit::<u64>::zeroed(); words];
-    let information = buffer.as_mut_ptr().cast::<FILE_RENAME_INFO>();
+    let information = buffer.as_mut_ptr().cast::<FILE_RENAME_INFORMATION>();
     // SAFETY: the allocation is sufficiently large/aligned for the projected structure and
-    // UTF-16 tail. Every field read by SetFileInformationByHandle is initialized here.
+    // UTF-16 tail. Every field read by NtSetInformationFile is initialized here.
     unsafe {
-        information.write(FILE_RENAME_INFO::default());
+        information.write(FILE_RENAME_INFORMATION::default());
         (*information).Anonymous.ReplaceIfExists = true;
         (*information).RootDirectory = raw_handle(directory);
         (*information).FileNameLength = u32::try_from(name_bytes).map_err(|_| invalid_input())?;
@@ -98,16 +98,21 @@ pub(super) fn rename_relative(source: &File, directory: &File, target: &str) -> 
         );
     }
     let buffer_bytes = u32::try_from(buffer_bytes).map_err(|_| invalid_input())?;
-    // SAFETY: `information` points at the initialized buffer described above.
-    let succeeded = unsafe {
-        SetFileInformationByHandle(
+    let mut status_block = IO_STATUS_BLOCK::default();
+    // SAFETY: `information` points at the initialized native rename buffer, and the source and
+    // pinned target-directory handles remain live through this synchronous operation.
+    let status = unsafe {
+        NtSetInformationFile(
             raw_handle(source),
-            FileRenameInfo,
+            &mut status_block,
             information.cast(),
             buffer_bytes,
+            FileRenameInformation,
         )
     };
-    bool_result(succeeded)?;
+    if status < 0 {
+        return Err(ntstatus_error(status));
+    }
     // SAFETY: the rename source remains a live writable file handle after the rename.
     let flushed = unsafe { FlushFileBuffers(raw_handle(source)) };
     bool_result(flushed)
