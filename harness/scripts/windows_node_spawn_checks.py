@@ -9,6 +9,8 @@ from pathlib import Path
 
 
 NODE_SPAWN_FILES = (
+    "scripts/package/assert-platform.mjs",
+    "scripts/package/inspect-windows-installer.mjs",
     "e2e/node-script-runner.mjs",
     "e2e/build-e2e-command.mjs",
     "e2e/build-e2e.mjs",
@@ -17,6 +19,8 @@ NODE_SPAWN_FILES = (
     "e2e/run-backup-settings-e2e.mjs",
 )
 IMMUTABLE_DIGESTS = {
+    "scripts/package/assert-platform.mjs": "41ce68c8792497571046f08caef9318b5f72c8b271135c4b31d1fe897297c75f",
+    "scripts/package/inspect-windows-installer.mjs": "3cf17af4371931874a572951d87b241b853274195f39e1231d429c19e1a4dd2b",
     "e2e/node-script-runner.mjs": "8fd0837377d20d82550889c0ec514cd7af6424bf5ce086ce95b59e0d81c725b7",
     "e2e/build-e2e-command.mjs": "f8f4447e46f8f2c207f9c3263322390e0467d41caac45487a5d712176df3592e",
     "e2e/build-e2e.mjs": "565483bbe7bdb5c91f7990376cfdfff74550b9ad182dbd2fc8900241e4b5f915",
@@ -57,8 +61,8 @@ EXPECTED_QA_TOKENS = (
     "harness:check",
 )
 EXPECTED_E2E_TRUST_SHA256 = "745775b0f6edbdf8429f331d06612686e7567181ec56d45c6c59fa2f2177b7a7"
-EXPECTED_PACKAGE_SCRIPTS_SHA256 = "e904aa0604653462b240a9b4956f1ed1da9f4760a2ba1d35dde924d8e764e383"
-EXPECTED_PACKAGE_SHA256 = "45e88f708d281676d5be8f926e56ff41fa474e031659e10a33f414210c8de7f5"
+EXPECTED_PACKAGE_SCRIPTS_SHA256 = "e7c18bf5bf5f8a41c965d430f8e3552701519c5c3b712b56495e946f10cf25a0"
+EXPECTED_PACKAGE_SHA256 = "6a4b1f2d8add7047ccae9fa81492fdd2441018f18c8ed646ad4dab4aee55c681"
 EXPECTED_PACKAGE_LOCK_SHA256 = "9b1e624cdc7a679e6cd4c8cdc33566f57364ef9006c235f313a7805f7edac2fd"
 
 
