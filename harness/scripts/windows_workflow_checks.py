@@ -9,11 +9,11 @@ from pathlib import Path
 
 
 WORKFLOW = ".github/workflows/tauri-e2e-windows.yml"
-WORKFLOW_SHA256 = "2d777a0715d2dc57ca7786b042711d945fd8d1717b4eeeee76bca27842cab3a3"
+WORKFLOW_SHA256 = "cd0cad550a7b84029f4d778114dd054a499f08ed06abf666a88dc1f4cc1d4498"
 NPM_PREFLIGHT = "harness/scripts/windows_npm_preflight.py"
-NPM_PREFLIGHT_SHA256 = "69d7a2cbad3501decaeeb272012122aca27a4cc75a25f83cd9ee52358a044311"
+NPM_PREFLIGHT_SHA256 = "dc28998dd93cb104bbddfb1a98b7750deeb2e081dbbb1466d50a4b4c43bb95f3"
 NPM_CHECKER = "harness/scripts/windows_node_spawn_checks.py"
-NPM_CHECKER_SHA256 = "b9cf2af5092485584781a48a5fadd06ce6e98a60a7b4c604f6b7d49c9aa5cb25"
+NPM_CHECKER_SHA256 = "eded6459194c95141e7e640e759c01b7494306ae794891e4d386d865ff0c295d"
 PRODUCTION_INSTALLER = "runtime-data/windows-release/BODAM_0.1.0_x64-setup.exe"
 UPLOAD_ALLOWLIST = (
     PRODUCTION_INSTALLER,
@@ -33,7 +33,7 @@ STEP_IDS = {
     "npm run qa": "cross_layer_qa",
     "pwsh -NoLogo -NoProfile -File e2e/test-windows-host-safety.ps1": "host_safety",
     "cargo test --manifest-path src-tauri/Cargo.toml --all-features": "windows_tests",
-    "npm run windows:build:production": "production_build",
+    "npm run package:windows": "production_build",
     "npm run windows:assert:production": "production_lifecycle",
     "npm run e2e:build:windows-nsis": "e2e_build",
     "npm run test:e2e:windows-installed": "installed_e2e",

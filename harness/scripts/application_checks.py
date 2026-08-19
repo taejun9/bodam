@@ -39,6 +39,8 @@ REQUIRED_SCRIPTS = (
     "database:contract",
     "build",
     "tauri:check",
+    "package:macos",
+    "package:windows",
     "qa",
     "verify",
 )

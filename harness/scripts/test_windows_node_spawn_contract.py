@@ -95,6 +95,18 @@ def run_windows_node_spawn_negative_controls(create_fixture, run_check) -> list[
     failures: list[str] = []
     cases = (
         (
+            "scripts/package/assert-platform.mjs",
+            'windows: { actual: "win32", label: "Windows" }',
+            'windows: { actual: "darwin", label: "Windows" }',
+            "immutable Node spawn contract changed",
+        ),
+        (
+            "scripts/package/inspect-windows-installer.mjs",
+            '!== "offlineInstaller"',
+            '!== "skip"',
+            "immutable Node spawn contract changed",
+        ),
+        (
             "e2e/node-script-runner.mjs",
             "shell: false",
             "shell: true",

@@ -57,7 +57,7 @@ jobs:
 
       - name: Build unsigned production NSIS
         id: production_build
-        run: npm run windows:build:production
+        run: npm run package:windows
 
       - name: Assert production install lifecycle and stage release evidence
         id: production_lifecycle

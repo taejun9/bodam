@@ -28,11 +28,37 @@
 
 브라우저 실행은 Tauri IPC 대신 `localStorage`의 명시적인 합성 미리보기 저장소를 사용합니다. 실제 고객 데이터와 SQLite 지속성 검증은 반드시 Tauri 앱에서 수행합니다.
 
-macOS 디버그 앱 번들은 다음 명령으로 만들 수 있습니다.
+## 설치 파일 만들기
 
-    npm run tauri -- build --debug --bundles app
+Node.js, npm, Rust와 Prisma는 설치 파일을 만드는 PC에만 필요합니다. 최종 사용자는 소스나 개발 도구를 받지 않고 아래 DMG 또는 EXE 하나만 받습니다. SQLite는 앱에 포함되고, macOS는 운영체제 WebKit을 사용하며, Windows 설치기는 WebView2 offline installer를 포함합니다.
 
-Windows 배포 대상은 WebView2 offline installer를 포함하도록 구성되어 있지만, Windows 설치·실행 완료 여부는 Windows CI와 깨끗한 VM 증거가 있기 전에는 주장하지 않습니다.
+처음 소스를 받은 제작 PC에서는 lockfile 기준 의존성을 설치합니다.
+
+    npm ci --ignore-scripts
+
+macOS 제작 PC에서는 Apple Silicon과 Intel을 함께 담기 위해 Rust target을 한 번 준비한 뒤 Universal DMG를 만듭니다.
+
+    rustup target add aarch64-apple-darwin x86_64-apple-darwin --toolchain stable
+    npm run package:macos
+
+명령은 DMG 무결성, 내부 `BODAM.app`, production identifier, arm64/x86_64 실행 파일과 ad-hoc 서명을 함께 검사합니다. 전달할 파일은 다음 위치에 생깁니다.
+
+    src-tauri/target/universal-apple-darwin/release/bundle/dmg/BODAM_0.1.0_universal.dmg
+
+Windows x64 제작 PC에서는 같은 의존성 설치 뒤 current-user NSIS를 만듭니다.
+
+    npm run package:windows
+
+전달할 파일은 다음 위치에 생깁니다. 약 127MB의 WebView2 offline installer가 포함되어 최종 사용자 PC에 인터넷이 없어도 필요한 WebView runtime을 설치할 수 있습니다.
+
+    src-tauri/target/release/bundle/nsis/BODAM_0.1.0_x64-setup.exe
+
+### 개발 지식 없는 사용자의 설치 순서
+
+- macOS: DMG를 더블클릭하고 열린 창의 `BODAM`을 `Applications`로 드래그한 뒤 응용 프로그램 폴더에서 실행합니다.
+- Windows: `BODAM_0.1.0_x64-setup.exe`를 더블클릭하고 설치 창을 완료한 뒤 BODAM을 실행합니다. Node.js, npm, Rust 또는 Prisma를 따로 설치하지 않습니다.
+
+현재 macOS 산출물은 ad-hoc 서명이고 Apple notarization은 없으며, Windows 산출물도 Authenticode 서명이 없습니다. 따라서 다른 PC에 다운로드해 공개 배포하면 Gatekeeper 또는 SmartScreen이 개발자 확인 경고를 표시할 수 있습니다. 경고 없는 공개 배포에는 Apple Developer ID notarization과 Windows code-signing 인증서가 별도로 필요하며, 현재 파일을 공증·서명된 배포본으로 표현하지 않습니다.
 
 ## 현재 기능
 

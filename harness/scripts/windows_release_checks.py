@@ -76,6 +76,7 @@ HOST_SAFETY_MARKERS = {
     ),
 }
 REQUIRED_SCRIPTS = {
+    "package:build:windows": "tauri build --ci --no-sign --bundles nsis",
     "windows:build:production": "tauri build --ci --no-sign --bundles nsis",
     "windows:assert:production": "pwsh -NoLogo -NoProfile -File e2e/assert-windows-production.ps1",
     "e2e:build:windows-nsis": "node e2e/build-e2e.mjs windows-nsis",

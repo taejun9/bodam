@@ -8,7 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 CHECKER = ROOT / "harness/scripts/windows_node_spawn_checks.py"
-CHECKER_SHA256 = "b9cf2af5092485584781a48a5fadd06ce6e98a60a7b4c604f6b7d49c9aa5cb25"
+CHECKER_SHA256 = "eded6459194c95141e7e640e759c01b7494306ae794891e4d386d865ff0c295d"
 
 
 def load_exact_checker(errors: list[str]) -> dict[str, object]:

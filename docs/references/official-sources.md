@@ -1,6 +1,6 @@
 # 공식 자료
 
-확인일: 2026-08-07 KST
+최근 확인일: 2026-08-19 KST
 
 현재 변경 가능성이 있는 기술 사실은 아래 공식/1차 문서를 기준으로 한다. 링크를 재확인하지 않고 버전·요구사항을 단정하지 않는다.
 
@@ -10,6 +10,9 @@
 | Tauri Vite | https://v2.tauri.app/start/frontend/vite/ | Vite frontend 연동 | project bootstrap 후보 |
 | Tauri Prerequisites | https://v2.tauri.app/start/prerequisites/ | Windows 개발 요구사항 | Build Tools와 WebView2 준비 |
 | Tauri Windows Installer | https://v2.tauri.app/distribute/windows-installer/ | MSI/NSIS와 WebView2 방식 | offline installer 결정 |
+| Tauri DMG | https://v2.tauri.app/distribute/dmg/ | macOS disk image와 drag-to-Applications 설치 | Universal DMG 사용자 흐름 |
+| Tauri macOS App Bundle | https://v2.tauri.app/distribute/macos-application-bundle/ | app bundle과 minimum system 설정 | DMG 내부 production bundle 검사 |
+| Tauri macOS Code Signing | https://v2.tauri.app/distribute/sign/macos/ | Developer ID, notarization과 ad-hoc signing | 내부 검증본과 public distribution 주장 분리 |
 | Tauri Dialog Plugin | https://v2.tauri.app/plugin/dialog/ | native open/save dialog | import/export/backup 경로 선택 |
 | Tauri Single Instance Plugin | https://v2.tauri.app/plugin/single-instance/ | desktop 단일 instance와 기존 window focus | restore 전 process 배타 경계 |
 | Tauri File System Plugin | https://v2.tauri.app/plugin/file-system/ | local file 접근 | 파일 adapter |
@@ -105,6 +108,8 @@
 
 - Vite의 transpile과 TypeScript typecheck는 별도 단계로 둔다.
 - Windows installer는 WebView2 offlineInstaller를 포함한다. hosted runner는 WebView2 미설치 환경을 증명하지 못하므로 clean VM 수동 검증을 분리한다.
+- macOS direct distribution은 DMG의 BODAM 앱을 Applications로 드래그하는 표준 흐름을 사용하고 arm64/x86_64 Universal binary를 한 파일에 담는다.
+- ad-hoc macOS signature는 binary 무결성 검사에는 쓰지만 Apple 신원이나 notarization을 증명하지 않으며 Gatekeeper 수동 허용 가능성을 제거하지 않는다.
 - Tauri CLI 2.11.4는 NSIS 생성 중 main binary의 첫 `UNK` bundle marker를 `NSS`로 patch한 payload를 담고 이후 build output을 복원한다. installed identity는 이 exact 동길이 치환 외 모든 byte의 equality로 검증하고 실제 installed hash를 별도로 기록한다.
 - Tauri core 2.11.5는 configured window를 user setup hook보다 먼저 build한다. 또한 잠긴 PathResolver의 `app_data_dir()`는 `data_dir()/identifier`이고, 잠긴 dirs 6.0.0의 Windows `data_dir()`는 `FOLDERID_RoamingAppData`이므로 BODAM 생산 DB는 exact roaming identifier 경로에 결속된다. window handle만으로 database·IPC readiness를 주장하지 않고, exact roaming DB·renderer daily backup·빈 workspace가 안정된 뒤에만 정상 close를 요청한다.
 - Production close smoke는 `CloseMainWindow` 1회와 bounded `WaitForExit`·exit code 0을 요구한다. force stop은 실패 cleanup일 뿐 정상 종료나 exit-backup 성공 증거가 아니다.
