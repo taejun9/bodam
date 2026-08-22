@@ -82,7 +82,7 @@
 .field input::placeholder,
 .field textarea::placeholder {
   color: var(--text-muted);
-  opacity: 0.75;
+  opacity: 1;
 }
 
 .field-error {

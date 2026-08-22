@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 import { customerApplication } from "@/app/composition/customer";
 import CustomerDeleteDialog from "@/features/customer/components/CustomerDeleteDialog.vue";
@@ -18,6 +18,7 @@ import AppIcon from "@/shared/components/AppIcon.vue";
 
 type FieldErrors = Partial<Record<keyof CustomerInput, string>>;
 
+const pageElement = ref<HTMLElement>();
 const customers = ref<Customer[]>([]);
 const search = ref("");
 const initialLoading = ref(true);
@@ -46,6 +47,13 @@ function showNotice(message: string) {
   noticeTimer = setTimeout(() => {
     notice.value = undefined;
   }, 3500);
+}
+
+async function focusCreateCustomer(): Promise<void> {
+  await nextTick();
+  pageElement.value
+    ?.querySelector<HTMLElement>("[data-testid='create-customer']")
+    ?.focus();
 }
 
 async function loadCustomers(mode: "initial" | "refresh" = "refresh") {
@@ -139,6 +147,7 @@ async function confirmDelete() {
     deleteOpen.value = false;
     showNotice("고객을 기본 목록에서 제외했습니다.");
     await loadCustomers();
+    await focusCreateCustomer();
   } catch (error) {
     deleteError.value = customerSafeMessage(error);
   } finally {
@@ -163,7 +172,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section class="customer-page" aria-labelledby="customer-section-title">
+  <section ref="pageElement" class="customer-page" aria-labelledby="customer-section-title">
     <header class="customer-toolbar">
       <div>
         <h2 id="customer-section-title">고객 목록</h2>

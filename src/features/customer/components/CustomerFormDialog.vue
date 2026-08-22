@@ -71,6 +71,13 @@ function errorFor(field: FieldName): string | undefined {
   return localErrors[field] ?? props.errors[field];
 }
 
+function describedBy(field: FieldName): string | undefined {
+  const ids: string[] = [];
+  if (field === "memo") ids.push("customer-memo-privacy");
+  if (errorFor(field)) ids.push(`customer-${field}-error`);
+  return ids.length > 0 ? ids.join(" ") : undefined;
+}
+
 function clearError(field: FieldName) {
   delete localErrors[field];
 }
@@ -140,11 +147,11 @@ watch(
             autocomplete="name"
             placeholder="예: 김보담"
             :aria-invalid="Boolean(errorFor('name'))"
-            :aria-describedby="errorFor('name') ? 'name-error' : undefined"
+            :aria-describedby="describedBy('name')"
             autofocus
             @input="clearError('name')"
           />
-          <small v-if="errorFor('name')" id="name-error" class="field-error">
+          <small v-if="errorFor('name')" id="customer-name-error" class="field-error">
             {{ errorFor("name") }}
           </small>
         </label>
@@ -156,9 +163,14 @@ watch(
             name="birthDate"
             type="date"
             :aria-invalid="Boolean(errorFor('birthDate'))"
+            :aria-describedby="describedBy('birthDate')"
             @input="clearError('birthDate')"
           />
-          <small v-if="errorFor('birthDate')" class="field-error">
+          <small
+            v-if="errorFor('birthDate')"
+            id="customer-birthDate-error"
+            class="field-error"
+          >
             {{ errorFor("birthDate") }}
           </small>
         </label>
@@ -170,9 +182,10 @@ watch(
             name="gender"
             placeholder="선택 입력"
             :aria-invalid="Boolean(errorFor('gender'))"
+            :aria-describedby="describedBy('gender')"
             @input="clearError('gender')"
           />
-          <small v-if="errorFor('gender')" class="field-error">
+          <small v-if="errorFor('gender')" id="customer-gender-error" class="field-error">
             {{ errorFor("gender") }}
           </small>
         </label>
@@ -186,9 +199,10 @@ watch(
             autocomplete="tel"
             placeholder="예: 010-0000-0000"
             :aria-invalid="Boolean(errorFor('phone'))"
+            :aria-describedby="describedBy('phone')"
             @input="clearError('phone')"
           />
-          <small v-if="errorFor('phone')" class="field-error">
+          <small v-if="errorFor('phone')" id="customer-phone-error" class="field-error">
             {{ errorFor("phone") }}
           </small>
         </label>
@@ -200,9 +214,10 @@ watch(
             name="status"
             placeholder="예: 상담 중"
             :aria-invalid="Boolean(errorFor('status'))"
+            :aria-describedby="describedBy('status')"
             @input="clearError('status')"
           />
-          <small v-if="errorFor('status')" class="field-error">
+          <small v-if="errorFor('status')" id="customer-status-error" class="field-error">
             {{ errorFor("status") }}
           </small>
         </label>
@@ -215,9 +230,10 @@ watch(
             autocomplete="street-address"
             placeholder="선택 입력"
             :aria-invalid="Boolean(errorFor('address'))"
+            :aria-describedby="describedBy('address')"
             @input="clearError('address')"
           />
-          <small v-if="errorFor('address')" class="field-error">
+          <small v-if="errorFor('address')" id="customer-address-error" class="field-error">
             {{ errorFor("address") }}
           </small>
         </label>
@@ -230,12 +246,13 @@ watch(
             rows="4"
             placeholder="고객 응대에 필요한 일반 메모"
             :aria-invalid="Boolean(errorFor('memo'))"
+            :aria-describedby="describedBy('memo')"
             @input="clearError('memo')"
           />
-          <small class="privacy-hint">
+          <small id="customer-memo-privacy" class="privacy-hint">
             주민등록번호, 보험사 로그인 정보, 민감 병력이나 상세 병력은 저장하지 마세요.
           </small>
-          <small v-if="errorFor('memo')" class="field-error">
+          <small v-if="errorFor('memo')" id="customer-memo-error" class="field-error">
             {{ errorFor("memo") }}
           </small>
         </label>

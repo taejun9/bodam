@@ -50,6 +50,10 @@ function errorFor(field: FieldName): string | undefined {
   return localErrors[field] ?? props.errors[field];
 }
 
+function describedBy(field: FieldName): string | undefined {
+  return errorFor(field) ? `insurance-policy-${field}-error` : undefined;
+}
+
 function clearError(field: FieldName) {
   delete localErrors[field];
 }
@@ -106,9 +110,14 @@ watch(
             placeholder="예: 합성손해보험"
             autofocus
             :aria-invalid="Boolean(errorFor('insurer'))"
+            :aria-describedby="describedBy('insurer')"
             @input="clearError('insurer')"
           />
-          <small v-if="errorFor('insurer')" class="field-error">{{ errorFor("insurer") }}</small>
+          <small
+            v-if="errorFor('insurer')"
+            id="insurance-policy-insurer-error"
+            class="field-error"
+          >{{ errorFor("insurer") }}</small>
         </label>
 
         <label class="field">
@@ -120,9 +129,14 @@ watch(
             autocomplete="off"
             placeholder="예: 합성 안심보험"
             :aria-invalid="Boolean(errorFor('productName'))"
+            :aria-describedby="describedBy('productName')"
             @input="clearError('productName')"
           />
-          <small v-if="errorFor('productName')" class="field-error">{{ errorFor("productName") }}</small>
+          <small
+            v-if="errorFor('productName')"
+            id="insurance-policy-productName-error"
+            class="field-error"
+          >{{ errorFor("productName") }}</small>
         </label>
 
         <label class="field field-wide">
@@ -136,11 +150,16 @@ watch(
               autocomplete="off"
               placeholder="예: 125000"
               :aria-invalid="Boolean(errorFor('monthlyPremiumWon'))"
+              :aria-describedby="describedBy('monthlyPremiumWon')"
               @input="clearError('monthlyPremiumWon')"
             />
             <span>원 / 월</span>
           </div>
-          <small v-if="errorFor('monthlyPremiumWon')" class="field-error">
+          <small
+            v-if="errorFor('monthlyPremiumWon')"
+            id="insurance-policy-monthlyPremiumWon-error"
+            class="field-error"
+          >
             {{ errorFor("monthlyPremiumWon") }}
           </small>
         </label>
@@ -152,9 +171,14 @@ watch(
             name="joinedOn"
             type="date"
             :aria-invalid="Boolean(errorFor('joinedOn'))"
+            :aria-describedby="describedBy('joinedOn')"
             @input="clearError('joinedOn')"
           />
-          <small v-if="errorFor('joinedOn')" class="field-error">{{ errorFor("joinedOn") }}</small>
+          <small
+            v-if="errorFor('joinedOn')"
+            id="insurance-policy-joinedOn-error"
+            class="field-error"
+          >{{ errorFor("joinedOn") }}</small>
         </label>
 
         <label class="field">
@@ -164,9 +188,14 @@ watch(
             name="maturesOn"
             type="date"
             :aria-invalid="Boolean(errorFor('maturesOn'))"
+            :aria-describedby="describedBy('maturesOn')"
             @input="clearError('maturesOn')"
           />
-          <small v-if="errorFor('maturesOn')" class="field-error">{{ errorFor("maturesOn") }}</small>
+          <small
+            v-if="errorFor('maturesOn')"
+            id="insurance-policy-maturesOn-error"
+            class="field-error"
+          >{{ errorFor("maturesOn") }}</small>
         </label>
 
         <label class="field">
@@ -177,9 +206,14 @@ watch(
             maxlength="200"
             placeholder="예: 종신 또는 20년"
             :aria-invalid="Boolean(errorFor('coverageTerm'))"
+            :aria-describedby="describedBy('coverageTerm')"
             @input="clearError('coverageTerm')"
           />
-          <small v-if="errorFor('coverageTerm')" class="field-error">{{ errorFor("coverageTerm") }}</small>
+          <small
+            v-if="errorFor('coverageTerm')"
+            id="insurance-policy-coverageTerm-error"
+            class="field-error"
+          >{{ errorFor("coverageTerm") }}</small>
         </label>
 
         <label class="field">
@@ -190,9 +224,14 @@ watch(
             maxlength="200"
             placeholder="예: 20년납"
             :aria-invalid="Boolean(errorFor('paymentTerm'))"
+            :aria-describedby="describedBy('paymentTerm')"
             @input="clearError('paymentTerm')"
           />
-          <small v-if="errorFor('paymentTerm')" class="field-error">{{ errorFor("paymentTerm") }}</small>
+          <small
+            v-if="errorFor('paymentTerm')"
+            id="insurance-policy-paymentTerm-error"
+            class="field-error"
+          >{{ errorFor("paymentTerm") }}</small>
         </label>
 
         <label class="field">
@@ -203,9 +242,14 @@ watch(
             maxlength="200"
             placeholder="선택 입력"
             :aria-invalid="Boolean(errorFor('disclosurePlan'))"
+            :aria-describedby="describedBy('disclosurePlan')"
             @input="clearError('disclosurePlan')"
           />
-          <small v-if="errorFor('disclosurePlan')" class="field-error">{{ errorFor("disclosurePlan") }}</small>
+          <small
+            v-if="errorFor('disclosurePlan')"
+            id="insurance-policy-disclosurePlan-error"
+            class="field-error"
+          >{{ errorFor("disclosurePlan") }}</small>
         </label>
 
         <label class="field">
@@ -216,9 +260,14 @@ watch(
             maxlength="200"
             placeholder="예: 정상 유지"
             :aria-invalid="Boolean(errorFor('status'))"
+            :aria-describedby="describedBy('status')"
             @input="clearError('status')"
           />
-          <small v-if="errorFor('status')" class="field-error">{{ errorFor("status") }}</small>
+          <small
+            v-if="errorFor('status')"
+            id="insurance-policy-status-error"
+            class="field-error"
+          >{{ errorFor("status") }}</small>
         </label>
 
         <div class="policy-switches field-wide">

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, ref } from "vue";
 
 import CalendarDayAgenda from "@/features/calendar/components/CalendarDayAgenda.vue";
 import CalendarMonthGrid from "@/features/calendar/components/CalendarMonthGrid.vue";
@@ -11,6 +11,7 @@ import { useCalendarPage } from "@/features/calendar/composables/use-calendar-pa
 import { useCalendarScheduleActions } from "@/features/calendar/composables/use-calendar-schedule-actions";
 import AppButton from "@/shared/components/AppButton.vue";
 
+const pageElement = ref<HTMLElement>();
 const contentHeading = ref<HTMLElement>();
 const notice = ref<string>();
 let noticeTimer: ReturnType<typeof setTimeout> | undefined;
@@ -25,11 +26,22 @@ function showNotice(message: string): void {
   }, 3500);
 }
 
+async function focusAfterScheduleDelete(): Promise<void> {
+  await nextTick();
+  const pageRoot = pageElement.value;
+  const target = pageRoot?.querySelector<HTMLElement>(
+    "[data-testid='agenda-create-schedule']",
+  ) ?? pageRoot?.querySelector<HTMLElement>("[data-testid='calendar-retry']")
+    ?? contentHeading.value;
+  target?.focus();
+}
+
 const actions = useCalendarScheduleActions({
   selectedDate: () => page.selectedDate.value,
   selectDate: page.selectDate,
   reload: () => page.loadCalendar(),
   showNotice,
+  focusAfterDelete: focusAfterScheduleDelete,
 });
 
 const monthLabel = computed(() =>
@@ -49,6 +61,7 @@ onBeforeUnmount(() => {
 <template>
   <section
     class="calendar-page"
+    ref="pageElement"
     data-testid="calendar-page"
     aria-labelledby="calendar-content-title"
     :aria-busy="page.initialLoading.value || page.refreshing.value || page.retrying.value"

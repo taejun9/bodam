@@ -38,12 +38,21 @@ function stored(overrides: Partial<Schedule> = {}): Schedule {
   };
 }
 
+function deferred<T>(): { promise: Promise<T>; resolve(value: T): void } {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((resolvePromise) => {
+    resolve = resolvePromise;
+  });
+  return { promise, resolve };
+}
+
 function harness(selectedDate = "2026-08-06") {
   const options = {
     selectedDate: vi.fn(() => selectedDate),
     selectDate: vi.fn().mockResolvedValue(undefined),
     reload: vi.fn().mockResolvedValue(undefined),
     showNotice: vi.fn(),
+    focusAfterDelete: vi.fn().mockResolvedValue(undefined),
   };
   return { actions: useCalendarScheduleActions(options), options };
 }
@@ -131,18 +140,25 @@ describe("calendar schedule actions", () => {
   });
 
   it("confirms soft deletion through the application and reloads the calendar", async () => {
+    const reload = deferred<void>();
     applicationMocks.remove.mockResolvedValue(undefined);
     const { actions, options } = harness();
+    options.reload.mockReturnValueOnce(reload.promise);
     actions.requestDelete(calendarUiSchedule);
 
     expect(actions.deleteOpen.value).toBe(true);
     expect(actions.deletingSchedule.value).toEqual(calendarUiSchedule);
-    await actions.confirmDelete();
+    const deletion = actions.confirmDelete();
+    await vi.waitFor(() => expect(options.reload).toHaveBeenCalledTimes(1));
+    expect(options.focusAfterDelete).not.toHaveBeenCalled();
+    reload.resolve(undefined);
+    await deletion;
 
     expect(applicationMocks.remove).toHaveBeenCalledWith(calendarUiSchedule.id);
     expect(actions.deleteOpen.value).toBe(false);
     expect(actions.deleting.value).toBe(false);
     expect(options.reload).toHaveBeenCalledTimes(1);
+    expect(options.focusAfterDelete).toHaveBeenCalledTimes(1);
     expect(options.showNotice).toHaveBeenCalledWith(
       "일정을 기본 달력에서 삭제했습니다.",
     );

@@ -11,6 +11,7 @@ const asset = (name: string): string =>
   readFileSync(resolve(assetsDirectory, name), "utf8");
 const dashboardCardCss = asset("dashboard-card.css");
 const dashboardPageCss = asset("dashboard-page.css");
+const customerFormCss = asset("customer-form.css");
 const themeCss = asset("theme.css");
 
 function cssBlock(selector: string): string {
@@ -49,6 +50,17 @@ function contrastRatio(foreground: string, background: string): number {
   return ((values[0] ?? 0) + 0.05) / ((values[1] ?? 0) + 0.05);
 }
 
+function composite(foreground: string, background: string, opacity: number): string {
+  const channel = (offset: number): string => {
+    const foregroundValue = Number.parseInt(foreground.slice(offset, offset + 2), 16);
+    const backgroundValue = Number.parseInt(background.slice(offset, offset + 2), 16);
+    return Math.round(foregroundValue * opacity + backgroundValue * (1 - opacity))
+      .toString(16)
+      .padStart(2, "0");
+  };
+  return `#${channel(1)}${channel(3)}${channel(5)}`;
+}
+
 describe("dashboard text contrast", () => {
   it("uses the AA secondary token for every dashboard supporting-text surface", () => {
     expect(dashboardCardCss).not.toContain("var(--text-muted)");
@@ -59,6 +71,39 @@ describe("dashboard text contrast", () => {
       const foreground = color(block, "text-secondary");
       for (const background of ["bg-app", "bg-surface", "bg-subtle", "bg-muted"]) {
         expect(contrastRatio(foreground, color(block, background))).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+  });
+
+  it("keeps muted text AA on every light and dark application surface", () => {
+    const lightTheme = cssBlock(":root");
+    expect(contrastRatio(color(lightTheme, "text-muted"), "#ffffff"))
+      .toBeGreaterThanOrEqual(4.5);
+
+    for (const selector of [":root", ':root[data-theme="dark"]']) {
+      const block = cssBlock(selector);
+      const foreground = color(block, "text-muted");
+      for (const background of ["bg-app", "bg-surface", "bg-subtle", "bg-muted"]) {
+        expect(contrastRatio(foreground, color(block, background))).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+  });
+
+  it("keeps placeholder opacity-composited text AA on form backgrounds", () => {
+    const placeholder = /\.field input::placeholder,\s*\.field textarea::placeholder\s*\{([^}]*)\}/
+      .exec(customerFormCss)?.[1];
+    if (!placeholder) throw new Error("missing shared form placeholder block");
+    expect(placeholder).toContain("color: var(--text-muted)");
+    const opacity = Number(/opacity:\s*([\d.]+)/.exec(placeholder)?.[1]);
+    expect(Number.isFinite(opacity)).toBe(true);
+
+    for (const selector of [":root", ':root[data-theme="dark"]']) {
+      const block = cssBlock(selector);
+      const foreground = color(block, "text-muted");
+      for (const background of ["bg-subtle", "bg-surface"]) {
+        const backgroundColor = color(block, background);
+        expect(contrastRatio(composite(foreground, backgroundColor, opacity), backgroundColor))
+          .toBeGreaterThanOrEqual(4.5);
       }
     }
   });
