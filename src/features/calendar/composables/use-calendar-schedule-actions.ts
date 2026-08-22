@@ -18,6 +18,7 @@ interface CalendarScheduleActionOptions {
   selectDate: (date: string) => Promise<void>;
   reload: () => Promise<void>;
   showNotice: (message: string) => void;
+  focusAfterDelete: () => Promise<void>;
 }
 
 export function useCalendarScheduleActions(options: CalendarScheduleActionOptions) {
@@ -129,6 +130,7 @@ export function useCalendarScheduleActions(options: CalendarScheduleActionOption
       deleteOpen.value = false;
       options.showNotice("일정을 기본 달력에서 삭제했습니다.");
       await options.reload();
+      await options.focusAfterDelete();
     } catch (error) {
       deleteError.value = scheduleSafeMessage(error);
     } finally {

@@ -4,14 +4,7 @@
 
 ## 도메인 규칙
 
-- 월 보험료에 특약 보험료가 포함되는지 여부
-- 보험기간·납입기간의 저장 단위와 종신 표현
 - 갱신 계약의 갱신 주기와 다음 갱신일 관리 여부
-- 보장금액의 통화·단위와 중복 특약 합산 규칙
-
-## 데이터 관계
-
-- 보험계약과 보장 레코드의 필수/선택 관계
 
 ## Excel / CSV
 
@@ -27,13 +20,16 @@
 
 ## Desktop / Database
 
-- Prisma Client를 Node sidecar에서 실행할지, Prisma를 schema/migration에만 사용할지
 - removable·network filesystem을 custom backup 위치로 쓸 때 platform별 atomicity와 운영 지원 범위
 - 자동 backup 파일을 앱 안에서 열람·개별 삭제·복사할 관리 UI 필요 여부
 - 향후 backup 암호화, recovery key와 앱 잠금 필요 여부
 
 ## 승인 프로필로 해결된 항목
 
+- 보험기간·납입기간은 `종신`을 포함할 수 있는 원문 text로 저장한다. 근거: [권장 기본 운영 프로필 5절](proposed-operating-profile.md)
+- 월 보험료는 계약서에서 확인한 총 월납입액 한 개를 KRW 정수로 저장하고 특약별 breakdown은 별도 저장하지 않는다. 근거: [권장 기본 운영 프로필 5절](proposed-operating-profile.md)
+- Policy는 Coverage 없이 생성할 수 있지만 각 Coverage는 Policy와 카테고리를 필수로 하고 금액은 KRW 정수로 저장한다. 같은 고객·카테고리의 여러 활성 Coverage 금액은 합산한다. 근거: [권장 기본 운영 프로필 5–6절](proposed-operating-profile.md)
+- Prisma schema와 migration history를 schema artifact의 단일 source로 유지하고, 설치 앱 runtime은 Node sidecar 없이 Tauri Rust adapter가 SQLite에 접근한다. 근거: [ADR-001 Prisma와 Tauri 런타임 경계](../architecture/decisions/adr-001-prisma-tauri-runtime.md)
 - Windows x64 NSIS는 WebView2 `offlineInstaller`를 포함해 설치와 핵심 실행 모두 offline을 목표로 한다. Hosted Windows CI는 설치된 앱 경로와 기능을 검증하지만, WebView2가 없는 network-blocked clean VM의 installer bootstrap·wizard를 대신 증명하지 않는다.
 - 담당상태와 상담 결과는 선택 자유입력으로 시작하며 enum을 고정하지 않는다.
 - Coverage Benchmark는 카테고리·정확히 같은 자유입력 성별·포함 만 나이 구간별 적정하한과 과다하한을 사용한다. 겹치는 활성 구간은 거부하고 일치 기준이 없으면 부족으로 간주하지 않는다.
@@ -59,4 +55,4 @@
 - 종료 backup 실패는 재시도 또는 경고 후 종료를 선택한다. MVP backup은 암호화하지 않고 OS 계정·디스크 보호에 의존한다.
 - Settings의 Dashboard 기간은 최근 상담·미상담 기준만 조절하고 예정 bucket은 고정한다. 카드 표시 건수는 전체 카드 공통 1–10이다.
 
-위 결정은 `docs/product/proposed-operating-profile.md`의 승인 상태와 공통 데이터·Customer/Consultation·Dashboard·Calendar 규칙을 근거로 한다.
+위 결정은 [권장 기본 운영 프로필](proposed-operating-profile.md)의 승인 상태와 공통 데이터·Customer/Consultation·Dashboard·Calendar 규칙 및 [ADR-001](../architecture/decisions/adr-001-prisma-tauri-runtime.md)을 근거로 한다.

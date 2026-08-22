@@ -216,6 +216,35 @@ describe("CalendarPage", () => {
     expect(document.activeElement?.id).toBe("calendar-content-title");
   });
 
+  it("focuses the stable agenda create action after a schedule soft delete reload", async () => {
+    calendarMocks.loadMonth
+      .mockResolvedValueOnce(calendarUiModel())
+      .mockResolvedValueOnce(
+        calendarUiModel("2026-08", calendarUiEvents.filter((event) => event.kind !== "schedule")),
+      );
+    scheduleMocks.remove.mockResolvedValue(undefined);
+    const { wrapper } = await mountPage("/calendar?month=2026-08&date=2026-08-06");
+    mounted.push(wrapper);
+    await flushPromises();
+
+    const schedule = wrapper.get(
+      `[data-event-id='schedule:${calendarUiIds.schedule}']`,
+    );
+    const remove = schedule.findAll("button").find((button) => button.text() === "삭제")!;
+    remove.element.focus();
+    await remove.trigger("click");
+    const confirm = wrapper.findAll("button")
+      .find((button) => button.text().includes("일정 삭제"))!;
+    await confirm.trigger("click");
+    await flushPromises();
+
+    expect(scheduleMocks.remove).toHaveBeenCalledWith(calendarUiIds.schedule);
+    expect(calendarMocks.loadMonth).toHaveBeenCalledTimes(2);
+    expect(document.activeElement).toBe(
+      wrapper.get("[data-testid='agenda-create-schedule']").element,
+    );
+  });
+
   it("reloads on focus, resume, and local midnight", async () => {
     vi.useFakeTimers();
     runtimeMocks.millisecondsUntilMidnight.mockReturnValue(100);

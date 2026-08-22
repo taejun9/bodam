@@ -50,13 +50,15 @@ describe("AppShell canonical theme toggle", () => {
   it("persists the requested theme and applies the canonical response", async () => {
     const wrapper = await mountShell();
     const button = wrapper.get(".topbar-actions .icon-button");
-    expect(button.attributes("aria-pressed")).toBe("false");
+    expect(button.attributes("aria-pressed")).toBeUndefined();
+    expect(button.attributes("aria-label")).toBe("다크 모드 사용");
 
     await button.trigger("click");
     await flushPromises();
 
     expect(applicationMocks.updateTheme).toHaveBeenCalledWith("dark");
-    expect(button.attributes("aria-pressed")).toBe("true");
+    expect(button.attributes("aria-pressed")).toBeUndefined();
+    expect(button.attributes("aria-label")).toBe("라이트 모드 사용");
     expect(document.documentElement.dataset.theme).toBe("dark");
     wrapper.unmount();
   });
@@ -70,7 +72,8 @@ describe("AppShell canonical theme toggle", () => {
     await button.trigger("click");
     await flushPromises();
 
-    expect(button.attributes("aria-pressed")).toBe("false");
+    expect(button.attributes("aria-pressed")).toBeUndefined();
+    expect(button.attributes("aria-label")).toBe("다크 모드 사용");
     const alert = wrapper.get(".topbar-actions [role='alert']");
     expect(alert.text()).toContain("설정 작업을 완료하지 못했습니다");
     expect(alert.text()).not.toContain("private-theme-marker");

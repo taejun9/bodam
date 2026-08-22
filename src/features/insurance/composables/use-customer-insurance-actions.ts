@@ -16,6 +16,7 @@ interface CustomerInsuranceActionOptions {
   customerId: () => string;
   loadPolicies: (expectedCustomerId?: string) => Promise<void>;
   showNotice: (message: string) => void;
+  focusCreate: () => Promise<void>;
 }
 
 export function useCustomerInsuranceActions(options: CustomerInsuranceActionOptions) {
@@ -111,6 +112,7 @@ export function useCustomerInsuranceActions(options: CustomerInsuranceActionOpti
       deleteOpen.value = false;
       options.showNotice("보험계약을 기본 목록에서 삭제했습니다.");
       await options.loadPolicies(expectedCustomerId);
+      if (expectedCustomerId === options.customerId()) await options.focusCreate();
     } catch (error) {
       if (expectedCustomerId === options.customerId()) {
         deleteError.value = insuranceSafeMessage(error);

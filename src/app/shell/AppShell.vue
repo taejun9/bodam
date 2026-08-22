@@ -54,7 +54,18 @@ async function toggleNavigation() {
   ui.toggleNavigation();
   if (!openingMobile) return;
   await nextTick();
-  sidebar.value?.querySelector<HTMLElement>(".nav-item:not([disabled])")?.focus();
+  const activeItem = sidebar.value?.querySelector<HTMLElement>(
+    ".nav-item.router-link-active:not([disabled])",
+  );
+  const fallbackItem = sidebar.value?.querySelector<HTMLElement>(
+    ".nav-item:not([disabled])",
+  );
+  (activeItem ?? fallbackItem)?.focus();
+}
+
+function isNavigationActive(path: string | undefined): boolean {
+  if (!path) return false;
+  return route.path === path || (path === "/customers" && route.name === "customer-detail");
 }
 
 function handleWindowKeydown(event: KeyboardEvent) {
@@ -139,6 +150,7 @@ const utilities = [
           <RouterLink
             v-if="item.to"
             class="nav-item"
+            :class="{ 'router-link-active': isNavigationActive(item.to) }"
             :to="item.to"
             :title="ui.sidebarCollapsed ? item.label : undefined"
             @click="closeMobileNavigation('main')"
@@ -164,6 +176,7 @@ const utilities = [
           <RouterLink
             v-if="item.to"
             class="nav-item"
+            :class="{ 'router-link-active': isNavigationActive(item.to) }"
             :to="item.to"
             :title="ui.sidebarCollapsed ? item.label : undefined"
             @click="closeMobileNavigation('main')"
@@ -225,7 +238,6 @@ const utilities = [
             :disabled="themeSaving"
             :aria-busy="themeSaving"
             :aria-label="ui.theme === 'light' ? '다크 모드 사용' : '라이트 모드 사용'"
-            :aria-pressed="ui.theme === 'dark'"
             @click="toggleTheme"
           >
             <AppIcon :name="ui.theme === 'light' ? 'moon' : 'sun'" />

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 
 import { customerApplication } from "@/app/composition/customer";
@@ -23,9 +23,13 @@ import AppButton from "@/shared/components/AppButton.vue";
 import AppIcon from "@/shared/components/AppIcon.vue";
 
 const route = useRoute();
+const pageElement = ref<HTMLElement>();
+const contentHeading = ref<HTMLElement>();
 const customer = ref<Customer>();
 const policies = ref<InsurancePolicy[]>([]);
 const initialLoading = ref(true);
+const retrying = ref(false);
+const initialLoadFailed = ref(false);
 const refreshing = ref(false);
 const pageError = ref<string>();
 const notice = ref<string>();
@@ -46,6 +50,13 @@ function showNotice(message: string) {
   noticeTimer = setTimeout(() => {
     notice.value = undefined;
   }, 3500);
+}
+
+async function focusCreatePolicy(): Promise<void> {
+  await nextTick();
+  pageElement.value
+    ?.querySelector<HTMLElement>("[data-testid='create-policy']")
+    ?.focus();
 }
 
 const {
@@ -71,15 +82,26 @@ const {
   confirmDelete,
   manageCoverage,
   coverageChanged,
-} = useCustomerInsuranceActions({ customerId, loadPolicies, showNotice });
+} = useCustomerInsuranceActions({
+  customerId,
+  loadPolicies,
+  showNotice,
+  focusCreate: focusCreatePolicy,
+});
 
-async function loadPage() {
+async function loadPage(mode: "initial" | "retry" = "initial") {
+  if (mode === "retry" && retrying.value) return;
   const currentLoad = ++loadNumber;
-  initialLoading.value = true;
+  if (mode === "initial") {
+    initialLoading.value = true;
+    initialLoadFailed.value = false;
+    pageError.value = undefined;
+  } else {
+    retrying.value = true;
+  }
   refreshing.value = false;
   customer.value = undefined;
   policies.value = [];
-  pageError.value = undefined;
   notice.value = undefined;
   resetDialogs();
   try {
@@ -90,20 +112,34 @@ async function loadPage() {
     if (currentLoad !== loadNumber) return;
     const activeCustomer = customers.find((item) => item.id === customerId());
     if (!activeCustomer) {
+      initialLoadFailed.value = false;
       pageError.value = "활성 고객을 찾을 수 없습니다.";
       return;
     }
     customer.value = activeCustomer;
     policies.value = loadedPolicies;
+    initialLoadFailed.value = false;
+    pageError.value = undefined;
+    if (mode === "retry") {
+      await nextTick();
+      if (currentLoad === loadNumber) contentHeading.value?.focus();
+    }
   } catch (error) {
     if (currentLoad === loadNumber) {
+      initialLoadFailed.value = !(
+        error instanceof InsuranceValidationError ||
+        (error instanceof InsuranceRepositoryError && error.code === "customer_not_found")
+      );
       pageError.value = error instanceof InsuranceValidationError
         || error instanceof InsuranceRepositoryError
         ? insuranceSafeMessage(error)
         : customerSafeMessage(error);
     }
   } finally {
-    if (currentLoad === loadNumber) initialLoading.value = false;
+    if (currentLoad === loadNumber) {
+      initialLoading.value = false;
+      retrying.value = false;
+    }
   }
 }
 
@@ -129,7 +165,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section class="insurance-page" aria-labelledby="insurance-section-title">
+  <section ref="pageElement" class="insurance-page" aria-labelledby="insurance-section-title">
     <nav class="detail-breadcrumb" aria-label="현재 위치">
       <RouterLink to="/customers">고객 목록</RouterLink>
       <span aria-hidden="true">/</span>
@@ -146,6 +182,12 @@ onBeforeUnmount(() => {
       <span class="state-symbol is-error" aria-hidden="true">!</span>
       <strong>고객 상세를 열지 못했습니다</strong>
       <span>{{ pageError ?? "활성 고객을 찾을 수 없습니다." }}</span>
+      <AppButton
+        v-if="initialLoadFailed"
+        data-testid="customer-detail-retry"
+        :loading="retrying"
+        @click="loadPage('retry')"
+      >다시 시도</AppButton>
       <RouterLink class="state-link" to="/customers">고객 목록으로 돌아가기</RouterLink>
     </section>
 
@@ -154,7 +196,9 @@ onBeforeUnmount(() => {
         <div class="policy-customer">
           <span class="customer-avatar" aria-hidden="true">{{ customer.name.slice(0, 1) }}</span>
           <div>
-            <h2 id="insurance-section-title">{{ customer.name }}</h2>
+            <h2 id="insurance-section-title" ref="contentHeading" tabindex="-1">
+              {{ customer.name }}
+            </h2>
             <p>{{ customer.phone ?? "연락처 미입력" }} · {{ customer.status ?? "담당 상태 미입력" }}</p>
           </div>
         </div>
