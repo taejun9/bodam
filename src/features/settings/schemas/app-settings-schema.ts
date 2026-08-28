@@ -17,7 +17,7 @@ import {
   AppSettingsValidationError,
 } from "../types/app-settings-error";
 
-export const ThemeModeSchema = z.enum(["light", "dark"]);
+export const ThemeModeSchema = z.enum(["light", "dark", "system"]);
 
 const settingsInputShape = {
   theme: ThemeModeSchema,

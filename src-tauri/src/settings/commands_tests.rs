@@ -14,14 +14,14 @@ fn command_boundary_loads_and_updates_safe_settings_contract() {
     let updated = update_with_repository(
         &repository,
         UpdateAppSettingsInput {
-            theme: "dark".to_owned(),
+            theme: "system".to_owned(),
             recent_consultation_days: 45,
             unconsulted_days: 120,
             dashboard_item_limit: 6,
         },
     )
     .expect("update settings");
-    assert_eq!(updated.theme, "dark");
+    assert_eq!(updated.theme, "system");
     assert_eq!(updated.recent_consultation_days, 45);
     assert_eq!(updated.unconsulted_days, 120);
     assert_eq!(updated.dashboard_item_limit, 6);

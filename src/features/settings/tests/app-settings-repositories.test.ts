@@ -34,13 +34,13 @@ describe("BrowserAppSettingsRepository", () => {
     expect(await repository.load()).toEqual(DEFAULT_APP_SETTINGS);
 
     const updated = await repository.update({
-      theme: "dark",
+      theme: "system",
       recentConsultationDays: 45,
       unconsultedDays: 120,
       dashboardItemLimit: 7,
     });
     expect(updated).toEqual({
-      theme: "dark",
+      theme: "system",
       recentConsultationDays: 45,
       unconsultedDays: 120,
       dashboardItemLimit: 7,

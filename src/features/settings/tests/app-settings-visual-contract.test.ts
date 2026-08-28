@@ -38,6 +38,8 @@ describe("app settings visual contract", () => {
     expect(cssBlock(".app-settings-section")).toContain("min-width: 0");
     expect(cssBlock(".dashboard-preferences"))
       .toContain("repeat(3, minmax(0, 1fr))");
+    expect(cssBlock(".theme-options"))
+      .toContain("repeat(3, minmax(0, 1fr))");
     expect(css).toContain("@media (max-width: 640px)");
     expect(css).toContain(".dashboard-preferences {\n    grid-template-columns: 1fr;");
     expect(css).toContain("@media (max-width: 420px)");

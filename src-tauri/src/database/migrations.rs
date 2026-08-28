@@ -78,6 +78,13 @@ pub(crate) const MIGRATIONS: &[Migration] = &[
             "../../../database/prisma/migrations/20260806080000_add_app_settings/migration.sql"
         ),
     },
+    Migration {
+        name: "20260828000000_add_system_theme",
+        checksum_sha256: "00ffce3ddab96e49e8c663217858fa67cd6f8eec4007e82c94ce378ad459330a",
+        sql: include_str!(
+            "../../../database/prisma/migrations/20260828000000_add_system_theme/migration.sql"
+        ),
+    },
 ];
 
 const HISTORY_TABLE_SQL: &str = r#"

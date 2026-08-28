@@ -4,9 +4,30 @@ use crate::error::AppError;
 
 use super::inspection::{verify_columns, ExpectedColumn};
 
-pub(super) const OBJECTS: &[(&str, &str, &str)] = &[("table", "app_settings", "app_settings")];
+pub(super) const V9_OBJECTS: &[(&str, &str, &str)] = &[("table", "app_settings", "app_settings")];
+pub(super) const V10_OBJECTS: &[(&str, &str, &str)] = &[];
 
-pub(super) fn verify_schema(connection: &Connection) -> Result<(), AppError> {
+pub(super) fn verify_v9_schema(connection: &Connection) -> Result<(), AppError> {
+    verify_schema(
+        connection,
+        "CHECK (\"theme\" IN ('light', 'dark'))",
+        "CHECK (\"theme\" IN ('light', 'dark', 'system'))",
+    )
+}
+
+pub(super) fn verify_current_schema(connection: &Connection) -> Result<(), AppError> {
+    verify_schema(
+        connection,
+        "CHECK (\"theme\" IN ('light', 'dark', 'system'))",
+        "CHECK (\"theme\" IN ('light', 'dark'))",
+    )
+}
+
+fn verify_schema(
+    connection: &Connection,
+    required_theme_check: &str,
+    rejected_theme_check: &str,
+) -> Result<(), AppError> {
     const COLUMNS: &[ExpectedColumn] = &[
         ("id", "INTEGER", true, Some("1"), 1),
         ("theme", "TEXT", true, Some("'light'"), 0),
@@ -18,14 +39,17 @@ pub(super) fn verify_schema(connection: &Connection) -> Result<(), AppError> {
         ("updated_at", "DATETIME", true, Some("CURRENT_TIMESTAMP"), 0),
     ];
     verify_columns(connection, "app_settings", COLUMNS)?;
-    verify_checks(connection)?;
+    verify_checks(connection, required_theme_check, rejected_theme_check)?;
     verify_singleton(connection)
 }
 
-fn verify_checks(connection: &Connection) -> Result<(), AppError> {
+fn verify_checks(
+    connection: &Connection,
+    required_theme_check: &str,
+    rejected_theme_check: &str,
+) -> Result<(), AppError> {
     const REQUIRED: &[&str] = &[
         "CHECK (\"id\" = 1)",
-        "CHECK (\"theme\" IN ('light', 'dark'))",
         "CHECK (\"recent_consultation_days\" BETWEEN 1 AND 365)",
         "CHECK (\"unconsulted_days\" BETWEEN 1 AND 3650)",
         "CHECK (\"unconsulted_days\" >= \"recent_consultation_days\")",
@@ -39,7 +63,10 @@ fn verify_checks(connection: &Connection) -> Result<(), AppError> {
             |row| row.get::<_, String>(0),
         )
         .map_err(|_| AppError::MigrationDrift)?;
-    if REQUIRED.iter().any(|required| !sql.contains(required)) {
+    if !sql.contains(required_theme_check)
+        || sql.contains(rejected_theme_check)
+        || REQUIRED.iter().any(|required| !sql.contains(required))
+    {
         return Err(AppError::MigrationDrift);
     }
     Ok(())

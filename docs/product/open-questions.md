@@ -18,6 +18,16 @@
 - 앱을 여러 날 실행하지 않았을 때 시작 계산과 하루 1회 계산의 기준
 - 오늘의 경계와 Windows 로컬 시간대 변경 처리
 
+## Google Calendar 연동
+
+- BODAM 전용 Google 보조 캘린더를 만들지, 사용자의 기존 캘린더를 선택할지
+- BODAM→Google 단방향, Google→BODAM 단방향 또는 양방향 중 어떤 동기화가 필요한지
+- 사용자 일정만 전송할지, 상담일·다음 연락일·상령일·만기일까지 포함할지
+- 고객 이름·일정 제목·메모 중 Google에 전송할 수 있는 최소 필드
+- 수동 동기화만 제공할지, 앱 시작·일정 변경 때 자동 동기화할지
+- 중복·수정 충돌·삭제·연결 해제와 Google 반복 일정의 처리 규칙
+- 개인/소수 사용자용 Testing 운영인지 외부 배포와 OAuth 검증까지 필요한지
+
 ## Desktop / Database
 
 - removable·network filesystem을 custom backup 위치로 쓸 때 platform별 atomicity와 운영 지원 범위

@@ -29,9 +29,9 @@ fn loads_defaults_and_updates_preferences_without_changing_path() {
         .set_custom_backup_directory(&custom)
         .expect("set custom directory");
     let updated = repository
-        .update(write("dark", 45, 120, 7))
+        .update(write("system", 45, 120, 7))
         .expect("update settings");
-    assert_eq!(updated.theme, "dark");
+    assert_eq!(updated.theme, "system");
     assert_eq!(
         updated.custom_backup_directory.as_deref(),
         Some(custom.as_path())
@@ -118,7 +118,7 @@ fn persists_settings_across_repository_reopen() {
             .set_custom_backup_directory(&custom)
             .expect("set directory");
         repository
-            .update(write("dark", 60, 180, 5))
+            .update(write("system", 60, 180, 5))
             .expect("update settings");
     }
     let reopened = SettingsRepository::open(&path).expect("reopen settings repository");
@@ -126,7 +126,7 @@ fn persists_settings_across_repository_reopen() {
     assert_eq!(
         settings,
         super::model::StoredAppSettings {
-            theme: "dark".to_owned(),
+            theme: "system".to_owned(),
             recent_consultation_days: 60,
             unconsulted_days: 180,
             dashboard_item_limit: 5,

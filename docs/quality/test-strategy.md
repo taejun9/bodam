@@ -14,6 +14,7 @@
 - import row normalization과 validation
 - backup retention 30개 선택
 - Dashboard 설정 1/30/90/10 경계와 recent/unconsulted 비중복
+- light/dark/system 선호 저장, system 첫 화면 해석과 OS 색상 선호 변경 반영
 
 framework, DB, 실제 시간 없이 빠르게 실행되어야 한다.
 

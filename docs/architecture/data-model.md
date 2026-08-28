@@ -69,7 +69,7 @@ Calendar는 Schedule 원본과 Customer·Policy·Consultation 공개 application
 
 ### AppSettings
 
-AppSettings는 고정 singleton ID, `light|dark` theme, 최근 상담 일수, 미상담 기준 일수, Dashboard 카드 표시 건수, nullable custom backup directory와 updated timestamp를 가진 local 환경 설정이다. 기본값은 light·30·90·10·default backup 위치이며, 미상담 기준은 최근 상담 일수 이상이고 카드 건수는 1–10이다.
+AppSettings는 고정 singleton ID, `light|dark|system` theme 선호, 최근 상담 일수, 미상담 기준 일수, Dashboard 카드 표시 건수, nullable custom backup directory와 updated timestamp를 가진 local 환경 설정이다. 기본값은 light·30·90·10·default backup 위치이며, 미상담 기준은 최근 상담 일수 이상이고 카드 건수는 1–10이다. system 선호의 실제 light/dark 값은 OS에서 요청 시 해석하며 DB에 별도로 저장하지 않는다.
 
 custom directory의 전체 path는 SQLite adapter와 backup manager만 사용하고 UI DTO에는 기본/custom 여부와 basename만 전달한다. Settings는 업무 soft delete 대상이 아니며 전체 SQLite snapshot에 포함되어 restore 시 함께 돌아간다. sidebar collapse 같은 일시적 UI state는 AppSettings와 backup 대상에 포함하지 않는다.
 

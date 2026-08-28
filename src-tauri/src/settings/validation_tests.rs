@@ -21,10 +21,14 @@ fn accepts_exact_settings_boundaries_and_equal_periods() {
     assert!(validate_update(lower).is_ok());
 
     let mut upper = input();
-    upper.theme = "dark".to_owned();
+    upper.theme = "system".to_owned();
     upper.recent_consultation_days = 365;
     upper.unconsulted_days = 3_650;
     assert!(validate_update(upper).is_ok());
+
+    let mut dark = input();
+    dark.theme = "dark".to_owned();
+    assert!(validate_update(dark).is_ok());
 }
 
 #[test]

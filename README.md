@@ -87,7 +87,7 @@ Windows x64 제작 PC에서는 같은 의존성 설치 뒤 current-user NSIS를 
 - UTC로 저장하고 OS local timezone으로 표시하는 상담 일시와 선택 다음 연락일·자유입력 결과
 - KRW 원 단위 정수, 가입일·만기일·다음 연락일 date-only와 상담 timestamp 검증
 - SQLite migration checksum/history/runtime schema drift 검사
-- light/dark 테마, 키보드 접근성, 모바일 반응형 브라우저 화면
+- light/dark/system 테마와 실행 중 OS 테마 변경 반영, 키보드 접근성, 모바일 반응형 브라우저 화면
 - SQLite에 유지되는 테마, 최근·미상담 기간과 Dashboard 카드별 1–10건 설정
 - 시작·다시 활성화·날짜 변경의 일일 백업, 변경된 정상 종료 백업과 최근 자동 30개 보존
 - 설정된 로컬 폴더의 수동 전체 백업과 checksum·schema·SQLite 무결성 검증
@@ -160,7 +160,7 @@ Windows x64 제작 PC에서는 같은 의존성 설치 뒤 current-user NSIS를 
 
 ### 설정·백업·복원 사용 흐름
 
-1. 왼쪽 `설정`에서 light/dark 테마, 오늘 포함 최근 상담 기간, 미상담 기준과 카드별 표시 건수를 저장합니다. 미상담 기준은 최근 상담 기간 이상이어야 하며 상령·만기 30/60/90일 구간은 바뀌지 않습니다.
+1. 왼쪽 `설정`에서 light/dark/system 테마, 오늘 포함 최근 상담 기간, 미상담 기준과 카드별 표시 건수를 저장합니다. system은 운영체제 색상 선호를 따르며 실행 중 변경도 반영합니다. 미상담 기준은 최근 상담 기간 이상이어야 하며 상령·만기 30/60/90일 구간은 바뀌지 않습니다.
 2. 데스크톱 앱은 기본 app-data `backups`에 local date당 자동 성공본이 없을 때 daily backup을 만들고, 정상 종료에는 마지막 성공본 이후 DB가 바뀐 경우만 exit backup을 추가합니다. `daily|exit` 최근 30개만 자동 정리합니다.
 3. `백업 폴더 변경`은 native folder dialog로 로컬 폴더를 정하며 앱에는 기본/custom 여부와 폴더명만 표시합니다. 사용할 수 없어진 custom 위치를 기본 폴더로 조용히 바꾸지 않습니다.
 4. `지금 백업`은 설정된 폴더에 retention에서 제외되는 manual `.bodam-backup`을 만듭니다. 파일은 strict manifest와 `database.sqlite3`만 가진 검증된 ZIP이지만 암호화되지 않은 평문입니다.

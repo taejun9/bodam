@@ -21,14 +21,14 @@ describe("AppSettingsApplication", () => {
     };
     const application = new AppSettingsApplication(repository);
 
-    const updated = await application.updateTheme("dark");
+    const updated = await application.updateTheme("system");
     expect(repository.update).toHaveBeenCalledWith({
-      theme: "dark",
+      theme: "system",
       recentConsultationDays: 45,
       unconsultedDays: 120,
       dashboardItemLimit: 7,
     });
-    expect(updated.theme).toBe("dark");
+    expect(updated.theme).toBe("system");
     expect(updated.backupDirectory.basename).toBe("합성 백업");
   });
 

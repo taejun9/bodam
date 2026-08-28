@@ -28,11 +28,11 @@ describe("app settings schema", () => {
       dashboardItemLimit: 1,
     });
     expect(parseAppSettingsInput({
-      theme: "light",
+      theme: "system",
       recentConsultationDays: 365,
       unconsultedDays: 3_650,
       dashboardItemLimit: 10,
-    })).toBeDefined();
+    })).toMatchObject({ theme: "system" });
   });
 
   it("rejects overlap, out-of-range values, and backup input fields", () => {

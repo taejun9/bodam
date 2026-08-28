@@ -78,22 +78,18 @@ fn archive_round_trip_enforces_manifest_digest_and_exact_entries() {
 }
 
 #[test]
-fn registered_old_prefix_migrates_only_in_the_working_copy() {
+fn registered_v9_prefix_migrates_only_in_the_working_copy() {
     let runtime = TestDirectory::new();
     let old = runtime.path().join("old.sqlite3");
-    database::create_registered_prefix_for_test(&old, 8).unwrap();
+    database::create_registered_prefix_for_test(&old, 9).unwrap();
     let before = inspect_database(&old, false).unwrap();
-    assert_eq!(before.schema.migration_count, 8);
+    assert_eq!(before.schema.migration_count, 9);
     let migrated = migrate_working_database(&old).unwrap();
     assert_eq!(migrated.schema, database::current_registered_version());
     let connection = Connection::open(&old).unwrap();
     assert_eq!(
         connection
-            .query_row(
-                "SELECT COUNT(*) FROM app_settings WHERE id = 1",
-                [],
-                |row| { row.get::<_, u32>(0) }
-            )
+            .execute("UPDATE app_settings SET theme = 'system' WHERE id = 1", [])
             .unwrap(),
         1
     );
