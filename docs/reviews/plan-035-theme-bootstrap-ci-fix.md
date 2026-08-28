@@ -10,6 +10,7 @@ pass-with-residual-risk
 - reviewed tree: `codex/plan-035-theme-bootstrap-ci-fix` before initial and hosted-checkout follow-up commits
 - baseline: main `9ed42e9abc381058618bfc2b37b0cf70d323f618`
 - failure evidence: GitHub Actions run 33145307390 at baseline SHA
+- acceptance evidence: GitHub Actions run 33152307793 at `2079764e7d93b8c0b22a669cd2d746745daf5df7`
 - reviewers: independent code/parser, product/evidence, privacy/trust and hosted-checkout security boundaries
 - reviewed_at: 2026-08-28 KST
 
@@ -22,7 +23,8 @@ pass-with-residual-risk
 - actual release app: isolated OS-temp synthetic DB only; light, dark and system save/apply, current OS-dark system resolution, reload persistence and six top-level routes passed without a new error alert.
 - `cargo fmt --check`, `git diff --check`, review prerequisites, Windows npm trust preflight, 300-line, sensitive-artifact and capability gates: PASS.
 - hosted Windows run 33150814716 at `8f21d4c76ebc1ee626c0499a364b3e5e82e60e83`: FAIL after theme 4/4 PASS in 209ms and frontend/Rust/build PASS; final harness rejected the valid hosted checkout path, so installer/E2E skipped.
-- hosted-checkout follow-up: local full QA, focused policy controls, Windows npm trust preflight and two independent reviews PASS; exact follow-up SHA hosted rerun pending.
+- hosted-checkout follow-up: local full QA, focused policy controls, Windows npm trust preflight and two independent reviews PASS.
+- hosted Windows run 33152307793 at `2079764e7d93b8c0b22a669cd2d746745daf5df7`: PASS in 24m27s — cross-layer QA, all-feature Rust, production install lifecycle, private E2E NSIS, installed-app full suite, exact cleanup, evidence boundary and accepted installer upload all passed. https://github.com/taejun9/bodam/actions/runs/33152307793
 
 ## Findings
 
@@ -51,12 +53,11 @@ pass-with-residual-risk
 
 ## Residual Risk
 
-- The exact hosted-checkout follow-up commit still needs the full Windows NSIS and installed-app rerun; another failure reopens QA and this review.
 - The E2E-only missing/invalid DB-path launch exits through a macOS panic/abort instead of a friendly diagnostic. This is fail-closed and does not affect production, but remains a P3 test-harness UX follow-up.
 - Manual macOS light↔dark system-setting mutation was not run; automated cold-start/runtime tests cover both values and the actual app covered current OS-dark plus reload.
 - Vite retains the existing 533.56 kB main-chunk warning, with no observed functional failure.
 
 ## Follow-Ups
 
-- Dispatch and record the exact hosted-checkout follow-up Windows run after commit/push, then verify the exact main-merge SHA run.
+- Verify the exact main-merge SHA with the same Windows workflow after merge.
 - Consider a Node preflight that rejects missing/noncanonical E2E DB paths before launching the native bundle, if test-runner diagnostics become a maintenance problem.

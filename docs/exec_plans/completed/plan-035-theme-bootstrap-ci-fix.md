@@ -65,6 +65,7 @@ project_lead / plan_keeper / quality_runner / review_judge
 - [x] QA 뒤 independent code/product/privacy review findings를 해결한다.
 - [x] hosted checkout의 exact workspace는 허용하되 로컬 branch/worktree 강제는 유지하는 harness 회귀를 추가한다.
 - [x] 수정 후 local QA·독립 리뷰를 통과하고 hosted rerun용 remote commit을 준비한다.
+- [x] exact follow-up SHA의 hosted Windows NSIS·installed E2E 전체 실행을 통과한다.
 - [x] plan을 completed로 이동하고 같은 번호 review mirror를 갱신한다.
 
 ## QA Plan
@@ -92,7 +93,7 @@ QA 통과 뒤 independent reviewer가 Windows timeout 원인, production 순서 
 
 ## Open Questions
 
-- 수정 branch의 hosted Windows workflow를 현재 GitHub 권한으로 dispatch할 수 없으면 main push 뒤 run을 후속 evidence로 남긴다.
+- 없음.
 
 ## Decision Log
 
@@ -118,10 +119,11 @@ QA 통과 뒤 independent reviewer가 Windows timeout 원인, production 순서 
 | 2026-08-28 | review_judge / privacy_guard | 최종 semantic DOM·asset/order·Window cleanup 보강 뒤 code/product/privacy 재검토에서 남은 P0–P3 finding 없음으로 승인했다. |
 | 2026-08-28 | quality_runner | hosted run 33150814716에서 theme 4/4·frontend·Rust·build가 통과한 뒤 local-only worktree path check만 실패한 것을 확인하고 plan을 다시 열었다. |
 | 2026-08-28 | harness_builder / review_judge | GitHub-hosted exact ref·run·SHA·workspace·HEAD·top-level만 허용하고 self-hosted·detached mismatch·git failure를 거부하는 controls를 추가했으며 두 독립 리뷰가 승인했다. |
+| 2026-08-28 | quality_runner | follow-up SHA `2079764e7d93b8c0b22a669cd2d746745daf5df7`의 hosted run 33152307793에서 cross-layer QA부터 installed E2E·cleanup·artifact까지 전 단계를 통과했다. |
 
 ## QA Evidence
 
-- local result: PASS; hosted run 33150814716: FAIL; exact-fix rerun pending after follow-up commit
+- result: PASS — local QA·release E2E와 exact-fix hosted Windows run 33152307793 모두 통과.
 - final semantic-parser 집중 theme bootstrap test: 4 tests PASS, 462ms; tests 112ms.
 - `npm run lint`: PASS.
 - `npm run typecheck`: PASS.
@@ -139,15 +141,16 @@ QA 통과 뒤 independent reviewer가 Windows timeout 원인, production 순서 
 - hosted Windows pre-commit: NOT RUN — 수정 branch가 아직 commit/push 전이라 dispatch 가능한 remote ref가 없다. 수정 전 run 33145307390의 installer/E2E skip은 수정본 증거로 사용하지 않는다.
 - hosted Windows run 33150814716 at `8f21d4c76ebc1ee626c0499a364b3e5e82e60e83`: FAIL — theme contract 4/4 PASS in 209ms and frontend/Rust/build PASS; final harness rejected the exact GitHub Actions checkout because it was not a local `.worktree/...` path. Installer/E2E skipped.
 - hosted-checkout harness fix: `python3 harness/scripts/test_harness.py`, `python3 harness/scripts/run_qa.py`, full `npm run qa`, Windows npm trust preflight와 `git diff --check` PASS. Exact hosted, main/local mismatch, self-hosted, invalid ref/run/SHA/workspace, detached PR, HEAD/top-level mismatch와 git failure controls 포함.
+- hosted Windows run 33152307793 at `2079764e7d93b8c0b22a669cd2d746745daf5df7`: PASS in 24m27s — cross-layer QA, all-feature Rust, production NSIS와 설치 lifecycle, private E2E NSIS, installed-app 전체 suite, exact state cleanup, evidence boundary와 installer artifact upload 전부 PASS. https://github.com/taejun9/bodam/actions/runs/33152307793
 
 ## Acceptance Status
 
-- #1: static cross-platform contract와 local final production build PASS; 수정본 hosted Windows는 pre-commit 시점 NOT RUN.
+- #1: static cross-platform contract, local final production build와 수정본 hosted Windows cross-layer QA PASS.
 - #2: production/e2e final HTML에서 exact synchronous bootstrap 1개와 module/CSS 선행 순서 PASS.
 - #3: automated system light/dark cold/runtime PASS; actual app current OS-dark resolve와 reload PASS, manual live OS transition NOT RUN.
 - #4: local `npm run qa`와 release `npm run verify` PASS.
 - #5: actual app 6개 top-level route bounded audit PASS; 상세 CRUD·오류·rollback·restore는 release E2E PASS.
-- #6: hosted Windows run 33150814716 exposed a separate hosted-checkout path portability bug; fix and rerun pending.
+- #6: hosted Windows run 33150814716이 드러낸 hosted-checkout path 결함을 수정했고 run 33152307793의 NSIS·installed E2E 전체 PASS.
 - #7: 실제 데이터·원격 기능·capability·trust hash 변경 없음.
 
 ## Review Findings
@@ -170,4 +173,4 @@ QA 통과 뒤 independent reviewer가 Windows timeout 원인, production 순서 
 - semantic DOM 검사는 정확한 parser-blocking bootstrap 1개, generated `/assets` module/CSS 존재, 모든 실제 module/CSS보다 앞선 순서와 inert/가짜 context 거부를 보장한다.
 - 최종 local QA와 release native E2E, 실제 앱 Settings·주요 navigation 점검을 통과했고 새 P0–P2 앱 결함은 재현되지 않았다.
 - 첨부 crash는 E2E 전용 번들을 필수 합성 DB 경로 없이 실행한 fail-closed 진단 crash이며 운영 앱 경로의 제품 crash가 아니다. 테스트 전용 진단 UX는 P3 잔여 위험이다.
-- 수정 branch hosted Windows run 33150814716에서 발견한 exact checkout path portability finding을 해결하고 독립 리뷰를 통과했다. 후속 commit SHA의 전체 hosted NSIS/installed E2E 결과는 별도 증거로 즉시 갱신한다.
+- 수정 branch hosted Windows run 33150814716에서 발견한 exact checkout path portability finding을 해결했고, 후속 SHA `2079764e7d93b8c0b22a669cd2d746745daf5df7`의 run 33152307793에서 전체 NSIS·installed E2E까지 통과했다.
