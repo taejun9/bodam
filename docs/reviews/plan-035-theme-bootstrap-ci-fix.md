@@ -7,10 +7,10 @@ pass-with-residual-risk
 ## Scope
 
 - plan: `docs/exec_plans/completed/plan-035-theme-bootstrap-ci-fix.md`
-- reviewed tree: `codex/plan-035-theme-bootstrap-ci-fix` before commit
+- reviewed tree: `codex/plan-035-theme-bootstrap-ci-fix` before initial and hosted-checkout follow-up commits
 - baseline: main `9ed42e9abc381058618bfc2b37b0cf70d323f618`
 - failure evidence: GitHub Actions run 33145307390 at baseline SHA
-- reviewers: independent code/parser, product/evidence and privacy/trust boundaries
+- reviewers: independent code/parser, product/evidence, privacy/trust and hosted-checkout security boundaries
 - reviewed_at: 2026-08-28 KST
 
 ## QA Evidence
@@ -21,7 +21,8 @@ pass-with-residual-risk
 - `npm run verify`: exit 0 — release `BODAM E2E` native IPC·SQLite·file flow passed Customer, policy, coverage, benchmark, family, consultation, Dashboard, Schedule/Calendar, XLSX/CSV import/export/round-trip/rollback and backup/restore/exit orchestration.
 - actual release app: isolated OS-temp synthetic DB only; light, dark and system save/apply, current OS-dark system resolution, reload persistence and six top-level routes passed without a new error alert.
 - `cargo fmt --check`, `git diff --check`, review prerequisites, Windows npm trust preflight, 300-line, sensitive-artifact and capability gates: PASS.
-- hosted Windows modified branch before commit: NOT RUN because no remote ref existed; baseline failure is not reused as fixed evidence.
+- hosted Windows run 33150814716 at `8f21d4c76ebc1ee626c0499a364b3e5e82e60e83`: FAIL after theme 4/4 PASS in 209ms and frontend/Rust/build PASS; final harness rejected the valid hosted checkout path, so installer/E2E skipped.
+- hosted-checkout follow-up: local full QA, focused policy controls, Windows npm trust preflight and two independent reviews PASS; exact follow-up SHA hosted rerun pending.
 
 ## Findings
 
@@ -32,6 +33,7 @@ pass-with-residual-risk
 | resolved P2 | generated-asset filtering could ignore an earlier local or CDN stylesheet/module | separate `/assets/*.js|css` existence from the earliest actual module/stylesheet order check and add negative regressions |
 | resolved P3 | detached happy-dom `window.close()` was a no-op | make parser, assertion and Vite hook async and await `window.happyDOM.close()` in `finally` |
 | resolved P2/P3 | hosted and system-theme evidence scopes were initially ambiguous | record modified Windows as NOT RUN until push and distinguish actual current OS-dark/reload from automated OS-light/runtime coverage |
+| resolved P2 | local-only `.worktree/<plan>` enforcement rejected an exact GitHub-hosted branch checkout | preserve local enforcement while allowing only matching GitHub-hosted runner/ref/run/SHA/workspace/HEAD/top-level identity; reject self-hosted, detached mismatch and git failure |
 | none | no remaining P0–P3 code, product, privacy or trust finding | independent final reviewers approved the result |
 
 ## Failure and Crash Analysis
@@ -49,12 +51,12 @@ pass-with-residual-risk
 
 ## Residual Risk
 
-- The modified branch's hosted Windows NSIS and installed-app suite must be dispatched after the first push; a failure reopens QA and this review.
+- The exact hosted-checkout follow-up commit still needs the full Windows NSIS and installed-app rerun; another failure reopens QA and this review.
 - The E2E-only missing/invalid DB-path launch exits through a macOS panic/abort instead of a friendly diagnostic. This is fail-closed and does not affect production, but remains a P3 test-harness UX follow-up.
 - Manual macOS light↔dark system-setting mutation was not run; automated cold-start/runtime tests cover both values and the actual app covered current OS-dark plus reload.
 - Vite retains the existing 533.56 kB main-chunk warning, with no observed functional failure.
 
 ## Follow-Ups
 
-- Dispatch and record the exact modified-branch Windows run after commit/push, then verify the exact main-merge SHA run.
+- Dispatch and record the exact hosted-checkout follow-up Windows run after commit/push, then verify the exact main-merge SHA run.
 - Consider a Node preflight that rejects missing/noncanonical E2E DB paths before launching the native bundle, if test-runner diagnostics become a maintenance problem.
