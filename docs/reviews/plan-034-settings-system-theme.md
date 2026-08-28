@@ -55,6 +55,6 @@ pass-with-residual-risk
 
 ## Follow-Ups
 
-- Proposed Plan-035: BODAM-created secondary Google calendar, BODAM-to-Google one-way manual sync, Schedule-only minimum fields, Desktop OAuth Authorization Code with PKCE/state and OS credential storage.
+- 향후 별도 승인 plan: BODAM-created secondary Google calendar, BODAM-to-Google one-way manual sync, Schedule-only minimum fields, Desktop OAuth Authorization Code with PKCE/state and OS credential storage.
 - Decide whether any customer name or memo may leave the device before expanding transmitted fields or enabling automatic/bidirectional sync.
 - Consider route-based code splitting only if measured startup or navigation performance warrants it.

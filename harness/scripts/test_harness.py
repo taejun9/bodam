@@ -9,6 +9,7 @@ from pathlib import Path
 import application_checks
 import base_checks
 import repository_checks
+from test_worktree_flow import run_worktree_flow_controls
 
 
 def expect_error(errors: list[str], phrase: str, failures: list[str]) -> None:
@@ -206,50 +207,6 @@ pending
         base_checks.ROOT = original_root
 
 
-def test_main_worktree_rejection(failures: list[str]) -> None:
-    original_root = base_checks.ROOT
-    original_git_branch = base_checks.git_branch
-    try:
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            active = root / "docs/exec_plans/active"
-            active.mkdir(parents=True)
-            (active / "plan-999-negative-control.md").write_text(
-                "# synthetic\n", encoding="utf-8"
-            )
-            base_checks.ROOT = root
-            base_checks.git_branch = lambda: "main"
-            errors: list[str] = []
-            base_checks.check_worktree_flow(errors)
-            expect_error(errors, "must not be implemented or validated on main", failures)
-    finally:
-        base_checks.ROOT = original_root
-        base_checks.git_branch = original_git_branch
-
-
-def test_unexpected_worktree_redacts_root(failures: list[str]) -> None:
-    original_root = base_checks.ROOT
-    original_git_branch = base_checks.git_branch
-    try:
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            active = root / "docs/exec_plans/active"
-            active.mkdir(parents=True)
-            (active / "plan-999-negative-control.md").write_text(
-                "# synthetic\n", encoding="utf-8"
-            )
-            base_checks.ROOT = root
-            base_checks.git_branch = lambda: "codex/plan-999-negative-control"
-            errors: list[str] = []
-            base_checks.check_worktree_flow(errors)
-            expect_error(errors, "current location does not match", failures)
-            if str(root) in "\n".join(errors):
-                failures.append("worktree rejection exposed the absolute root")
-    finally:
-        base_checks.ROOT = original_root
-        base_checks.git_branch = original_git_branch
-
-
 def run_negative_controls() -> list[str]:
     failures: list[str] = []
     test_sensitive_artifacts(failures)
@@ -258,8 +215,7 @@ def run_negative_controls() -> list[str]:
     test_line_limit_extensions(failures)
     test_generated_cache_and_vue_sql_detection(failures)
     test_plan_approval_and_qa(failures)
-    test_main_worktree_rejection(failures)
-    test_unexpected_worktree_redacts_root(failures)
+    failures.extend(run_worktree_flow_controls())
     return failures
 
 

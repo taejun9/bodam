@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -67,7 +68,70 @@ def git_branch() -> str:
         capture_output=True,
         text=True,
     )
-    return result.stdout.strip() if result.returncode == 0 else ""
+    if result.returncode != 0:
+        return ""
+    branch = result.stdout.strip()
+    if branch:
+        return branch
+    hosted_branch = (
+        os.environ.get("GITHUB_HEAD_REF") or
+        os.environ.get("GITHUB_REF_NAME", "")
+    )
+    return hosted_branch if is_exact_github_actions_checkout(hosted_branch) else ""
+
+
+def git_checkout_identity() -> tuple[str, str]:
+    outputs: list[str] = []
+    for arguments in (["git", "rev-parse", "HEAD"], ["git", "rev-parse", "--show-toplevel"]):
+        try:
+            result = subprocess.run(
+                arguments,
+                cwd=ROOT,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+        except OSError:
+            return "", ""
+        if result.returncode != 0:
+            return "", ""
+        outputs.append(result.stdout.strip())
+    return outputs[0], outputs[1]
+
+
+def is_exact_github_actions_checkout(branch: str) -> bool:
+    """Recognize the hosted checkout for policy checks, not remote attestation."""
+    workspace = os.environ.get("GITHUB_WORKSPACE", "")
+    event_branch = (
+        os.environ.get("GITHUB_HEAD_REF") or
+        os.environ.get("GITHUB_REF_NAME", "")
+    )
+    run_id = os.environ.get("GITHUB_RUN_ID", "")
+    expected_sha = os.environ.get("GITHUB_SHA", "")
+    if (
+        os.environ.get("GITHUB_ACTIONS") != "true" or
+        os.environ.get("CI") != "true" or
+        os.environ.get("RUNNER_ENVIRONMENT") != "github-hosted" or
+        not workspace or
+        not re.fullmatch(r"[1-9][0-9]*", run_id) or
+        not re.fullmatch(r"[0-9a-fA-F]{40}", expected_sha) or
+        event_branch != branch
+    ):
+        return False
+    workspace_path = Path(workspace)
+    if not workspace_path.is_absolute():
+        return False
+    head_sha, top_level = git_checkout_identity()
+    if head_sha.lower() != expected_sha.lower() or not top_level:
+        return False
+    try:
+        canonical_root = ROOT.resolve(strict=True)
+        return (
+            workspace_path.resolve(strict=True) == canonical_root and
+            Path(top_level).resolve(strict=True) == canonical_root
+        )
+    except (OSError, RuntimeError):
+        return False
 
 
 def check_plan_content(plan: Path, folder: str, errors: list[str]) -> None:
@@ -143,7 +207,8 @@ def check_worktree_flow(errors: list[str]) -> None:
     expected_plan = f"{plan_stem}.md"
     if expected_plan not in active_plans | completed_plans:
         errors.append(f"branch {branch} has no matching plan {expected_plan}")
-    if ROOT.parent.name != ".worktree" or ROOT.name != plan_stem:
+    local_worktree = ROOT.parent.name == ".worktree" and ROOT.name == plan_stem
+    if not local_worktree and not is_exact_github_actions_checkout(branch):
         errors.append(
             f"branch {branch} must run in .worktree/{plan_stem}; "
             "current location does not match"
