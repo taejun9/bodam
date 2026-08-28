@@ -45,23 +45,35 @@ describe("AppSettingsSection", () => {
     document.body.replaceChildren();
     document.documentElement.removeAttribute("data-theme");
     localStorage.clear();
+    vi.restoreAllMocks();
   });
 
   it("loads exact preferences and saves all four editable fields", async () => {
+    vi.spyOn(window, "matchMedia").mockReturnValue({
+      matches: false,
+      media: "(prefers-color-scheme: dark)",
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(() => true),
+    });
     const wrapper = mountSection();
     await flushPromises();
+    expect(wrapper.findAll("input[name='theme']")).toHaveLength(3);
     expect(wrapper.get("input[name='recentConsultationDays']").element)
       .toHaveProperty("value", "30");
     expect(wrapper.get("input[name='unconsultedDays']").element)
       .toHaveProperty("value", "90");
 
-    await wrapper.get("input[value='dark']").setValue(true);
+    await wrapper.get("input[value='system']").setValue(true);
     await wrapper.get("input[name='recentConsultationDays']").setValue("45");
     await wrapper.get("input[name='unconsultedDays']").setValue("120");
     await wrapper.get("input[name='dashboardItemLimit']").setValue("7");
     applicationMocks.update.mockResolvedValue({
       ...settings,
-      theme: "dark",
+      theme: "system",
       recentConsultationDays: 45,
       unconsultedDays: 120,
       dashboardItemLimit: 7,
@@ -70,7 +82,7 @@ describe("AppSettingsSection", () => {
     await flushPromises();
 
     expect(applicationMocks.update).toHaveBeenCalledWith({
-      theme: "dark",
+      theme: "system",
       recentConsultationDays: 45,
       unconsultedDays: 120,
       dashboardItemLimit: 7,
@@ -78,7 +90,7 @@ describe("AppSettingsSection", () => {
     const result = wrapper.get("[role='status'].app-settings-result");
     expect(result.text()).toContain("설정을 저장했습니다");
     expect(document.activeElement).toBe(result.element);
-    expect(document.documentElement.dataset.theme).toBe("dark");
+    expect(document.documentElement.dataset.theme).toBe("light");
   });
 
   it("focuses the first invalid preference and marks it for assistive tech", async () => {

@@ -21,7 +21,7 @@ async function bootstrap() {
   const ui = useUiStore(pinia);
   ui.initialize();
   try {
-    ui.setTheme((await appSettingsApplication.load()).theme);
+    ui.setThemePreference((await appSettingsApplication.load()).theme);
   } catch {
     // The first-paint cache remains usable until Settings can be retried in-app.
   }

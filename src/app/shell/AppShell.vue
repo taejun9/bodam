@@ -33,6 +33,11 @@ const navigationExpanded = computed(() =>
 const mobileNavigationActive = computed(
   () => mobileViewport.value && ui.mobileNavigationOpen,
 );
+const themeCycleAction = computed(() => ({
+  light: { label: "다크 모드 사용", icon: "moon" as const },
+  dark: { label: "시스템 설정 사용", icon: "monitor" as const },
+  system: { label: "라이트 모드 사용", icon: "sun" as const },
+})[ui.themePreference]);
 
 function updateMobileViewport(event: MediaQueryListEvent) {
   mobileViewport.value = event.matches;
@@ -76,14 +81,14 @@ function handleWindowKeydown(event: KeyboardEvent) {
 
 async function toggleTheme() {
   if (themeSaving.value) return;
-  const previous = ui.theme;
-  const requested = ui.toggleTheme();
+  const requested = ui.nextThemePreference();
   themeSaving.value = true;
   themeError.value = undefined;
   try {
-    ui.setTheme((await appSettingsApplication.updateTheme(requested)).theme);
+    ui.setThemePreference(
+      (await appSettingsApplication.updateTheme(requested)).theme,
+    );
   } catch (error: unknown) {
-    ui.setTheme(previous);
     themeError.value = appSettingsSafeMessage(error);
   } finally {
     themeSaving.value = false;
@@ -91,6 +96,7 @@ async function toggleTheme() {
 }
 
 onMounted(() => {
+  ui.startThemeListener();
   mobileQuery = window.matchMedia("(max-width: 860px)");
   mobileViewport.value = mobileQuery.matches;
   mobileQuery.addEventListener("change", updateMobileViewport);
@@ -98,6 +104,7 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  ui.stopThemeListener();
   mobileQuery?.removeEventListener("change", updateMobileViewport);
   window.removeEventListener("keydown", handleWindowKeydown);
 });
@@ -237,10 +244,10 @@ const utilities = [
             type="button"
             :disabled="themeSaving"
             :aria-busy="themeSaving"
-            :aria-label="ui.theme === 'light' ? '다크 모드 사용' : '라이트 모드 사용'"
+            :aria-label="themeCycleAction.label"
             @click="toggleTheme"
           >
-            <AppIcon :name="ui.theme === 'light' ? 'moon' : 'sun'" />
+            <AppIcon :name="themeCycleAction.icon" />
           </button>
           <p v-if="themeError" class="sr-only" role="alert">{{ themeError }}</p>
         </div>

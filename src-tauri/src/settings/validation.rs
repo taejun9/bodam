@@ -27,10 +27,10 @@ pub(crate) fn validate_values(
     dashboard_item_limit: i64,
 ) -> Result<AppSettingsWrite, AppError> {
     let mut fields = BTreeMap::new();
-    if theme != "light" && theme != "dark" {
+    if theme != "light" && theme != "dark" && theme != "system" {
         fields.insert(
             "theme".to_owned(),
-            "테마는 라이트 또는 다크만 선택할 수 있습니다.".to_owned(),
+            "테마는 라이트, 다크 또는 시스템만 선택할 수 있습니다.".to_owned(),
         );
     }
     validate_range(

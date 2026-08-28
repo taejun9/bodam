@@ -7,6 +7,7 @@ type IconName =
   | "database"
   | "family"
   | "menu"
+  | "monitor"
   | "moon"
   | "policy"
   | "search"
@@ -77,6 +78,10 @@ defineProps<{
     <template v-else-if="name === 'search'">
       <circle cx="11" cy="11" r="7" />
       <path d="m20 20-4-4" />
+    </template>
+    <template v-else-if="name === 'monitor'">
+      <rect x="3" y="4" width="18" height="13" rx="2" />
+      <path d="M8 21h8M12 17v4" />
     </template>
     <template v-else-if="name === 'sun'">
       <circle cx="12" cy="12" r="4" />

@@ -22,7 +22,7 @@ plan-012에서 구현·검증하는 SQLite backup, restore와 Settings 수명주
 
 ## Settings
 
-- v9 `app_settings` singleton은 light/dark theme, 최근 상담 일수, 미상담 기준 일수, Dashboard 공통 표시 건수와 nullable custom backup directory를 가진다.
+- v10 `app_settings` singleton은 light/dark/system theme 선호, 최근 상담 일수, 미상담 기준 일수, Dashboard 공통 표시 건수와 nullable custom backup directory를 가진다. v9 값은 그대로 보존하고 v10에서 theme CHECK만 확장한다.
 - 기본값은 light, 30일, 90일, 10건과 app-data `backups`다.
 - 최근 상담은 오늘 포함 1–365일, 미상담은 1–3,650일이고 미상담 기준은 최근 상담 기간 이상이다.
 - 카드 표시 건수는 1–10이며 상령·만기의 0–30/31–60/61–90 bucket은 설정으로 바꾸지 않는다.

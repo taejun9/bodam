@@ -159,7 +159,7 @@ source 없는 수동 Policy의 21열 합성과 domain/source 충돌 해결 UI, �
 
 ## Settings
 
-- light/dark theme
+- light/dark/system theme; system은 OS 색상 선호를 실행 중 변경까지 반영
 - 최근 상담 기간 1–365일, 미상담 기준 1–3,650일이며 미상담 기준은 최근 상담 기간 이상
 - Dashboard 카드별 공통 표시 건수 1–10; 상령·만기 0–30/31–60/61–90 bucket은 변경하지 않음
 - 기존 사용자 정의 Coverage Benchmark

@@ -1,4 +1,5 @@
-export type ThemeMode = "light" | "dark";
+export type ThemeMode = "light" | "dark" | "system";
+export type ResolvedTheme = Exclude<ThemeMode, "system">;
 
 export const DEFAULT_RECENT_CONSULTATION_DAYS = 30;
 export const DEFAULT_UNCONSULTED_DAYS = 90;

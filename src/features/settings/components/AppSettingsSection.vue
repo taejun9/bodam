@@ -79,7 +79,7 @@ async function load(focusResult = false): Promise<void> {
     if (request !== requestNumber) return;
     loaded.value = settings;
     replaceDraft(settings);
-    ui.setTheme(settings.theme);
+    ui.setThemePreference(settings.theme);
     succeeded = true;
   } catch (error: unknown) {
     if (request !== requestNumber) return;
@@ -109,7 +109,7 @@ async function save(): Promise<void> {
     const settings = await appSettingsApplication.update(input());
     loaded.value = settings;
     replaceDraft(settings);
-    ui.setTheme(settings.theme);
+    ui.setThemePreference(settings.theme);
     notice.value = "화면과 대시보드 설정을 저장했습니다.";
     focusTarget = "result";
   } catch (error: unknown) {
@@ -148,7 +148,7 @@ function focusFirstInvalidField(): void {
 }
 
 watch(
-  () => ui.theme,
+  () => ui.themePreference,
   (theme) => {
     if (loaded.value && !saving.value) draft.theme = theme;
   },
@@ -196,7 +196,7 @@ onBeforeUnmount(() => {
     <form v-else class="app-settings-form" novalidate @submit.prevent="save">
       <fieldset class="theme-fieldset" :disabled="saving">
         <legend>화면 테마</legend>
-        <p id="theme-help">상단의 테마 버튼과 같은 설정을 사용합니다.</p>
+        <p id="theme-help">시스템은 운영체제의 라이트·다크 모드를 자동으로 따릅니다.</p>
         <div class="theme-options" aria-describedby="theme-help">
           <label>
             <input v-model="draft.theme" type="radio" name="theme" value="light">
@@ -205,6 +205,10 @@ onBeforeUnmount(() => {
           <label>
             <input v-model="draft.theme" type="radio" name="theme" value="dark">
             <span>다크</span>
+          </label>
+          <label>
+            <input v-model="draft.theme" type="radio" name="theme" value="system">
+            <span>시스템</span>
           </label>
         </div>
       </fieldset>
